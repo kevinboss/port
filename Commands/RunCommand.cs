@@ -8,10 +8,7 @@ public class RunCommand : AsyncCommand<RunSettings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
     {
-        if (settings.ImageAlias == null)
-        {
-            GetImageAliasFromUser(settings);
-        }
+        settings.ImageAlias ??= GetImageAliasFromUser();
 
         var image = Config.Instance.Images.SingleOrDefault(e => e.Identifier == settings.ImageAlias);
         if (image == null)
@@ -28,7 +25,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         return 0;
     }
 
-    private static void GetImageAliasFromUser(RunSettings settings)
+    private static string GetImageAliasFromUser()
     {
         var selectionPrompt = new SelectionPrompt<string>()
             .PageSize(10)
@@ -39,7 +36,7 @@ public class RunCommand : AsyncCommand<RunSettings>
             if (image.Identifier != null) selectionPrompt.AddChoice(image.Identifier);
         }
 
-        settings.ImageAlias = AnsiConsole.Prompt(selectionPrompt);
+        return AnsiConsole.Prompt(selectionPrompt);
     }
 
     private async Task TerminateOtherContainers(Image image)
