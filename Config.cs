@@ -16,14 +16,22 @@ public class Config
         DockerEndpoint = "unix:///var/run/docker.sock",
         Images = new List<Image>
         {
-            new Image
+            new()
             {
-                ImageAlias = "Hello.World",
+                Identifier = "Hello.World",
+                ImageName = "alpine",
+                ImageTag = "latest",
+                PortFrom = 80,
+                PortTo = 80
+            },
+            new()
+            {
+                Identifier = "Hello.World2",
                 ImageName = "hello-world",
                 ImageTag = "latest",
                 PortFrom = 80,
                 PortTo = 80
-            }
+            },
         }
     };
 
