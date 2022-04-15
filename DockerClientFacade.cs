@@ -4,6 +4,34 @@ namespace dcma;
 
 public static class DockerClientFacade
 {
+    public static Task CreateImage(string? imageName, string? imageTag)
+    {
+        return Services.DockerClient.Value.Images.CreateImageAsync(
+            new ImagesCreateParameters
+            {
+                FromImage = imageName,
+                Tag = imageTag,
+            },
+            null,
+            new Progress<JSONMessage>());
+    }
+
+    public static async Task<bool> DoesImageExistAsync(string imageName)
+    {
+        return await Services.DockerClient.Value.Images.ListImagesAsync(new ImagesListParameters
+        {
+            Filters = new Dictionary<string, IDictionary<string, bool>>
+            {
+                {
+                    "reference", new Dictionary<string, bool>
+                    {
+                        { imageName, true }
+                    }
+                }
+            }
+        }).ContinueWith(task => task.Result.Any());
+    }
+
     public static async Task<ContainerListResponse?> GetContainerAsync(string containerName)
     {
         var containerListResponses = await Services.DockerClient.Value.Containers.ListContainersAsync(
@@ -21,6 +49,38 @@ public static class DockerClientFacade
                 }
             });
         return containerListResponses.SingleOrDefault(e => e.Names.Any(name => name == $"/{containerName}"));
+    }
+
+    public static Task CreateContainerAsync(string imageIdentifier, string imageName, int portFrom, int portTo)
+    {
+        return Services.DockerClient.Value.Containers.CreateContainerAsync(new CreateContainerParameters
+        {
+            Name = imageIdentifier,
+            Image = imageName,
+            HostConfig = new HostConfig()
+            {
+                PortBindings = new Dictionary<string, IList<PortBinding>>
+                {
+                    {
+                        portFrom.ToString(), new List<PortBinding>
+                        {
+                            new()
+                            {
+                                HostPort = portTo.ToString()
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    public static Task RunContainerAsync(string imageIdentifier)
+    {
+        return Services.DockerClient.Value.Containers.StartContainerAsync(
+            imageIdentifier,
+            new ContainerStartParameters()
+        );
     }
 
     public static async Task TerminateContainers(IEnumerable<string> containerNames)
@@ -43,5 +103,13 @@ public static class DockerClientFacade
             await Services.DockerClient.Value.Containers.StopContainerAsync(containerListResponse.ID,
                 new ContainerStopParameters());
         }
+    }
+
+    public static async Task RemoveContainerAsync(string id)
+    {
+        await Services.DockerClient.Value.Containers.StopContainerAsync(id,
+            new ContainerStopParameters());
+        await Services.DockerClient.Value.Containers.RemoveContainerAsync(id,
+            new ContainerRemoveParameters());
     }
 }
