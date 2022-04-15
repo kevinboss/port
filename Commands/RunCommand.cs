@@ -49,7 +49,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         await DockerClientFacade.TerminateContainers(containerNames);
     }
 
-    private async Task LaunchImageAsync(Image image)
+    private static async Task LaunchImageAsync(Image image)
     {
         if (image.Identifier == null)
         {
@@ -59,90 +59,26 @@ public class RunCommand : AsyncCommand<RunSettings>
         var containerListResponse = await DockerClientFacade.GetContainerAsync(image.Identifier);
         if (containerListResponse != null && containerListResponse.Image != image.ImageName)
         {
-            await Services.DockerClient.Value.Containers.StopContainerAsync(containerListResponse.ID,
-                new ContainerStopParameters());
-            await Services.DockerClient.Value.Containers.RemoveContainerAsync(containerListResponse.ID,
-                new ContainerRemoveParameters());
+            var id = containerListResponse.ID;
+            await DockerClientFacade.RemoveContainerAsync(id);
             containerListResponse = null;
         }
 
         if (containerListResponse == null)
         {
-            var imageExists = await DoesImageExistAsync(image);
+            if (image.ImageName == null)
+            {
+                throw new InvalidOperationException();
+            }
+            var imageExists = await DockerClientFacade.DoesImageExistAsync(image.ImageName);
             if (!imageExists)
             {
-                await CreateImage(image);
+                await DockerClientFacade.CreateImage(image.ImageName, image.ImageTag);
             }
 
-            await CreateContainerAsync(image);
+            await DockerClientFacade.CreateContainerAsync(image.Identifier, image.ImageName, image.PortFrom, image.PortTo);
         }
 
-        await RunContainerAsync(image);
-    }
-
-
-    private static async Task<bool> DoesImageExistAsync(Image image)
-    {
-        if (image.ImageName == null)
-        {
-            throw new InvalidOperationException();
-        }
-
-        return await Services.DockerClient.Value.Images.ListImagesAsync(new ImagesListParameters
-        {
-            Filters = new Dictionary<string, IDictionary<string, bool>>
-            {
-                {
-                    "reference", new Dictionary<string, bool>
-                    {
-                        { image.ImageName, true }
-                    }
-                }
-            }
-        }).ContinueWith(task => task.Result.Any());
-    }
-
-    private static Task CreateImage(Image image)
-    {
-        return Services.DockerClient.Value.Images.CreateImageAsync(
-            new ImagesCreateParameters
-            {
-                FromImage = image.ImageName,
-                Tag = image.ImageTag,
-            },
-            null,
-            new Progress<JSONMessage>());
-    }
-
-    private static Task CreateContainerAsync(Image image)
-    {
-        return Services.DockerClient.Value.Containers.CreateContainerAsync(new CreateContainerParameters
-        {
-            Name = image.Identifier,
-            Image = image.ImageName,
-            HostConfig = new HostConfig()
-            {
-                PortBindings = new Dictionary<string, IList<PortBinding>>
-                {
-                    {
-                        image.PortFrom.ToString(), new List<PortBinding>
-                        {
-                            new()
-                            {
-                                HostPort = image.PortTo.ToString()
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    private static Task RunContainerAsync(Image image)
-    {
-        return Services.DockerClient.Value.Containers.StartContainerAsync(
-            image.Identifier,
-            new ContainerStartParameters()
-        );
+        await DockerClientFacade.RunContainerAsync(image.Identifier);
     }
 }
