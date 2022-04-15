@@ -10,7 +10,7 @@ public class RunCommand : AsyncCommand<RunSettings>
     {
         settings.ImageAlias ??= GetImageAliasFromUser();
 
-        var image = Config.Instance.Images.SingleOrDefault(e => e.Identifier == settings.ImageAlias);
+        var image = Services.Config.Value.Images.SingleOrDefault(e => e.Identifier == settings.ImageAlias);
         if (image == null)
         {
             throw new InvalidOperationException();
@@ -31,7 +31,7 @@ public class RunCommand : AsyncCommand<RunSettings>
             .PageSize(10)
             .Title("Select image you wish to [green]run[/]")
             .MoreChoicesText("[grey](Move up and down to reveal more images)[/]");
-        foreach (var image in Config.Instance.Images)
+        foreach (var image in Services.Config.Value.Images)
         {
             if (image.Identifier != null) selectionPrompt.AddChoice(image.Identifier);
         }
@@ -39,41 +39,29 @@ public class RunCommand : AsyncCommand<RunSettings>
         return AnsiConsole.Prompt(selectionPrompt);
     }
 
-    private async Task TerminateOtherContainers(Image image)
+    private static async Task TerminateOtherContainers(Image image)
     {
-        var containerNames = new Dictionary<string, bool>();
-        foreach (var e in Config.Instance.Images)
-        {
-            if (e.Identifier != null && e.Identifier != image.Identifier) containerNames.Add(e.Identifier, true);
-        }
-
-        var containers = await DockerClient.Instance.Containers
-            .ListContainersAsync(new ContainersListParameters
-            {
-                Limit = containerNames.Count,
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    {
-                        "name", containerNames
-                    }
-                }
-            });
-
-        foreach (var containerListResponse in containers)
-        {
-            await DockerClient.Instance.Containers.StopContainerAsync(containerListResponse.ID,
-                new ContainerStopParameters());
-        }
+        var containerNames
+            = Services.Config.Value.Images
+                .Where(e => e.Identifier != null && e.Identifier != image.Identifier)
+                .Select(e => e.Identifier)!
+                .ToList<string>();
+        await DockerClientFacade.TerminateContainers(containerNames);
     }
 
     private async Task LaunchImageAsync(Image image)
     {
-        var containerListResponse = await GetContainerAsync(image);
+        if (image.Identifier == null)
+        {
+            throw new InvalidOperationException();
+        }
+
+        var containerListResponse = await DockerClientFacade.GetContainerAsync(image.Identifier);
         if (containerListResponse != null && containerListResponse.Image != image.ImageName)
         {
-            await DockerClient.Instance.Containers.StopContainerAsync(containerListResponse.ID,
+            await Services.DockerClient.Value.Containers.StopContainerAsync(containerListResponse.ID,
                 new ContainerStopParameters());
-            await DockerClient.Instance.Containers.RemoveContainerAsync(containerListResponse.ID,
+            await Services.DockerClient.Value.Containers.RemoveContainerAsync(containerListResponse.ID,
                 new ContainerRemoveParameters());
             containerListResponse = null;
         }
@@ -92,30 +80,6 @@ public class RunCommand : AsyncCommand<RunSettings>
         await RunContainerAsync(image);
     }
 
-    private static async Task<ContainerListResponse?> GetContainerAsync(Image image)
-    {
-        if (image.Identifier == null)
-        {
-            throw new InvalidOperationException();
-        }
-
-        var containerListResponses = await DockerClient.Instance.Containers.ListContainersAsync(
-            new ContainersListParameters
-            {
-                Limit = 100,
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    {
-                        "name", new Dictionary<string, bool>
-                        {
-                            { $"/{image.Identifier}", true }
-                        }
-                    }
-                }
-            });
-        return containerListResponses.SingleOrDefault(e => e.Names.Any(name => name == $"/{image.Identifier}"));
-    }
-
 
     private static async Task<bool> DoesImageExistAsync(Image image)
     {
@@ -124,7 +88,7 @@ public class RunCommand : AsyncCommand<RunSettings>
             throw new InvalidOperationException();
         }
 
-        return await DockerClient.Instance.Images.ListImagesAsync(new ImagesListParameters
+        return await Services.DockerClient.Value.Images.ListImagesAsync(new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>
             {
@@ -138,9 +102,9 @@ public class RunCommand : AsyncCommand<RunSettings>
         }).ContinueWith(task => task.Result.Any());
     }
 
-    private Task CreateImage(Image image)
+    private static Task CreateImage(Image image)
     {
-        return DockerClient.Instance.Images.CreateImageAsync(
+        return Services.DockerClient.Value.Images.CreateImageAsync(
             new ImagesCreateParameters
             {
                 FromImage = image.ImageName,
@@ -152,7 +116,7 @@ public class RunCommand : AsyncCommand<RunSettings>
 
     private static Task CreateContainerAsync(Image image)
     {
-        return DockerClient.Instance.Containers.CreateContainerAsync(new CreateContainerParameters
+        return Services.DockerClient.Value.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Name = image.Identifier,
             Image = image.ImageName,
@@ -174,9 +138,9 @@ public class RunCommand : AsyncCommand<RunSettings>
         });
     }
 
-    private Task RunContainerAsync(Image image)
+    private static Task RunContainerAsync(Image image)
     {
-        return DockerClient.Instance.Containers.StartContainerAsync(
+        return Services.DockerClient.Value.Containers.StartContainerAsync(
             image.Identifier,
             new ContainerStartParameters()
         );
