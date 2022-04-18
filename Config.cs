@@ -15,7 +15,7 @@ public class Config
         {
             new()
             {
-                Identifier = "Hello.World",
+                Identifier = "Alpine",
                 ImageName = "alpine",
                 ImageTag = "latest",
                 PortFrom = 80,
@@ -23,9 +23,9 @@ public class Config
             },
             new()
             {
-                Identifier = "Hello.World2",
-                ImageName = "hello-world",
-                ImageTag = "latest",
+                Identifier = "NgInx",
+                ImageName = "nginx",
+                ImageTag = "alpine",
                 PortFrom = 80,
                 PortTo = 80
             },

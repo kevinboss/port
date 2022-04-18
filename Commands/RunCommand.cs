@@ -8,9 +8,9 @@ public class RunCommand : AsyncCommand<RunSettings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
     {
-        settings.ImageAlias ??= GetImageAliasFromUser();
+        settings.ImageIdentifier ??= PromptHelper.GetImageAliasFromUser();
 
-        var image = Services.Config.Value.Images.SingleOrDefault(e => e.Identifier == settings.ImageAlias);
+        var image = Services.Config.Value.Images.SingleOrDefault(e => e.Identifier == settings.ImageIdentifier);
         if (image == null)
         {
             throw new InvalidOperationException();
@@ -23,20 +23,6 @@ public class RunCommand : AsyncCommand<RunSettings>
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Launching {image.Identifier}", _ => LaunchImageAsync(image));
         return 0;
-    }
-
-    private static string GetImageAliasFromUser()
-    {
-        var selectionPrompt = new SelectionPrompt<string>()
-            .PageSize(10)
-            .Title("Select image you wish to [green]run[/]")
-            .MoreChoicesText("[grey](Move up and down to reveal more images)[/]");
-        foreach (var image in Services.Config.Value.Images)
-        {
-            if (image.Identifier != null) selectionPrompt.AddChoice(image.Identifier);
-        }
-
-        return AnsiConsole.Prompt(selectionPrompt);
     }
 
     private static async Task TerminateOtherContainers(Image image)
@@ -70,8 +56,9 @@ public class RunCommand : AsyncCommand<RunSettings>
             {
                 throw new InvalidOperationException();
             }
-            var imageExists = await DockerClientFacade.DoesImageExistAsync(image.ImageName);
-            if (!imageExists)
+
+            var imagesListResponse = await DockerClientFacade.GetImageAsync(image.ImageName);
+            if (imagesListResponse == null)
             {
                 await DockerClientFacade.CreateImage(image.ImageName, image.ImageTag);
             }
