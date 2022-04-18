@@ -16,9 +16,22 @@ public static class DockerClientFacade
             new Progress<JSONMessage>());
     }
 
-    public static async Task<bool> DoesImageExistAsync(string imageName)
+    public static Task<IList<ImagesListResponse>> GetImagesAndChildrenAsync(IEnumerable<string> imageNames)
     {
-        return await Services.DockerClient.Value.Images.ListImagesAsync(new ImagesListParameters
+       return Services.DockerClient.Value.Images.ListImagesAsync(new ImagesListParameters
+        {
+            Filters = new Dictionary<string, IDictionary<string, bool>>
+            {
+                {
+                    "reference", imageNames.ToDictionary(s => s, _ => true)
+                }
+            }
+        });
+    }
+
+    public static Task<ImagesListResponse?> GetImageAsync(string imageName)
+    {
+        return Services.DockerClient.Value.Images.ListImagesAsync(new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>
             {
@@ -29,7 +42,7 @@ public static class DockerClientFacade
                     }
                 }
             }
-        }).ContinueWith(task => task.Result.Any());
+        }).ContinueWith(task => task.Result.SingleOrDefault());
     }
 
     public static async Task<ContainerListResponse?> GetContainerAsync(string containerName)

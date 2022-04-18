@@ -4,6 +4,6 @@ namespace dcma.Commands;
 
 public class RunSettings : CommandSettings
 {
-    [CommandArgument(0, "[ImageAlias]")]
-    public string? ImageAlias { get; set; }
+    [CommandArgument(0, "[ImageIdentifier]")]
+    public string? ImageIdentifier { get; set; }
 }
