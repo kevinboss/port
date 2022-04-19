@@ -56,6 +56,11 @@ public class RunCommand : AsyncCommand<RunSettings>
             {
                 throw new InvalidOperationException();
             }
+            
+            if (image.ImageTag == null)
+            {
+                throw new InvalidOperationException();
+            }
 
             var imagesListResponse = await DockerClientFacade.GetImageAsync(image.ImageName);
             if (imagesListResponse == null)
@@ -63,7 +68,7 @@ public class RunCommand : AsyncCommand<RunSettings>
                 await DockerClientFacade.CreateImage(image.ImageName, image.ImageTag);
             }
 
-            await DockerClientFacade.CreateContainerAsync(image.Identifier, image.ImageName, image.PortFrom, image.PortTo);
+            await DockerClientFacade.CreateContainerAsync(image.Identifier, image.ImageName, image.ImageTag, image.PortFrom, image.PortTo);
         }
 
         await DockerClientFacade.RunContainerAsync(image.Identifier);
