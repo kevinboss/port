@@ -10,7 +10,7 @@ public static class DockerClientFacade
             new ImagesCreateParameters
             {
                 FromImage = imageName,
-                Tag = imageTag,
+                Tag = imageTag
             },
             null,
             new Progress<JSONMessage>());
@@ -64,12 +64,12 @@ public static class DockerClientFacade
         return containerListResponses.SingleOrDefault(e => e.Names.Any(name => name == $"/{containerName}"));
     }
 
-    public static Task CreateContainerAsync(string imageIdentifier, string imageName, int portFrom, int portTo)
+    public static Task CreateContainerAsync(string imageIdentifier, string imageName, string tag, int portFrom, int portTo)
     {
         return Services.DockerClient.Value.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Name = imageIdentifier,
-            Image = imageName,
+            Image = $"{imageName}:{tag}",
             HostConfig = new HostConfig()
             {
                 PortBindings = new Dictionary<string, IList<PortBinding>>
