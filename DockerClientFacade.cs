@@ -16,14 +16,17 @@ public static class DockerClientFacade
             new Progress<JSONMessage>());
     }
 
-    public static Task<IList<ImagesListResponse>> GetImagesAndChildrenAsync(IEnumerable<string> imageNames)
+    public static Task<IList<ImagesListResponse>> GetImagesAndChildrenAsync(string imageName)
     {
        return Services.DockerClient.Value.Images.ListImagesAsync(new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>
             {
                 {
-                    "reference", imageNames.ToDictionary(s => s, _ => true)
+                    "reference", new Dictionary<string, bool>
+                    {
+                        { imageName, true }
+                    }
                 }
             }
         });

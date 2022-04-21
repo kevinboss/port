@@ -13,15 +13,15 @@ public class ListCommand : AsyncCommand<ListSettings>
         return 0;
     }
 
-    private async Task LoadImages(string? imageIdentifier)
+    private static async Task LoadImages(string? imageIdentifier)
     {
-        var images = Services.Config.Value.Images
-            .Where(e => e.ImageName != null);
+        var images = Services.Config.Value.Images;
+
         var imageNames = new List<string>();
         if (imageIdentifier != null)
         {
-            var image = images.SingleOrDefault(e => e.Identifier != imageIdentifier);
-            Add(image, imageNames);
+            var image = Services.Config.Value.GetImageByIdentifier(imageIdentifier);
+            if (image != null) Add(image, imageNames);
         }
         else
         {
@@ -30,14 +30,31 @@ public class ListCommand : AsyncCommand<ListSettings>
                 Add(image, imageNames);
             }
         }
-
-        var imagesListResponses = await DockerClientFacade.GetImagesAndChildrenAsync(imageNames);
         foreach (var imageName in imageNames)
         {
+            var image = Services.Config.Value.GetImageByImageName(imageName);
+            if (image?.Identifier == null)
+            {
+                continue;
+            }
+            var root = new Tree(image.Identifier);
+            var imagesListResponses = await DockerClientFacade.GetImagesAndChildrenAsync(imageName);
+            if (imagesListResponses.Any())
+            {
+                foreach (var imagesListResponse in imagesListResponses)
+                {
+                    root.AddNode($"[yellow]{string.Join(", ", imagesListResponse.Labels.Keys)}[/]");
+                }
+            }
+            else
+            {
+                root.AddNode("[grey]No children found[/]");
+            }
+            AnsiConsole.Write(root);
         }
     }
 
-    private static void Add(Image? image, List<string> imageNames)
+    private static void Add(Image image, ICollection<string> imageNames)
     {
         if (image?.ImageName == null)
         {
