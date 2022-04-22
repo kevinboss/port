@@ -6,71 +6,87 @@ namespace dcma.Commands;
 
 public class RunCommand : AsyncCommand<RunSettings>
 {
+    private readonly IPromptHelper _promptHelper;
+    private readonly IAllImagesQuery _allImagesQuery;
+
+    public RunCommand(IAllImagesQuery allImagesQuery, IPromptHelper promptHelper)
+    {
+        _allImagesQuery = allImagesQuery;
+        _promptHelper = promptHelper;
+    }
+
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
     {
-        settings.ImageIdentifier ??= PromptHelper.GetImageAliasFromUser();
-
-        var image = Services.Config.Value.Images.SingleOrDefault(e => e.Identifier == settings.ImageIdentifier);
-        if (image == null)
+        string? identifier;
+        string? tag;
+        if (settings.ImageIdentifier != null)
         {
-            throw new InvalidOperationException();
+            var identifierAndTag = DockerHelper.GetImageNameAndTag(settings.ImageIdentifier);
+            identifier = identifierAndTag.imageName;
+            tag = identifierAndTag.tag;
+        }
+        else
+        {
+            var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("run");
+            identifier = identifierAndTag.imageName;
+            tag = identifierAndTag.tag;
         }
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync("Terminating containers of other images", _ => TerminateOtherContainers(image));
+            .StartAsync("Terminating containers of other images", _ => TerminateOtherContainers(identifier, tag));
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching {image.Identifier}", _ => LaunchImageAsync(image));
+            .StartAsync($"Launching {identifier}", _ => LaunchImageAsync(identifier, tag));
         return 0;
     }
 
-    private static async Task TerminateOtherContainers(Image image)
+    private async Task TerminateOtherContainers(string identifier, string? tag)
     {
-        var containerNames
-            = Services.Config.Value.Images
-                .Where(e => e.Identifier != null && e.Identifier != image.Identifier)
-                .Select(e => e.Identifier)!
-                .ToList<string>();
-        await DockerClientFacade.TerminateContainers(containerNames);
+        var imageNames = new List<(string imageName, string tag)>();
+        await foreach (var imageName in GetImageNamesExceptAsync(identifier, tag))
+        {
+            imageNames.Add(imageName);
+        }
+        await DockerClientFacade.TerminateContainers(imageNames);
     }
 
-    private static async Task LaunchImageAsync(Image image)
+    private async IAsyncEnumerable<(string Name, string Tag)> GetImageNamesExceptAsync(string identifier, string? tag)
     {
-        if (image.Identifier == null)
+        await foreach (var imageGroup in _allImagesQuery.QueryAsync())
+        {
+            foreach (var image in imageGroup.Images.Where(image => image.Identifier != identifier || image.Tag != tag))
+            {
+                yield return (image.Name, image.Tag);
+            }
+        }
+    }
+
+    private static async Task LaunchImageAsync(string identifier, string? tag)
+    {
+        var imageConfig = Services.Config.Value.GetImageByIdentifier(identifier);
+        if (imageConfig?.ImageName == null)
         {
             throw new InvalidOperationException();
         }
 
-        var containerListResponse = await DockerClientFacade.GetContainerAsync(image.Identifier);
-        if (containerListResponse != null && containerListResponse.Image != image.ImageName)
-        {
-            var id = containerListResponse.ID;
-            await DockerClientFacade.RemoveContainerAsync(id);
-            containerListResponse = null;
-        }
+        tag ??= imageConfig.ImageTag;
 
+        var imageName = imageConfig.ImageName;
+        var portFrom = imageConfig.PortFrom;
+        var portTo = imageConfig.PortTo;
+        var containerListResponse = await DockerClientFacade.GetContainerAsync(imageName, tag);
         if (containerListResponse == null)
         {
-            if (image.ImageName == null)
-            {
-                throw new InvalidOperationException();
-            }
-            
-            if (image.ImageTag == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            var imagesListResponse = await DockerClientFacade.GetImageAsync(image.ImageName);
+            var imagesListResponse = await DockerClientFacade.GetImageAsync(imageName, tag);
             if (imagesListResponse == null)
             {
-                await DockerClientFacade.CreateImageAsync(image.ImageName, image.ImageTag);
+                await DockerClientFacade.CreateImageAsync(imageName, tag);
             }
 
-            await DockerClientFacade.CreateContainerAsync(image.Identifier, image.ImageName, image.ImageTag, image.PortFrom, image.PortTo);
+            await DockerClientFacade.CreateContainerAsync(identifier, imageName, tag, portFrom, portTo);
         }
 
-        await DockerClientFacade.RunContainerAsync(image.Identifier);
+        await DockerClientFacade.RunContainerAsync(identifier, tag);
     }
 }
