@@ -4,7 +4,7 @@ namespace dcma;
 
 public static class DockerClientFacade
 {
-    public static Task CreateImage(string? imageName, string? imageTag)
+    public static Task CreateImageAsync(string? imageName, string? imageTag)
     {
         return Services.DockerClient.Value.Images.CreateImageAsync(
             new ImagesCreateParameters
@@ -14,6 +14,16 @@ public static class DockerClientFacade
             },
             null,
             new Progress<JSONMessage>());
+    }
+
+    public static async Task CreateImageFromContainerAsync(ContainerListResponse containerToCommit, string? identifier)
+    {
+        await Services.DockerClient.Value.Images.CommitContainerChangesAsync(new CommitContainerChangesParameters
+        {
+            ContainerID = containerToCommit.ID,
+            RepositoryName = DockerHelper.GetImageNameAndTag(containerToCommit.Image).ImageName,
+            Tag = identifier
+        });
     }
 
     public static Task<IList<ImagesListResponse>> GetImagesAndChildrenAsync(string imageName)
@@ -67,13 +77,34 @@ public static class DockerClientFacade
         return containerListResponses.SingleOrDefault(e => e.Names.Any(name => name == $"/{containerName}"));
     }
 
+    public static async Task<ContainerListResponse?> GetRunningContainersAsync()
+    {
+        var images = Services.Config.Value.Images;
+
+        var imageNames = new List<string>();
+        foreach (var image in images)
+        {
+            if (image.ImageName == null) continue;
+            imageNames.Add(image.ImageName);
+        }
+
+        var runningContainers = await Services.DockerClient.Value.Containers.ListContainersAsync(
+            new ContainersListParameters
+            {
+                Limit = long.MaxValue
+            }).ContinueWith(task => task.Result.Where(e => e.State == "running"));
+        var candidates = runningContainers.Where(e => imageNames.Contains(DockerHelper.GetImageNameAndTag(e.Image).ImageName));
+        var containerToCommit = candidates.SingleOrDefault();
+        return containerToCommit;
+    }
+
     public static Task CreateContainerAsync(string imageIdentifier, string imageName, string tag, int portFrom, int portTo)
     {
         return Services.DockerClient.Value.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Name = imageIdentifier,
             Image = $"{imageName}:{tag}",
-            HostConfig = new HostConfig()
+            HostConfig = new HostConfig
             {
                 PortBindings = new Dictionary<string, IList<PortBinding>>
                 {
