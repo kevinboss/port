@@ -65,7 +65,7 @@ public class RunCommand : AsyncCommand<RunSettings>
             var imagesListResponse = await DockerClientFacade.GetImageAsync(image.ImageName);
             if (imagesListResponse == null)
             {
-                await DockerClientFacade.CreateImage(image.ImageName, image.ImageTag);
+                await DockerClientFacade.CreateImageAsync(image.ImageName, image.ImageTag);
             }
 
             await DockerClientFacade.CreateContainerAsync(image.Identifier, image.ImageName, image.ImageTag, image.PortFrom, image.PortTo);

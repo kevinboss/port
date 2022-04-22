@@ -30,6 +30,8 @@ public class ListCommand : AsyncCommand<ListSettings>
                 Add(image, imageNames);
             }
         }
+
+        var root = new Tree("Images");
         foreach (var imageName in imageNames)
         {
             var image = Services.Config.Value.GetImageByImageName(imageName);
@@ -37,26 +39,29 @@ public class ListCommand : AsyncCommand<ListSettings>
             {
                 continue;
             }
-            var root = new Tree(image.Identifier);
+
+            var imageNode = root.AddNode(image.Identifier);
             var imagesListResponses = await DockerClientFacade.GetImagesAndChildrenAsync(imageName);
             if (imagesListResponses.Any())
             {
                 foreach (var imagesListResponse in imagesListResponses)
                 {
-                    root.AddNode($"[yellow]{string.Join(", ", imagesListResponse.Labels.Keys)}[/]");
+                    var tags = string.Join(", ", imagesListResponse.RepoTags);
+                    imageNode.AddNode($"[yellow]{tags}[/]");
                 }
             }
             else
             {
-                root.AddNode("[grey]No children found[/]");
+                imageNode.AddNode("[grey]No children found[/]");
             }
-            AnsiConsole.Write(root);
         }
+
+        AnsiConsole.Write(root);
     }
 
     private static void Add(Image image, ICollection<string> imageNames)
     {
-        if (image?.ImageName == null)
+        if (image.ImageName == null)
         {
             throw new InvalidOperationException();
         }

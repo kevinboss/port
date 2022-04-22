@@ -8,6 +8,7 @@ app.Configure(appConfig =>
 {
     appConfig.AddCommand<RunCommand>("run");
     appConfig.AddCommand<ListCommand>("list");
+    appConfig.AddCommand<CommitCommand>("commit");
 });
 
 return app.Run(args);
