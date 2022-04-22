@@ -4,6 +4,6 @@ namespace dcma.Commands;
 
 public class CommitSettings : CommandSettings
 {
-    [CommandOption("-i|--identifier")]
-    public string? Identifier { get; set; }
+    [CommandOption("-t|--tag")]
+    public string? Tag { get; set; }
 }

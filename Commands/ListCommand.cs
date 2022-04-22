@@ -5,6 +5,13 @@ namespace dcma.Commands;
 
 public class ListCommand : AsyncCommand<ListSettings>
 {
+    private readonly IAllImagesQuery _allImagesQuery;
+
+    public ListCommand(IAllImagesQuery allImagesQuery)
+    {
+        _allImagesQuery = allImagesQuery;
+    }
+
     public override async Task<int> ExecuteAsync(CommandContext context, ListSettings settings)
     {
         await AnsiConsole.Status()
@@ -13,59 +20,23 @@ public class ListCommand : AsyncCommand<ListSettings>
         return 0;
     }
 
-    private static async Task LoadImages(string? imageIdentifier)
+    private async Task LoadImages(string? imageIdentifier)
     {
-        var images = Services.Config.Value.Images;
-
-        var imageNames = new List<string>();
-        if (imageIdentifier != null)
-        {
-            var image = Services.Config.Value.GetImageByIdentifier(imageIdentifier);
-            if (image != null) Add(image, imageNames);
-        }
-        else
-        {
-            foreach (var image in images)
-            {
-                Add(image, imageNames);
-            }
-        }
-
+        var imageGroups = _allImagesQuery.QueryAsync();
         var root = new Tree("Images");
-        foreach (var imageName in imageNames)
+        await foreach (var imageGroup in imageGroups)
         {
-            var image = Services.Config.Value.GetImageByImageName(imageName);
-            if (image?.Identifier == null)
-            {
-                continue;
-            }
+            if (imageGroup.Identifier == null) continue;
 
-            var imageNode = root.AddNode(image.Identifier);
-            var imagesListResponses = await DockerClientFacade.GetImagesAndChildrenAsync(imageName);
-            if (imagesListResponses.Any())
+            var imageNode = root.AddNode($"[green]{imageGroup.Identifier} Tags[/]");
+
+            foreach (var image in imageGroup.Images)
             {
-                foreach (var imagesListResponse in imagesListResponses)
-                {
-                    var tags = string.Join(", ", imagesListResponse.RepoTags);
-                    imageNode.AddNode($"[yellow]{tags}[/]");
-                }
-            }
-            else
-            {
-                imageNode.AddNode("[grey]No children found[/]");
+                var imageTypeText = image.IsSnapshot ? "Snapshot" : "Base";
+                imageNode.AddNode($"[yellow]{image.Tag} ({imageTypeText})[/]");
             }
         }
 
         AnsiConsole.Write(root);
-    }
-
-    private static void Add(Image image, ICollection<string> imageNames)
-    {
-        if (image.ImageName == null)
-        {
-            throw new InvalidOperationException();
-        }
-
-        imageNames.Add(image.ImageName);
     }
 }
