@@ -2,5 +2,5 @@ namespace dcma;
 
 public interface IPromptHelper
 {
-    Task<(string imageName, string? tag)> GetIdentifierFromUserAsync(string command);
+    Task<(string identifier, string? tag)> GetIdentifierFromUserAsync(string command);
 }

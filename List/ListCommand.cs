@@ -1,7 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace dcma.Commands;
+namespace dcma.List;
 
 public class ListCommand : AsyncCommand<ListSettings>
 {
@@ -28,12 +28,12 @@ public class ListCommand : AsyncCommand<ListSettings>
         {
             if (imageGroup.Identifier == null) continue;
 
-            var imageNode = root.AddNode($"[green]{imageGroup.Identifier} Tags[/]");
+            var imageNode = root.AddNode($"[yellow]{imageGroup.Identifier} Tags[/]");
 
             foreach (var image in imageGroup.Images)
             {
                 var imageTypeText = image.IsSnapshot ? "Snapshot" : "Base";
-                imageNode.AddNode($"[yellow]{image.Tag} ({imageTypeText})[/]");
+                imageNode.AddNode($"[blue]{image.Tag} ({imageTypeText})[/]");
             }
         }
 

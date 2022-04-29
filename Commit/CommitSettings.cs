@@ -1,6 +1,6 @@
 using Spectre.Console.Cli;
 
-namespace dcma.Commands;
+namespace dcma.Commit;
 
 public class CommitSettings : CommandSettings
 {
