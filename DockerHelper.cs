@@ -9,7 +9,21 @@ public static class DockerHelper
         {
             throw new InvalidOperationException();
         }
+
         return (imageName[..idx], imageName[(idx + 1)..]);
+    }
+
+    public static bool TryGetImageNameAndTag(string imageName, out (string imageName, string tag) nameAndTag)
+    {
+        nameAndTag = (string.Empty, string.Empty);
+        var idx = imageName.LastIndexOf(':');
+        if (idx == -1)
+        {
+            return false;
+        }
+
+        nameAndTag = (imageName[..idx], imageName[(idx + 1)..]);
+        return true;
     }
 
     public static string JoinImageNameAndTag(string imageName, string? tag)
