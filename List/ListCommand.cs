@@ -30,7 +30,7 @@ public class ListCommand : AsyncCommand<ListSettings>
 
             var imageNode = root.AddNode($"[yellow]{imageGroup.Identifier} Tags[/]");
 
-            foreach (var image in imageGroup.Images)
+            foreach (var image in imageGroup.Images.OrderBy(e => e.IsSnapshot))
             {
                 var imageTypeText = image.IsSnapshot ? "Snapshot" : "Base";
                 imageNode.AddNode($"[blue]{image.Tag} ({imageTypeText})[/]");
