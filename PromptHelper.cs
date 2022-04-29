@@ -11,35 +11,34 @@ public class PromptHelper : IPromptHelper
         _allImagesQuery = allImagesQuery;
     }
 
-    public async Task<(string imageName, string? tag)> GetIdentifierFromUserAsync(string command)
+    public async Task<(string identifier, string? tag)> GetIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = new SelectionPrompt<string>()
             .PageSize(10)
             .Title($"Select image you wish to [green]{command}[/]")
             .MoreChoicesText("[grey](Move up and down to reveal more images)[/]");
+
+        var options = new Dictionary<string, Image>();
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
             if (imageGroup.Identifier == null)
             {
                 continue;
             }
-
-            foreach (var image in imageGroup.Images)
+            
+            
+            var groupOptions = new List<string>();
+            foreach (var image in imageGroup.Images.OrderBy(e => e.IsSnapshot))
             {
-                if (image.Identifier == null)
-                {
-                    throw new InvalidOperationException();
-                }
-
-                if (image.Tag == null)
-                {
-                    throw new InvalidOperationException();
-                }
-
-                selectionPrompt.AddChoice(DockerHelper.JoinImageNameAndTag(image.Identifier, image.Tag));
+                var imageTypeText = image.IsSnapshot ? "Snapshot" : "Base";
+                var choiceIdentifier = $"{image.Tag} ({imageTypeText})";
+                groupOptions.Add(choiceIdentifier);
+                options.Add(choiceIdentifier, image);
             }
+            selectionPrompt.AddChoiceGroup(imageGroup.Identifier, groupOptions);
         }
 
-        return DockerHelper.GetImageNameAndTag(AnsiConsole.Prompt(selectionPrompt));
+        var selectedImage = options[AnsiConsole.Prompt(selectionPrompt)];
+        return (selectedImage.Identifier, selectedImage.Tag);
     }
 }
