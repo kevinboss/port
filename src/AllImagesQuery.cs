@@ -1,25 +1,23 @@
+using Docker.DotNet;
 using Docker.DotNet.Models;
 
 namespace dcma;
 
 internal class AllImagesQuery : IAllImagesQuery
 {
+    private readonly IDockerClient _dockerClient;
+
+    public AllImagesQuery(IDockerClient dockerClient)
+    {
+        _dockerClient = dockerClient;
+    }
+
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
     {
         var images = Services.Config.Value.Images;
         foreach (var imageConfig in images)
         {
-            if (imageConfig.Identifier == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if (imageConfig.ImageName == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            var imagesListResponses = await Services.DockerClient.Value.Images.ListImagesAsync(new ImagesListParameters
+            var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
             {
                 Filters = new Dictionary<string, IDictionary<string, bool>>
                 {

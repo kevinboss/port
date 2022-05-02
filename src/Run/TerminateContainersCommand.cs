@@ -1,12 +1,20 @@
+using Docker.DotNet;
 using Docker.DotNet.Models;
 
 namespace dcma.Run;
 
 internal class TerminateContainersCommand : ITerminateContainersCommand
 {
+    private readonly IDockerClient _dockerClient;
+
+    public TerminateContainersCommand(IDockerClient dockerClient)
+    {
+        _dockerClient = dockerClient;
+    }
+
     public async Task ExecuteAsync(IEnumerable<(string imageName, string tag)> imageNames)
     {
-        var containers = await Services.DockerClient.Value.Containers
+        var containers = await _dockerClient.Containers
             .ListContainersAsync(new ContainersListParameters
             {
                 Limit = long.MaxValue
@@ -18,7 +26,7 @@ internal class TerminateContainersCommand : ITerminateContainersCommand
                                      imageNameAndTag.imageName == nameAndTag.imageName &&
                                      imageNameAndTag.tag == nameAndTag.tag)))
         {
-            await Services.DockerClient.Value.Containers.StopContainerAsync(containerListResponse.ID,
+            await _dockerClient.Containers.StopContainerAsync(containerListResponse.ID,
                 new ContainerStopParameters());
         }
     }

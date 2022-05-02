@@ -35,7 +35,7 @@ public class PromptHelper : IPromptHelper
                 groupOptions.Add(choiceIdentifier);
                 options.Add(choiceIdentifier, image);
             }
-            selectionPrompt.AddChoiceGroup(imageGroup.Identifier, groupOptions);
+            selectionPrompt.AddChoiceGroup($"{imageGroup.Identifier} Tags", groupOptions);
         }
 
         var selectedImage = options[AnsiConsole.Prompt(selectionPrompt)];

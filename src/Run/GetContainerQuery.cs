@@ -1,12 +1,20 @@
+using Docker.DotNet;
 using Docker.DotNet.Models;
 
 namespace dcma.Run;
 
 internal class GetContainerQuery : IGetContainerQuery
 {
+    private readonly IDockerClient _dockerClient;
+
+    public GetContainerQuery(IDockerClient dockerClient)
+    {
+        _dockerClient = dockerClient;
+    }
+
     public async Task<ContainerListResponse?> QueryAsync(string imageName, string tag)
     {
-        var containers = await Services.DockerClient.Value.Containers.ListContainersAsync(
+        var containers = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
             {
                 Limit = long.MaxValue

@@ -2,6 +2,7 @@
 using dcma.Commit;
 using dcma.List;
 using dcma.Run;
+using Docker.DotNet;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 
@@ -16,6 +17,17 @@ registrations.AddSingleton<IGetRunningContainersQuery, GetRunningContainersQuery
 registrations.AddSingleton<ICreateContainerCommand, CreateContainerCommand>();
 registrations.AddSingleton<IRunContainerCommand, RunContainerCommand>();
 registrations.AddSingleton<ITerminateContainersCommand, TerminateContainersCommand>();
+registrations.AddSingleton(typeof(IDockerClient), provider =>
+{
+    if (Services.Config.Value.DockerEndpoint == null)
+    {
+        throw new InvalidOperationException("Docker endpoint has not been configured");
+    }
+
+    var endpoint = new Uri(Services.Config.Value.DockerEndpoint);
+    return new DockerClientConfiguration(endpoint)
+        .CreateClient();
+});
 
 var registrar = new dcma.Infrastructure.TypeRegistrar(registrations);
 
