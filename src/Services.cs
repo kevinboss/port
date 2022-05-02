@@ -1,4 +1,3 @@
-using Docker.DotNet;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -8,43 +7,11 @@ public static class Services
 {
     private const string ConfigFileName = ".dcma";
 
-    public static readonly Lazy<DockerClient> DockerClient = new(CreateDockerClient);
     public static readonly Lazy<Config> Config = new(GetOrCreateConfig);
-
-    private static DockerClient CreateDockerClient()
-    {
-        if (Config.Value.DockerEndpoint == null)
-        {
-            throw new InvalidOperationException();
-        }
-
-        var endpoint = new Uri(Config.Value.DockerEndpoint);
-        return new DockerClientConfiguration(endpoint)
-            .CreateClient();
-    }
 
     private static Config GetOrCreateConfig()
     {
-        var userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var configFilePath = Path.Combine(userProfilePath, ConfigFileName);
-
-        void PersistConfig(Config config, string path)
-        {
-            var serializer = new SerializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
-            var yaml = serializer.Serialize(config);
-            File.WriteAllText(path, yaml);
-        }
-
-        Config LoadConfig(string path)
-        {
-            var yaml = File.ReadAllText(path);
-            var serializer = new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build();
-            return serializer.Deserialize<Config>(yaml);
-        }
+        var configFilePath = GetConfigFilePath();
 
         if (File.Exists(ConfigFileName))
         {
@@ -52,7 +19,32 @@ public static class Services
         }
 
         var config = dcma.Config.CreateDefault();
-        //PersistConfig(config, configFilePath);
+        PersistConfig(config, configFilePath);
         return config;
+    }
+
+    private static string GetConfigFilePath()
+    {
+        var userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var configFilePath = Path.Combine(userProfilePath, ConfigFileName);
+        return configFilePath;
+    }
+
+    private static Config LoadConfig(string path)
+    {
+        var yaml = File.ReadAllText(path);
+        var serializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+        return serializer.Deserialize<Config>(yaml);
+    }
+
+    private static void PersistConfig(Config config, string path)
+    {
+        var serializer = new SerializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+        var yaml = serializer.Serialize(config);
+        File.WriteAllText(path, yaml);
     }
 }

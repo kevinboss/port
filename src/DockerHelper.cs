@@ -7,7 +7,7 @@ public static class DockerHelper
         var idx = imageName.LastIndexOf(':');
         if (idx == -1)
         {
-            throw new InvalidOperationException();
+            throw new ArgumentException("Does not contain tag separator ':'", nameof(imageName));
         }
 
         return (imageName[..idx], imageName[(idx + 1)..]);
