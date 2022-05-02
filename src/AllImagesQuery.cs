@@ -1,3 +1,4 @@
+using dcma.Config;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -6,15 +7,17 @@ namespace dcma;
 internal class AllImagesQuery : IAllImagesQuery
 {
     private readonly IDockerClient _dockerClient;
+    private readonly IConfig _config;
 
-    public AllImagesQuery(IDockerClient dockerClient)
+    public AllImagesQuery(IDockerClient dockerClient, IConfig config)
     {
         _dockerClient = dockerClient;
+        _config = config;
     }
 
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
     {
-        var images = Services.Config.Value.Images;
+        var images = _config.Images;
         foreach (var imageConfig in images)
         {
             var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
