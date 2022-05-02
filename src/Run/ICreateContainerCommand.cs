@@ -2,5 +2,5 @@ namespace dcma.Run;
 
 public interface ICreateContainerCommand
 {
-    Task ExecuteAsync(string identifier, string imageName, string tag, int portFrom, int portTo);
+    Task ExecuteAsync(string identifier, string imageName, string tag, List<string> ports);
 }

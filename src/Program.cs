@@ -1,5 +1,6 @@
 ﻿using dcma;
 using dcma.Commit;
+using dcma.Config;
 using dcma.List;
 using dcma.Run;
 using Docker.DotNet;
@@ -17,14 +18,16 @@ registrations.AddSingleton<IGetRunningContainersQuery, GetRunningContainersQuery
 registrations.AddSingleton<ICreateContainerCommand, CreateContainerCommand>();
 registrations.AddSingleton<IRunContainerCommand, RunContainerCommand>();
 registrations.AddSingleton<ITerminateContainersCommand, TerminateContainersCommand>();
+registrations.AddSingleton(typeof(IConfig), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
 {
-    if (Services.Config.Value.DockerEndpoint == null)
+    var config = provider.GetService<IConfig>();
+    if (config?.DockerEndpoint == null)
     {
         throw new InvalidOperationException("Docker endpoint has not been configured");
     }
 
-    var endpoint = new Uri(Services.Config.Value.DockerEndpoint);
+    var endpoint = new Uri(config.DockerEndpoint);
     return new DockerClientConfiguration(endpoint)
         .CreateClient();
 });
