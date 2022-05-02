@@ -1,3 +1,4 @@
+using dcma.Config;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -13,11 +14,12 @@ public class RunCommand : AsyncCommand<RunSettings>
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
     private readonly ITerminateContainersCommand _terminateContainersCommand;
+    private readonly IConfig _config;
 
     public RunCommand(IAllImagesQuery allImagesQuery, IPromptHelper promptHelper,
         ICreateImageCommand createImageCommand, IGetImageQuery getImageQuery, IGetContainerQuery getContainerQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
-        ITerminateContainersCommand terminateContainersCommand)
+        ITerminateContainersCommand terminateContainersCommand, IConfig config)
     {
         _allImagesQuery = allImagesQuery;
         _promptHelper = promptHelper;
@@ -27,6 +29,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
         _terminateContainersCommand = terminateContainersCommand;
+        _config = config;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
@@ -85,7 +88,7 @@ public class RunCommand : AsyncCommand<RunSettings>
 
     private async Task LaunchImageAsync(string identifier, string? tag)
     {
-        var imageConfig = Services.Config.Value.GetImageByIdentifier(identifier);
+        var imageConfig = _config.GetImageByIdentifier(identifier);
         if (imageConfig == null)
         {
             throw new ArgumentException($"There is no config defined for identifier '{identifier}'", nameof(identifier));
@@ -94,8 +97,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         tag ??= imageConfig.ImageTag;
 
         var imageName = imageConfig.ImageName;
-        var portFrom = imageConfig.PortFrom;
-        var portTo = imageConfig.PortTo;
+        var ports = imageConfig.Ports;
         var containerListResponse = await _getContainerQuery.QueryAsync(imageName, tag);
         if (containerListResponse == null)
         {
@@ -105,7 +107,7 @@ public class RunCommand : AsyncCommand<RunSettings>
                 await _createImageCommand.ExecuteAsync(imageName, tag);
             }
 
-            await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, portFrom, portTo);
+            await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
         }
 
         await _runContainerCommand.ExecuteAsync(identifier, tag);
