@@ -88,7 +88,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         var imageConfig = Services.Config.Value.GetImageByIdentifier(identifier);
         if (imageConfig == null)
         {
-            throw new InvalidOperationException();
+            throw new ArgumentException($"There is no config defined for identifier '{identifier}'", nameof(identifier));
         }
 
         tag ??= imageConfig.ImageTag;

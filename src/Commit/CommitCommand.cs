@@ -21,7 +21,7 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
 
         if (containerToCommit == null)
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("No running container found");
         }
 
         await _createImageFromContainerCommand.ExecuteAsync(containerToCommit, settings.Tag);
