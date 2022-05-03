@@ -2,6 +2,7 @@
 using dcma.Commit;
 using dcma.Config;
 using dcma.List;
+using dcma.Remove;
 using dcma.Run;
 using Docker.DotNet;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,8 @@ registrations.AddSingleton<IGetRunningContainersQuery, GetRunningContainersQuery
 registrations.AddSingleton<ICreateContainerCommand, CreateContainerCommand>();
 registrations.AddSingleton<IRunContainerCommand, RunContainerCommand>();
 registrations.AddSingleton<ITerminateContainersCommand, TerminateContainersCommand>();
+registrations.AddSingleton<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
+registrations.AddSingleton<IRemoveImageCommand, RemoveImageCommand>();
 registrations.AddSingleton(typeof(IConfig), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
 {
@@ -41,6 +44,7 @@ app.Configure(appConfig =>
     appConfig.AddCommand<RunCommand>("run");
     appConfig.AddCommand<ListCommand>("list");
     appConfig.AddCommand<CommitCommand>("commit");
+    appConfig.AddCommand<RemoveCommand>("remove");
 });
 
 return app.Run(args);

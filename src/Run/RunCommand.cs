@@ -40,11 +40,12 @@ public class RunCommand : AsyncCommand<RunSettings>
             .StartAsync("Terminating containers of other images", _ => TerminateOtherContainers(identifier, tag));
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching {identifier}", _ => LaunchImageAsync(identifier, tag));
+            .StartAsync($"Launching {DockerHelper.JoinImageNameAndTag(identifier, tag)}",
+                _ => LaunchImageAsync(identifier, tag));
         return 0;
     }
 
-    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(RunSettings settings)
+    private async Task<(string identifier, string tag)> GetIdentifierAndTagAsync(RunSettings settings)
     {
         string? identifier;
         string? tag;
@@ -64,7 +65,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         return (identifier, tag);
     }
 
-    private async Task TerminateOtherContainers(string identifier, string? tag)
+    private async Task TerminateOtherContainers(string identifier, string tag)
     {
         var imageNames = new List<(string imageName, string tag)>();
         await foreach (var imageName in GetImageNamesExceptAsync(identifier, tag))
@@ -86,15 +87,14 @@ public class RunCommand : AsyncCommand<RunSettings>
         }
     }
 
-    private async Task LaunchImageAsync(string identifier, string? tag)
+    private async Task LaunchImageAsync(string identifier, string tag)
     {
-        var imageConfig = _config.GetImageByIdentifier(identifier);
+        var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
         {
-            throw new ArgumentException($"There is no config defined for identifier '{identifier}'", nameof(identifier));
+            throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
+                nameof(identifier));
         }
-
-        tag ??= imageConfig.ImageTag;
 
         var imageName = imageConfig.ImageName;
         var ports = imageConfig.Ports;

@@ -13,7 +13,7 @@ public class Config10 : IConfig
         return Images.SingleOrDefault(e => e.ImageName == imageName);
     }
 
-    public ImageConfig? GetImageByIdentifier(string identifier)
+    public ImageConfig? GetImageConfigByIdentifier(string identifier)
     {
         return Images.SingleOrDefault(e => e.Identifier == identifier);
     }
