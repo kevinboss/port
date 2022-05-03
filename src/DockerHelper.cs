@@ -26,8 +26,8 @@ public static class DockerHelper
         return true;
     }
 
-    public static string JoinImageNameAndTag(string imageName, string? tag)
+    public static string JoinImageNameAndTag(string imageName, string tag)
     {
-        return tag == null ? imageName : $"{imageName}:{tag}";
+        return $"{imageName}:{tag}";
     }
 }

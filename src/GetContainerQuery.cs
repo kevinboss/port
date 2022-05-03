@@ -1,7 +1,7 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace dcma.Run;
+namespace dcma;
 
 internal class GetContainerQuery : IGetContainerQuery
 {
