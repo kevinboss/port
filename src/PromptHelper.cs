@@ -11,7 +11,7 @@ public class PromptHelper : IPromptHelper
         _allImagesQuery = allImagesQuery;
     }
 
-    public async Task<(string identifier, string? tag)> GetIdentifierFromUserAsync(string command)
+    public async Task<(string identifier, string tag)> GetIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = new SelectionPrompt<string>()
             .PageSize(10)
