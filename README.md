@@ -1,5 +1,7 @@
 # dcma (DoCker ManAger)
 
+[![CI](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml)
+
 ## Why?
 
 Docker is used deploy various releases of a database to the development machines. Developers can access the different releases by loading different image tags.
@@ -32,5 +34,3 @@ identifier is optional, if not provided all images will be listed. If provided a
 ### remove \[identifier\]
 
 identifier is optional, if not provided the user will be asked to select an image.
-
-[![CI](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml)
