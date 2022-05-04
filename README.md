@@ -23,7 +23,7 @@ identifier is optional, if not provided the user will be asked to select an imag
 
 ### list \[identifier\]
 
-identifier is optional, if not provided the user will be asked to select an image.
+identifier is optional, if not provided all images will be listed. If provided all images belonging to the same identifier will be listed.
 
 ### commit -t(ag)
 
