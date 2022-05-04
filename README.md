@@ -14,7 +14,7 @@
 
 ## Why?
 
-Docker is used deploy various releases of a database to the development machines. Developers can access the different releases by loading different image tags.
+I have a scenario where Docker is used deploy various releases of a database to the development machines. Developers can access the different releases by loading different image tags.
 In addition there is a need to update those images (new versions get created daily) as well as creating snapshots of the current state of the database.
 It is also nice to be able to clean up not needed images to regain disk-space.
 
