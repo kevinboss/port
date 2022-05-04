@@ -2,7 +2,15 @@
 
 [![CI](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml)
 
-[Latest release 💾](https://github.com/kevinboss/dcma/releases/latest)
+## How to get it?
+
+[Manual download latest release 💾](https://github.com/kevinboss/dcma/releases/latest)
+
+*Install using scoop*
+
+`scoop bucket add maple 'https://github.com/kevinboss/maple.git'`
+
+`scoop install dcma`
 
 ## Why?
 
