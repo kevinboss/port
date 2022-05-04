@@ -17,6 +17,20 @@ Afterwards the user can run the images (this also shuts down any other running c
 
 ## Commands
 
-!TODO
+### run \[identifier\]
+
+identifier is optional, if not provided the user will be asked to select an image.
+
+### list \[identifier\]
+
+identifier is optional, if not provided the user will be asked to select an image.
+
+### commit -t(ag)
+
+-t(ag) is optional, if not provied current date-time will be used as the tag.
+
+### remove \[identifier\]
+
+identifier is optional, if not provided the user will be asked to select an image.
 
 [![CI](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml)
