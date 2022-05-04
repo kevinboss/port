@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/dcma/actions/workflows/ci.yaml)
 
+[Latest release 💾](https://github.com/kevinboss/dcma/releases/latest)
+
 ## Why?
 
 Docker is used deploy various releases of a database to the development machines. Developers can access the different releases by loading different image tags.
