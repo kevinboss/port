@@ -18,7 +18,6 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
         settings.Tag ??= $"{DateTime.Now:yyyyMMddhhmmss}";
 
         var containerToCommit = await _getRunningContainersQuery.QueryAsync();
-
         if (containerToCommit == null)
         {
             throw new InvalidOperationException("No running container found");

@@ -12,11 +12,14 @@ internal class CreateImageFromContainerCommand : ICreateImageFromContainerComman
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(ContainerListResponse containerToCommit, string? tag) =>
-        _dockerClient.Images.CommitContainerChangesAsync(new CommitContainerChangesParameters
+    public Task ExecuteAsync(ContainerListResponse containerToCommit, string? tag)
+    {
+        var imageNameAndTag = DockerHelper.GetImageNameAndTag(containerToCommit.Image);
+        return _dockerClient.Images.CommitContainerChangesAsync(new CommitContainerChangesParameters
         {
             ContainerID = containerToCommit.ID,
-            RepositoryName = DockerHelper.GetImageNameAndTag(containerToCommit.Image).imageName,
-            Tag = tag
+            RepositoryName = imageNameAndTag.imageName,
+            Tag = $"{imageNameAndTag.tag}.{tag}"
         });
+    }
 }
