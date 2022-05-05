@@ -36,8 +36,10 @@ internal class AllImagesQuery : IAllImagesQuery
             {
                 Identifier = imageConfig.Identifier,
                 Images = imagesListResponses
-                    .Where(e => !e.RepoTags.Contains(DockerHelper
-                        .JoinImageNameAndTag(imageConfig.ImageName, imageConfig.ImageTag)))
+                    .Where(e => !images.Any(imageConfig1 => e.RepoTags.Contains(DockerHelper
+                        .JoinImageNameAndTag(imageConfig1.ImageName, imageConfig1.ImageTag))))
+                    .Where(e => e.RepoTags.Any(repoTag => repoTag.StartsWith(DockerHelper
+                        .JoinImageNameAndTag(imageConfig.ImageName, imageConfig.ImageTag))))
                     .Select(e =>
                     {
                         var (imageName, tag) = DockerHelper.GetImageNameAndTag(e.RepoTags.First());
