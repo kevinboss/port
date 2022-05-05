@@ -15,11 +15,12 @@ public class RunCommand : AsyncCommand<RunSettings>
     private readonly IRunContainerCommand _runContainerCommand;
     private readonly ITerminateContainersCommand _terminateContainersCommand;
     private readonly IConfig _config;
+    private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
     public RunCommand(IAllImagesQuery allImagesQuery, IPromptHelper promptHelper,
         ICreateImageCommand createImageCommand, IGetImageQuery getImageQuery, IGetContainerQuery getContainerQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
-        ITerminateContainersCommand terminateContainersCommand, IConfig config)
+        ITerminateContainersCommand terminateContainersCommand, IConfig config, IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
         _allImagesQuery = allImagesQuery;
         _promptHelper = promptHelper;
@@ -30,6 +31,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         _runContainerCommand = runContainerCommand;
         _terminateContainersCommand = terminateContainersCommand;
         _config = config;
+        _identifierAndTagEvaluator = identifierAndTagEvaluator;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
@@ -45,27 +47,18 @@ public class RunCommand : AsyncCommand<RunSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string tag)> GetIdentifierAndTagAsync(RunSettings settings)
+    private async Task<(string identifier, string tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
     {
-        string? identifier;
-        string? tag;
         if (settings.ImageIdentifier != null)
         {
-            var identifierAndTag = DockerHelper.GetImageNameAndTag(settings.ImageIdentifier);
-            identifier = identifierAndTag.imageName;
-            tag = identifierAndTag.tag;
-        }
-        else
-        {
-            var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("run");
-            identifier = identifierAndTag.identifier;
-            tag = identifierAndTag.tag;
+            return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        return (identifier, tag);
+        var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("run");
+        return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private async Task TerminateOtherContainers(string identifier, string tag)
+    private async Task TerminateOtherContainers(string identifier, string? tag)
     {
         var imageNames = new List<(string imageName, string tag)>();
         await foreach (var imageName in GetImageNamesExceptAsync(identifier, tag))
@@ -87,7 +80,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         }
     }
 
-    private async Task LaunchImageAsync(string identifier, string tag)
+    private async Task LaunchImageAsync(string identifier, string? tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)

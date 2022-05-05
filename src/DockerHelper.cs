@@ -15,7 +15,7 @@ public static class DockerHelper
 
     public static bool TryGetImageNameAndTag(string imageName, out (string imageName, string tag) nameAndTag)
     {
-        nameAndTag = (string.Empty, string.Empty);
+        nameAndTag = (imageName, string.Empty);
         var idx = imageName.LastIndexOf(':');
         if (idx == -1)
         {

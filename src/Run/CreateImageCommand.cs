@@ -12,7 +12,7 @@ internal class CreateImageCommand : ICreateImageCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string? imageName, string imageTag)
+    public Task ExecuteAsync(string? imageName, string? imageTag)
     {
         return _dockerClient.Images.CreateImageAsync(
             new ImagesCreateParameters
