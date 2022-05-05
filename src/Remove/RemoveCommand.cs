@@ -49,12 +49,6 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
     private async Task RemoveImageAsync(string identifier, string? tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
-        if (imageConfig == null)
-        {
-            throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
-                nameof(identifier));
-        }
-
         var imageName = imageConfig.ImageName;
         var containerListResponse = await _getContainerQuery.QueryAsync(imageName, tag);
         if (containerListResponse != null)
