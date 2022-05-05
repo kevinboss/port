@@ -11,15 +11,18 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
     private readonly IConfig _config;
+    private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
     public RemoveCommand(IPromptHelper promptHelper, IGetContainerQuery getContainerQuery, IConfig config,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand)
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
+        IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
         _promptHelper = promptHelper;
         _getContainerQuery = getContainerQuery;
         _config = config;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _removeImageCommand = removeImageCommand;
+        _identifierAndTagEvaluator = identifierAndTagEvaluator;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
@@ -32,27 +35,18 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string tag)> GetIdentifierAndTagAsync(RemoveSettings settings)
+    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
     {
-        string? identifier;
-        string? tag;
         if (settings.ImageIdentifier != null)
         {
-            var identifierAndTag = DockerHelper.GetImageNameAndTag(settings.ImageIdentifier);
-            identifier = identifierAndTag.imageName;
-            tag = identifierAndTag.tag;
-        }
-        else
-        {
-            var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("remove");
-            identifier = identifierAndTag.identifier;
-            tag = identifierAndTag.tag;
+            return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        return (identifier, tag);
+        var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("remove");
+        return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private async Task RemoveImageAsync(string identifier, string tag)
+    private async Task RemoveImageAsync(string identifier, string? tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)

@@ -12,14 +12,9 @@ public static class ConfigFactory
 
     public static IConfig GetOrCreateConfig()
     {
-        if (Debugger.IsAttached)
-        {
-            return CreateDefault();
-        }
-        
         var configFilePath = GetConfigFilePath();
 
-        if (File.Exists(ConfigFileName))
+        if (File.Exists(configFilePath))
         {
             return LoadConfig(configFilePath);
         }
@@ -61,17 +56,7 @@ public static class ConfigFactory
                 {
                     "80:80"
                 }
-            },
-            new()
-            {
-                Identifier = "NgInx",
-                ImageName = "nginx",
-                ImageTag = "alpine",
-                Ports = new List<string>
-                {
-                    "80:80"
-                }
-            },
+            }
         }
     };
 

@@ -12,7 +12,7 @@ internal class GetContainerQuery : IGetContainerQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<ContainerListResponse?> QueryAsync(string imageName, string tag)
+    public async Task<ContainerListResponse?> QueryAsync(string imageName, string? tag)
     {
         var containers = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
