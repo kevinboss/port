@@ -12,7 +12,7 @@ internal class GetImageQuery : IGetImageQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<ImagesListResponse?> QueryAsync(string imageName, string? tag)
+    public async Task<ImagesListResponse?> QueryAsync(string imageName, string tag)
     {
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
         {

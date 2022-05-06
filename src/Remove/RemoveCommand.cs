@@ -10,10 +10,10 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
     private readonly IGetContainerQuery _getContainerQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
-    private readonly IConfig _config;
+    private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
-    public RemoveCommand(IPromptHelper promptHelper, IGetContainerQuery getContainerQuery, IConfig config,
+    public RemoveCommand(IPromptHelper promptHelper, IGetContainerQuery getContainerQuery, Config.Config config,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
@@ -35,7 +35,7 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
+    private async Task<(string identifier, string tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
     {
         if (settings.ImageIdentifier != null)
         {
@@ -46,7 +46,7 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private async Task RemoveImageAsync(string identifier, string? tag)
+    private async Task RemoveImageAsync(string identifier, string tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;

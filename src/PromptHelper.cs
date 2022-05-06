@@ -11,7 +11,7 @@ public class PromptHelper : IPromptHelper
         _allImagesQuery = allImagesQuery;
     }
 
-    public async Task<(string identifier, string? tag)> GetBaseIdentifierFromUserAsync(string command)
+    public async Task<(string identifier, string tag)> GetBaseIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
         var options = new Dictionary<string, Image>();

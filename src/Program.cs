@@ -22,10 +22,10 @@ registrations.AddSingleton<ITerminateContainersCommand, TerminateContainersComma
 registrations.AddSingleton<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
 registrations.AddSingleton<IRemoveImageCommand, RemoveImageCommand>();
 registrations.AddSingleton<IIdentifierAndTagEvaluator, IdentifierAndTagEvaluator>();
-registrations.AddSingleton(typeof(IConfig), _ => ConfigFactory.GetOrCreateConfig());
+registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
 {
-    var config = provider.GetService<IConfig>();
+    var config = provider.GetService<Config>();
     if (config?.DockerEndpoint == null)
     {
         throw new InvalidOperationException("Docker endpoint has not been configured");

@@ -12,7 +12,7 @@ internal class CreateContainerCommand : ICreateContainerCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string identifier, string imageName, string? tag, List<string> ports)
+    public Task ExecuteAsync(string identifier, string imageName, string tag, List<string> ports)
     {
         return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
