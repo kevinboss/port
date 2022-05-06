@@ -25,7 +25,20 @@ Afterwards the user can run the images (this also shuts down any other running c
 
 ## Configuration
 
-!TODO
+```yaml
+version: 1.1
+dockerEndpoint: unix:///var/run/docker.sock
+imageConfigs:
+- identifier: Getting.Started
+  imageName: docker/getting-started
+  imageTags:
+  - latest
+  - vscode
+  ports:
+  - 80:80
+```
+
+A default .dcma file will be created in your user profile of you don't manually create one
 
 ## Commands
 
