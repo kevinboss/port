@@ -14,7 +14,6 @@ public class PromptHelper : IPromptHelper
     public async Task<(string identifier, string tag)> GetBaseIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
-        var options = new Dictionary<string, Image>();
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
             if (imageGroup.Identifier == null)
@@ -22,26 +21,19 @@ public class PromptHelper : IPromptHelper
                 continue;
             }
 
-
-            var groupOptions = new List<string>();
-            foreach (var image in imageGroup.Images.Where(e => !e.IsSnapshot))
-            {
-                var choiceIdentifier = $"{image.Tag} (Base)";
-                groupOptions.Add(choiceIdentifier);
-                options.Add(choiceIdentifier, image);
-            }
-
-            selectionPrompt.AddChoiceGroup($"{imageGroup.Identifier} Tags", groupOptions);
+            selectionPrompt.AddChoiceGroup($"{imageGroup.Identifier} Tags",
+                imageGroup.Images
+                    .Where(e => !e.IsSnapshot)
+                    .OrderBy(e => e.Tag));
         }
 
-        var selectedImage = options[AnsiConsole.Prompt(selectionPrompt)];
+        var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
         return (selectedImage.Identifier, selectedImage.Tag);
     }
 
-    public async Task<(string identifier, string tag)> GetIdentifierFromUserAsync(string command)
+    public async Task<(string identifier, string tag)> GetIdentifierFromUserAsync(string command, bool hideMissing = false)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
-        var options = new Dictionary<string, Image>();
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
             if (imageGroup.Identifier == null)
@@ -49,26 +41,28 @@ public class PromptHelper : IPromptHelper
                 continue;
             }
 
-
-            var groupOptions = new List<string>();
-            foreach (var image in imageGroup.Images.OrderBy(e => e.IsSnapshot))
-            {
-                var imageTypeText = image.IsSnapshot ? "Snapshot" : "Base";
-                var choiceIdentifier = $"{image.Tag} ({imageTypeText})";
-                groupOptions.Add(choiceIdentifier);
-                options.Add(choiceIdentifier, image);
-            }
-
-            selectionPrompt.AddChoiceGroup($"{imageGroup.Identifier} Tags", groupOptions);
+            selectionPrompt.AddChoiceGroup($"{imageGroup.Identifier} Tags",
+                imageGroup.Images
+                    .Where(e => !hideMissing || e.Existing)
+                    .OrderBy(e => e.Tag));
         }
 
-        var selectedImage = options[AnsiConsole.Prompt(selectionPrompt)];
+        var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
         return (selectedImage.Identifier, selectedImage.Tag);
     }
 
-    private static SelectionPrompt<string> CreateSelectionPrompt(string command)
+    private static SelectionPrompt<object> CreateSelectionPrompt(string command)
     {
-        return new SelectionPrompt<string>()
+        return new SelectionPrompt<object>()
+            .UseConverter(o =>
+            {
+                if (o is not Image image)
+                {
+                    return o as string ?? throw new InvalidOperationException();
+                }
+
+                return TagTextBuilder.BuildTagText(image);
+            })
             .PageSize(10)
             .Title($"Select image you wish to [green]{command}[/]")
             .MoreChoicesText("[grey](Move up and down to reveal more images)[/]");

@@ -1,4 +1,3 @@
-using dcma.Config;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -42,7 +41,7 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
             return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("remove");
+        var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("remove", true);
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 

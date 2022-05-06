@@ -1,4 +1,4 @@
-using dcma.Config;
+using dcma.Run;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -8,11 +8,13 @@ internal class AllImagesQuery : IAllImagesQuery
 {
     private readonly IDockerClient _dockerClient;
     private readonly Config.Config _config;
+    private readonly IGetImageQuery _getImageQuery;
 
-    public AllImagesQuery(IDockerClient dockerClient, Config.Config config)
+    public AllImagesQuery(IDockerClient dockerClient, Config.Config config, IGetImageQuery getImageQuery)
     {
         _dockerClient = dockerClient;
         _config = config;
+        _getImageQuery = getImageQuery;
     }
 
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
@@ -20,44 +22,65 @@ internal class AllImagesQuery : IAllImagesQuery
         var imageConfigs = _config.ImageConfigs;
         foreach (var imageConfig in imageConfigs)
         {
-            var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
-            {
-                Filters = new Dictionary<string, IDictionary<string, bool>>
-                {
-                    {
-                        "reference", new Dictionary<string, bool>
-                        {
-                            { imageConfig.ImageName, true }
-                        }
-                    }
-                }
-            });
+            var baseImages = await GetBaseImagesAsync(imageConfig);
+            var snapshotImages = await GetSnapshotImagesAsync(imageConfigs, imageConfig);
             yield return new ImageGroup
             {
                 Identifier = imageConfig.Identifier,
-                Images = imagesListResponses
-                    .Where(e => IsNotBase(imageConfigs, e))
-                    .Where(e => IsSnapshotOfBase(imageConfig, e))
-                    .Select(e =>
-                    {
-                        var (imageName, tag) = DockerHelper.GetImageNameAndTag(e.RepoTags.First());
-                        return new Image
-                        {
-                            Identifier = imageConfig.Identifier,
-                            Name = imageName,
-                            Tag = tag,
-                            IsSnapshot = true
-                        };
-                    })
-                    .Concat(imageConfig.ImageTags.Select(tag => new Image
-                    {
-                        Identifier = imageConfig.Identifier,
-                        Name = imageConfig.ImageName,
-                        Tag = tag,
-                        IsSnapshot = false
-                    })).ToList()
+                Images = snapshotImages.Concat(baseImages).ToList()
             };
         }
+    }
+
+    private async Task<IEnumerable<Image>> GetSnapshotImagesAsync(
+        IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
+        Config.Config.ImageConfig imageConfig)
+    {
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
+        {
+            Filters = new Dictionary<string, IDictionary<string, bool>>
+            {
+                {
+                    "reference", new Dictionary<string, bool>
+                    {
+                        { imageConfig.ImageName, true }
+                    }
+                }
+            }
+        });
+        return imagesListResponses
+            .Where(e => IsNotBase(imageConfigs, e))
+            .Where(e => IsSnapshotOfBase(imageConfig, e))
+            .Select(e =>
+            {
+                var (imageName, tag) = DockerHelper.GetImageNameAndTag(e.RepoTags.First());
+                return new Image
+                {
+                    Identifier = imageConfig.Identifier,
+                    Name = imageName,
+                    Tag = tag,
+                    IsSnapshot = true,
+                    Existing = true,
+                    Created = e.Created
+                };
+            });
+    }
+
+    private async Task<IEnumerable<Image>> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
+    {
+        return await Task.WhenAll(imageConfig.ImageTags.Select(async tag =>
+        {
+            var imagesListResponse = await _getImageQuery.QueryAsync(imageConfig.ImageName, tag);
+            return new Image
+            {
+                Identifier = imageConfig.Identifier,
+                Name = imageConfig.ImageName,
+                Tag = tag,
+                IsSnapshot = false,
+                Existing = imagesListResponse != null,
+                Created = imagesListResponse?.Created
+            };
+        }));
     }
 
     private static bool IsNotBase(IEnumerable<Config.Config.ImageConfig> imageConfigs, ImagesListResponse e)
