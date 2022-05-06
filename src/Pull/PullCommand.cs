@@ -7,10 +7,10 @@ namespace dcma.Pull;
 public class PullCommand : AsyncCommand<PullSettings>
 {
     private readonly IPromptHelper _promptHelper;
-    private readonly IConfig _config;
+    private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
-    public PullCommand(IPromptHelper promptHelper, IConfig config, IIdentifierAndTagEvaluator identifierAndTagEvaluator)
+    public PullCommand(IPromptHelper promptHelper, Config.Config config, IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
         _promptHelper = promptHelper;
         _config = config;

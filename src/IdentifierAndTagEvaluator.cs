@@ -4,9 +4,9 @@ namespace dcma;
 
 internal class IdentifierAndTagEvaluator : IIdentifierAndTagEvaluator
 {
-    private IConfig _config;
+    private readonly Config.Config _config;
 
-    public IdentifierAndTagEvaluator(IConfig config)
+    public IdentifierAndTagEvaluator(Config.Config config)
     {
         _config = config;
     }
@@ -19,6 +19,11 @@ internal class IdentifierAndTagEvaluator : IIdentifierAndTagEvaluator
         }
 
         var imageConfig = _config.GetImageConfigByIdentifier(identifierAndTag.imageName);
-        return (imageConfig.Identifier, imageConfig.ImageTag);
+        if (imageConfig.ImageTags.Count > 1)
+        {
+            throw new InvalidOperationException("Given identifier has multiple tags, please manually provide the tag");
+        }
+
+        return (imageConfig.Identifier, imageConfig.ImageTags.Single());
     }
 }

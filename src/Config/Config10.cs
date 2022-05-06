@@ -1,10 +1,8 @@
-using System.Runtime.InteropServices;
-
 namespace dcma.Config;
 
-public class Config10 : IConfig
+public class Config10
 {
-    public string Version { get; set; } = "1.0";
+    public string Version { get; set; } = Versions.V10;
     public string? DockerEndpoint { get; set; }
     public List<ImageConfig> Images { get; set; } = new();
 
@@ -30,5 +28,13 @@ public class Config10 : IConfig
         }
 
         return imageConfig;
+    }
+    
+    public class ImageConfig
+    {
+        public string Identifier { get; set; } = null!;
+        public string ImageName { get; set; } = null!;
+        public string ImageTag { get; set; } = null!;
+        public List<string> Ports { get; set; } = new();
     }
 }

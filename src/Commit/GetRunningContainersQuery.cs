@@ -7,9 +7,9 @@ namespace dcma.Commit;
 internal class GetRunningContainersQuery : IGetRunningContainersQuery
 {
     private readonly IDockerClient _dockerClient;
-    private readonly IConfig _config;
+    private readonly Config.Config _config;
 
-    public GetRunningContainersQuery(IDockerClient dockerClient, IConfig config)
+    public GetRunningContainersQuery(IDockerClient dockerClient, Config.Config config)
     {
         _dockerClient = dockerClient;
         _config = config;
@@ -17,7 +17,7 @@ internal class GetRunningContainersQuery : IGetRunningContainersQuery
 
     public async Task<ContainerListResponse?> QueryAsync()
     {
-        var images = _config.Images;
+        var images = _config.ImageConfigs;
         var imageNames = images.Select(image => image.ImageName).ToList();
 
         var containers = await _dockerClient.Containers.ListContainersAsync(
