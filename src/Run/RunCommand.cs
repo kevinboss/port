@@ -1,4 +1,5 @@
 using dcma.Config;
+using Docker.DotNet.Models;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -14,13 +15,14 @@ public class RunCommand : AsyncCommand<RunSettings>
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
     private readonly ITerminateContainersCommand _terminateContainersCommand;
-    private readonly IConfig _config;
+    private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
     public RunCommand(IAllImagesQuery allImagesQuery, IPromptHelper promptHelper,
         ICreateImageCommand createImageCommand, IGetImageQuery getImageQuery, IGetContainerQuery getContainerQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
-        ITerminateContainersCommand terminateContainersCommand, IConfig config, IIdentifierAndTagEvaluator identifierAndTagEvaluator)
+        ITerminateContainersCommand terminateContainersCommand, Config.Config config,
+        IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
         _allImagesQuery = allImagesQuery;
         _promptHelper = promptHelper;
@@ -40,10 +42,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync("Terminating containers of other images", _ => TerminateOtherContainers(identifier, tag));
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching {DockerHelper.JoinImageNameAndTag(identifier, tag)}",
-                _ => LaunchImageAsync(identifier, tag));
+        await LaunchImageAsync(identifier, tag);
         return 0;
     }
 
@@ -80,7 +79,7 @@ public class RunCommand : AsyncCommand<RunSettings>
         }
     }
 
-    private async Task LaunchImageAsync(string identifier, string? tag)
+    private async Task LaunchImageAsync(string identifier, string tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
@@ -97,12 +96,41 @@ public class RunCommand : AsyncCommand<RunSettings>
             var imagesListResponse = await _getImageQuery.QueryAsync(imageName, tag);
             if (imagesListResponse == null)
             {
-                await _createImageCommand.ExecuteAsync(imageName, tag);
+                await AnsiConsole.Status()
+                    .Spinner(Spinner.Known.Dots)
+                    .StartAsync($"Downloading image for for {DockerHelper.JoinImageNameAndTag(identifier, tag)}", async ctx =>
+                    {
+                        var progress = new Progress<JSONMessage>();
+
+                        var lockObject = new object();
+                        void OnProgressChanged(object? _, JSONMessage message)
+                        {
+                            lock (lockObject)
+                            {
+                                if (message.Progress == null)
+                                    return;
+                                if (!string.IsNullOrEmpty(message.ProgressMessage))
+                                {
+                                    ctx.Status(message.ProgressMessage.EscapeMarkup());
+                                }
+                            }
+                        }
+
+                        progress.ProgressChanged += OnProgressChanged;
+                        await _createImageCommand.ExecuteAsync(imageName, tag, progress);
+                        progress.ProgressChanged -= OnProgressChanged;
+                    });
             }
 
-            await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
+            await AnsiConsole.Status()
+                .Spinner(Spinner.Known.Dots)
+                .StartAsync($"Creating container for {DockerHelper.JoinImageNameAndTag(identifier, tag)}",
+                    _ => _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports));
         }
 
-        await _runContainerCommand.ExecuteAsync(identifier, tag);
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync($"Launching container for {DockerHelper.JoinImageNameAndTag(identifier, tag)}",
+                _ => _runContainerCommand.ExecuteAsync(identifier, tag));
     }
 }

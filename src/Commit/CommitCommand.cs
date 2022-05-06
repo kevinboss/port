@@ -1,3 +1,4 @@
+using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace dcma.Commit;
@@ -23,7 +24,10 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
             throw new InvalidOperationException("No running container found");
         }
 
-        await _createImageFromContainerCommand.ExecuteAsync(containerToCommit, settings.Tag);
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync("Creating image from running container",
+                _ => _createImageFromContainerCommand.ExecuteAsync(containerToCommit, settings.Tag));
 
         return 0;
     }

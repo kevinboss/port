@@ -1,21 +1,20 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using dcma.Config;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace dcma;
+namespace dcma.Config;
 
 public static class ConfigFactory
 {
     private const string ConfigFileName = ".dcma";
 
-    public static IConfig GetOrCreateConfig()
+    public static Config GetOrCreateConfig()
     {
         var configFilePath = GetConfigFilePath();
 
         if (File.Exists(configFilePath))
         {
+            MigrateIfNecessary(configFilePath);
             return LoadConfig(configFilePath);
         }
 
@@ -31,27 +30,48 @@ public static class ConfigFactory
         return configFilePath;
     }
 
-    private static Config10 LoadConfig(string path)
+    private static void MigrateIfNecessary(string path)
+    {
+        var versionString = File.ReadLines(path).First();
+        var serializer = new DeserializerBuilder()
+            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .Build();
+        var version = serializer.Deserialize<ConfigVersion>(versionString);
+        switch (version.Version)
+        {
+            case Versions.V10:
+                var yaml = File.ReadAllText(path);
+                PersistConfig(ConfigMigrations.Migrate10To11(serializer.Deserialize<Config10>(yaml)), path);
+                break;
+            case Versions.V11:
+                break;
+        }
+    }
+
+    private static Config LoadConfig(string path)
     {
         var yaml = File.ReadAllText(path);
         var serializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
-        return serializer.Deserialize<Config10>(yaml);
+        return serializer.Deserialize<Config>(yaml);
     }
 
-    private static IConfig CreateDefault() => new Config10
+    private static Config CreateDefault() => new Config
     {
         DockerEndpoint = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "npipe://./pipe/docker_engine"
             : "unix:///var/run/docker.sock",
-        Images = new List<ImageConfig>
+        ImageConfigs = new List<Config.ImageConfig>
         {
             new()
             {
                 Identifier = "Getting.Started",
                 ImageName = "docker/getting-started",
-                ImageTag = "latest",
+                ImageTags = new List<string>
+                {
+                    "latest"
+                },
                 Ports = new List<string>
                 {
                     "80:80"
@@ -60,12 +80,17 @@ public static class ConfigFactory
         }
     };
 
-    private static void PersistConfig(IConfig config, string path)
+    private static void PersistConfig(Config config, string path)
     {
         var serializer = new SerializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
         var yaml = serializer.Serialize(config);
         File.WriteAllText(path, yaml);
+    }
+    
+    public class ConfigVersion
+    {
+        public string Version { get; set; } = null!;
     }
 }

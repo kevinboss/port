@@ -7,9 +7,9 @@ namespace dcma;
 internal class AllImagesQuery : IAllImagesQuery
 {
     private readonly IDockerClient _dockerClient;
-    private readonly IConfig _config;
+    private readonly Config.Config _config;
 
-    public AllImagesQuery(IDockerClient dockerClient, IConfig config)
+    public AllImagesQuery(IDockerClient dockerClient, Config.Config config)
     {
         _dockerClient = dockerClient;
         _config = config;
@@ -17,8 +17,8 @@ internal class AllImagesQuery : IAllImagesQuery
 
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
     {
-        var images = _config.Images;
-        foreach (var imageConfig in images)
+        var imageConfigs = _config.ImageConfigs;
+        foreach (var imageConfig in imageConfigs)
         {
             var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
             {
@@ -36,10 +36,8 @@ internal class AllImagesQuery : IAllImagesQuery
             {
                 Identifier = imageConfig.Identifier,
                 Images = imagesListResponses
-                    .Where(e => !images.Any(imageConfig1 => e.RepoTags.Contains(DockerHelper
-                        .JoinImageNameAndTag(imageConfig1.ImageName, imageConfig1.ImageTag))))
-                    .Where(e => e.RepoTags.Any(repoTag => repoTag.StartsWith(DockerHelper
-                        .JoinImageNameAndTag(imageConfig.ImageName, imageConfig.ImageTag))))
+                    .Where(e => IsNotBase(imageConfigs, e))
+                    .Where(e => IsSnapshotOfBase(imageConfig, e))
                     .Select(e =>
                     {
                         var (imageName, tag) = DockerHelper.GetImageNameAndTag(e.RepoTags.First());
@@ -51,17 +49,39 @@ internal class AllImagesQuery : IAllImagesQuery
                             IsSnapshot = true
                         };
                     })
-                    .Concat(new List<Image>
+                    .Concat(imageConfig.ImageTags.Select(tag => new Image
                     {
-                        new()
-                        {
-                            Identifier = imageConfig.Identifier,
-                            Name = imageConfig.ImageName,
-                            Tag = imageConfig.ImageTag,
-                            IsSnapshot = false
-                        }
-                    }).ToList()
+                        Identifier = imageConfig.Identifier,
+                        Name = imageConfig.ImageName,
+                        Tag = tag,
+                        IsSnapshot = false
+                    })).ToList()
             };
         }
+    }
+
+    private static bool IsNotBase(IEnumerable<Config.Config.ImageConfig> imageConfigs, ImagesListResponse e)
+    {
+        return !imageConfigs
+            .SelectMany(imageConfig => imageConfig.ImageTags.Select(tag => new
+            {
+                imageConfig.ImageName,
+                tag
+            }))
+            .Any(imageConfig =>
+            {
+                var imageNameAndTag = DockerHelper.JoinImageNameAndTag(imageConfig.ImageName, imageConfig.tag);
+                return e.RepoTags.Contains(imageNameAndTag);
+            });
+    }
+
+    private static bool IsSnapshotOfBase(Config.Config.ImageConfig imageConfig, ImagesListResponse e)
+    {
+        var imageNameAndTags = imageConfig.ImageTags.Select(tag => new
+        {
+            imageConfig.ImageName,
+            tag
+        }).Select(imageConfig1 => DockerHelper.JoinImageNameAndTag(imageConfig1.ImageName, imageConfig1.tag));
+        return e.RepoTags.Any(repoTag => imageNameAndTags.Any(repoTag.StartsWith));
     }
 }
