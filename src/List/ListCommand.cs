@@ -1,3 +1,4 @@
+using System.Text;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -32,8 +33,7 @@ public class ListCommand : AsyncCommand<ListSettings>
 
             foreach (var image in imageGroup.Images.OrderBy(e => e.IsSnapshot))
             {
-                var imageTypeText = image.IsSnapshot ? "Snapshot" : "Base";
-                imageNode.AddNode($"[blue]{image.Tag} ({imageTypeText})[/]");
+                imageNode.AddNode(TagTextBuilder.BuildTagText(image));
             }
         }
 
