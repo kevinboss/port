@@ -10,8 +10,8 @@ It is also necessary to be able to clean up not needed images to regain disk-spa
 
 ## What is it?
 
-While the scenario above can be achieved by using the regular docker CLI or desktop terminal dcma aims for a more streamlined experience. dcma allows the user to configure multiple images and assign a readable identifier for each image.
-Afterwards the user can run the images (this also shuts down any other running containers using a configured image), create snapshots of the running containers as well as remove the original image as well as the snapshots.
+While the scenario above can be achieved by using the regular docker CLI or desktop terminal, dcma aims for a more streamlined experience. dcma allows the user to configure multiple images and assign a readable identifier for each image.
+Afterwards the user can run the images (this also shuts down any other running containers using a configured image), create snapshots of the running containers as well as remove the original image as well as snapshots.
 
 ## How to get it?
 
