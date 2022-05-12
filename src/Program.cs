@@ -2,6 +2,7 @@
 using dcma.Commit;
 using dcma.Config;
 using dcma.List;
+using dcma.Pull;
 using dcma.Remove;
 using dcma.Run;
 using Docker.DotNet;
@@ -46,6 +47,7 @@ app.Configure(appConfig =>
     appConfig.AddCommand<ListCommand>("list");
     appConfig.AddCommand<CommitCommand>("commit");
     appConfig.AddCommand<RemoveCommand>("remove");
+    appConfig.AddCommand<PullCommand>("pull");
 });
 
 return app.Run(args);
