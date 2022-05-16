@@ -1,6 +1,4 @@
-using Docker.DotNet.Models;
-
-namespace dcma.Run;
+namespace dcma;
 
 public interface ICreateImageCommand
 {

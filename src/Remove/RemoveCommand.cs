@@ -56,5 +56,6 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
         }
 
         await _removeImageCommand.ExecuteAsync(imageName, tag);
+        AnsiConsole.WriteLine($"Removed image {DockerHelper.JoinImageNameAndTag(imageName, tag)}");
     }
 }
