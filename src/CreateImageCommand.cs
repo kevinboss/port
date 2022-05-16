@@ -1,8 +1,9 @@
+using dcma.Run;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Spectre.Console;
 
-namespace dcma.Run;
+namespace dcma;
 
 internal class CreateImageCommand : ICreateImageCommand
 {

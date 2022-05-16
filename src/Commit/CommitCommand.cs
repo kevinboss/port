@@ -8,7 +8,8 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
     private readonly ICreateImageFromContainerCommand _createImageFromContainerCommand;
     private readonly IGetRunningContainersQuery _getRunningContainersQuery;
 
-    public CommitCommand(ICreateImageFromContainerCommand createImageFromContainerCommand, IGetRunningContainersQuery getRunningContainersQuery)
+    public CommitCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
+        IGetRunningContainersQuery getRunningContainersQuery)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainersQuery = getRunningContainersQuery;
@@ -16,7 +17,7 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
     {
-        settings.Tag ??= $"{DateTime.Now:yyyyMMddhhmmss}";
+        var tag = settings.Tag ?? $"{DateTime.Now:yyyyMMddhhmmss}";
 
         var containerToCommit = await _getRunningContainersQuery.QueryAsync();
         if (containerToCommit == null)
@@ -27,7 +28,8 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync("Creating image from running container",
-                _ => _createImageFromContainerCommand.ExecuteAsync(containerToCommit, settings.Tag));
+                _ => _createImageFromContainerCommand.ExecuteAsync(containerToCommit, tag));
+        AnsiConsole.WriteLine($"Created image with tag {tag}");
 
         return 0;
     }
