@@ -7,7 +7,7 @@ namespace dcma.Run;
 
 public class RunCommand : AsyncCommand<RunSettings>
 {
-    private readonly IPromptHelper _promptHelper;
+    private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IAllImagesQuery _allImagesQuery;
     private readonly ICreateImageCommand _createImageCommand;
     private readonly IGetImageQuery _getImageQuery;
@@ -18,14 +18,14 @@ public class RunCommand : AsyncCommand<RunSettings>
     private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
-    public RunCommand(IAllImagesQuery allImagesQuery, IPromptHelper promptHelper,
+    public RunCommand(IAllImagesQuery allImagesQuery, IIdentifierPrompt identifierPrompt,
         ICreateImageCommand createImageCommand, IGetImageQuery getImageQuery, IGetContainerQuery getContainerQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         ITerminateContainersCommand terminateContainersCommand, Config.Config config,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
         _allImagesQuery = allImagesQuery;
-        _promptHelper = promptHelper;
+        _identifierPrompt = identifierPrompt;
         _createImageCommand = createImageCommand;
         _getImageQuery = getImageQuery;
         _getContainerQuery = getContainerQuery;
@@ -53,7 +53,7 @@ public class RunCommand : AsyncCommand<RunSettings>
             return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("run");
+        var identifierAndTag = await _identifierPrompt.GetIdentifierFromUserAsync("run");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 

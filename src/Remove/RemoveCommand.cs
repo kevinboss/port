@@ -5,18 +5,18 @@ namespace dcma.Remove;
 
 public class RemoveCommand : AsyncCommand<RemoveSettings>
 {
-    private readonly IPromptHelper _promptHelper;
+    private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IGetContainerQuery _getContainerQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
     private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
-    public RemoveCommand(IPromptHelper promptHelper, IGetContainerQuery getContainerQuery, Config.Config config,
+    public RemoveCommand(IIdentifierPrompt identifierPrompt, IGetContainerQuery getContainerQuery, Config.Config config,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
-        _promptHelper = promptHelper;
+        _identifierPrompt = identifierPrompt;
         _getContainerQuery = getContainerQuery;
         _config = config;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
@@ -41,7 +41,7 @@ public class RemoveCommand : AsyncCommand<RemoveSettings>
             return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _promptHelper.GetIdentifierFromUserAsync("remove", true);
+        var identifierAndTag = await _identifierPrompt.GetIdentifierFromUserAsync("remove", true);
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 

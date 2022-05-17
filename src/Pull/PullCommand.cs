@@ -7,17 +7,17 @@ namespace dcma.Pull;
 
 public class PullCommand : AsyncCommand<PullSettings>
 {
-    private readonly IPromptHelper _promptHelper;
+    private readonly IIdentifierPrompt _identifierPrompt;
     private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
     private readonly IDockerClient _dockerClient;
     private readonly ICreateImageCommand _createImageCommand;
 
-    public PullCommand(IPromptHelper promptHelper, Config.Config config,
+    public PullCommand(IIdentifierPrompt identifierPrompt, Config.Config config,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator, IDockerClient dockerClient,
         ICreateImageCommand createImageCommand)
     {
-        _promptHelper = promptHelper;
+        _identifierPrompt = identifierPrompt;
         _config = config;
         _identifierAndTagEvaluator = identifierAndTagEvaluator;
         _dockerClient = dockerClient;
@@ -38,7 +38,7 @@ public class PullCommand : AsyncCommand<PullSettings>
             return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _promptHelper.GetBaseIdentifierFromUserAsync("pull");
+        var identifierAndTag = await _identifierPrompt.GetBaseIdentifierFromUserAsync("pull");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
