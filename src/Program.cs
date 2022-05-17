@@ -1,10 +1,11 @@
 ﻿using dcma;
-using dcma.Commit;
+using dcma.Commands.Commit;
+using dcma.Commands.List;
+using dcma.Commands.Pull;
+using dcma.Commands.Remove;
+using dcma.Commands.Reset;
+using dcma.Commands.Run;
 using dcma.Config;
-using dcma.List;
-using dcma.Pull;
-using dcma.Remove;
-using dcma.Run;
 using Docker.DotNet;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
@@ -48,6 +49,7 @@ app.Configure(appConfig =>
     appConfig.AddCommand<CommitCommand>("commit");
     appConfig.AddCommand<RemoveCommand>("remove");
     appConfig.AddCommand<PullCommand>("pull");
+    appConfig.AddCommand<ResetCommand>("reset");
 });
 
 return app.Run(args);

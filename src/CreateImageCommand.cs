@@ -1,4 +1,3 @@
-using dcma.Run;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using Spectre.Console;
