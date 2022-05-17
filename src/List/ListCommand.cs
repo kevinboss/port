@@ -31,7 +31,9 @@ public class ListCommand : AsyncCommand<ListSettings>
 
             var imageNode = root.AddNode($"[yellow]{imageGroup.Identifier} Tags[/]");
 
-            foreach (var image in imageGroup.Images.OrderBy(e => e.IsSnapshot))
+            foreach (var image in imageGroup.Images
+                         .OrderBy(e => e.IsSnapshot)
+                         .ThenByDescending(e => e.Tag))
             {
                 imageNode.AddNode(TagTextBuilder.BuildTagText(image));
             }

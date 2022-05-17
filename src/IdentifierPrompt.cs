@@ -2,11 +2,11 @@ using Spectre.Console;
 
 namespace dcma;
 
-public class PromptHelper : IPromptHelper
+public class IdentifierPrompt : IIdentifierPrompt
 {
     private readonly IAllImagesQuery _allImagesQuery;
 
-    public PromptHelper(IAllImagesQuery allImagesQuery)
+    public IdentifierPrompt(IAllImagesQuery allImagesQuery)
     {
         _allImagesQuery = allImagesQuery;
     }
@@ -21,10 +21,10 @@ public class PromptHelper : IPromptHelper
                 continue;
             }
 
-            selectionPrompt.AddChoiceGroup($"{imageGroup.Identifier} Tags",
+            selectionPrompt.AddChoiceGroup($"[yellow]{imageGroup.Identifier} Tags[/]",
                 imageGroup.Images
                     .Where(e => !e.IsSnapshot)
-                    .OrderBy(e => e.Tag));
+                    .OrderByDescending(e => e.Tag));
         }
 
         var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
@@ -41,10 +41,10 @@ public class PromptHelper : IPromptHelper
                 continue;
             }
 
-            selectionPrompt.AddChoiceGroup($"{imageGroup.Identifier} Tags",
+            selectionPrompt.AddChoiceGroup($"[yellow]{imageGroup.Identifier} Tags[/]",
                 imageGroup.Images
                     .Where(e => !hideMissing || e.Existing)
-                    .OrderBy(e => e.Tag));
+                    .OrderByDescending(e => e.Tag));
         }
 
         var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
