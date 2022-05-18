@@ -22,7 +22,7 @@ internal class AllImagesQuery : IAllImagesQuery
         var imageConfigs = _config.ImageConfigs;
         foreach (var imageConfig in imageConfigs)
         {
-            var baseImages = await GetBaseImagesAsync(imageConfig);
+            var baseImages = await GetBaseImagesAsync(imageConfig).ToListAsync();
             var snapshotImages = await GetSnapshotImagesAsync(imageConfigs, imageConfig);
             yield return new ImageGroup
             {
@@ -72,12 +72,12 @@ internal class AllImagesQuery : IAllImagesQuery
         return e.RepoTags != null;
     }
 
-    private async Task<IEnumerable<Image>> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
+    private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
     {
-        return await Task.WhenAll(imageConfig.ImageTags.Select(async tag =>
+        foreach (var tag in imageConfig.ImageTags)
         {
             var imagesListResponse = await _getImageQuery.QueryAsync(imageConfig.ImageName, tag);
-            return new Image
+            yield return new Image
             {
                 Identifier = imageConfig.Identifier,
                 Name = imageConfig.ImageName,
@@ -86,7 +86,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created
             };
-        }));
+        }
     }
 
     private static bool IsNotBase(IEnumerable<Config.Config.ImageConfig> imageConfigs, ImagesListResponse e)
