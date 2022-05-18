@@ -8,7 +8,7 @@ public class RunCommand : AsyncCommand<RunSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IAllImagesQuery _allImagesQuery;
-    private readonly ICreateImageCommand _createImageCommand;
+    private readonly IDownloadImageCommand _downloadImageCommand;
     private readonly IGetImageQuery _getImageQuery;
     private readonly IGetContainerQuery _getContainerQuery;
     private readonly ICreateContainerCommand _createContainerCommand;
@@ -18,14 +18,14 @@ public class RunCommand : AsyncCommand<RunSettings>
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
     public RunCommand(IAllImagesQuery allImagesQuery, IIdentifierPrompt identifierPrompt,
-        ICreateImageCommand createImageCommand, IGetImageQuery getImageQuery, IGetContainerQuery getContainerQuery,
+        IDownloadImageCommand downloadImageCommand, IGetImageQuery getImageQuery, IGetContainerQuery getContainerQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         ITerminateContainersCommand terminateContainersCommand, Config.Config config,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
         _allImagesQuery = allImagesQuery;
         _identifierPrompt = identifierPrompt;
-        _createImageCommand = createImageCommand;
+        _downloadImageCommand = downloadImageCommand;
         _getImageQuery = getImageQuery;
         _getContainerQuery = getContainerQuery;
         _createContainerCommand = createContainerCommand;
@@ -95,63 +95,13 @@ public class RunCommand : AsyncCommand<RunSettings>
             var imagesListResponse = await _getImageQuery.QueryAsync(imageName, tag);
             if (imagesListResponse == null)
             {
-                await CreateImageAsync(imageName, tag);
+                await _downloadImageCommand.ExecuteAsync(imageName, tag);
             }
 
             await CreateContainerAsync(identifier, tag, imageName, ports);
         }
 
         await RunContainerAsync(identifier, tag);
-    }
-
-    private async Task CreateImageAsync(string imageName, string tag)
-    {
-        AnsiConsole.WriteLine($"Downloading image {DockerHelper.JoinImageNameAndTag(imageName, tag)}");
-        var tasks = new Dictionary<string, string>();
-        var lockObject = new object();
-        var table = new Table();
-        table.HideHeaders();
-        table.Border = TableBorder.None;
-        table.AddColumn("Downloads");
-        await AnsiConsole.Live(table)
-            .StartAsync(async ctx =>
-            {
-                using (_createImageCommand.ProgressObservable
-                           .Subscribe(progress =>
-                           {
-                               lock (lockObject)
-                               {
-                                   var value =
-                                       progress.ProgressMessage == null
-                                           ? progress.Description.EscapeMarkup()
-                                           : $"{progress.Description} {progress.ProgressMessage}".EscapeMarkup();
-                                   if (progress.Initial)
-                                   {
-                                       tasks.Add(progress.Id, value);
-                                       table.AddRow(value);
-                                   }
-                                   else
-                                   {
-                                       tasks.Remove(progress.Id);
-                                       tasks.Add(progress.Id, value);
-                                   }
-
-                                   var row = 0;
-                                   foreach (var task in tasks)
-                                   {
-                                       table.UpdateCell(row, 0, task.Value);
-                                       row++;
-                                   }
-
-                                   ctx.Refresh();
-                               }
-                           }))
-                {
-                    await _createImageCommand.ExecuteAsync(imageName, tag);
-                }
-            });
-
-        AnsiConsole.WriteLine($"Image {DockerHelper.JoinImageNameAndTag(imageName, tag)} downloaded");
     }
 
     private async Task CreateContainerAsync(string identifier, string tag, string imageName, List<string> ports)

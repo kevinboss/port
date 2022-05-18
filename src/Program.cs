@@ -23,6 +23,7 @@ registrations.AddSingleton<IRunContainerCommand, RunContainerCommand>();
 registrations.AddSingleton<ITerminateContainersCommand, TerminateContainersCommand>();
 registrations.AddSingleton<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
 registrations.AddSingleton<IRemoveImageCommand, RemoveImageCommand>();
+registrations.AddSingleton<IDownloadImageCommand, DownloadImageCommand>();
 registrations.AddSingleton<IIdentifierAndTagEvaluator, IdentifierAndTagEvaluator>();
 registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
