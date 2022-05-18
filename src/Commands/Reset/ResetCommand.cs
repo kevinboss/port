@@ -1,4 +1,5 @@
 using dcma.Commands.Run;
+using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace dcma.Commands.Reset;
@@ -29,11 +30,22 @@ internal class ResetCommand : AsyncCommand<ResetSettings>
             throw new InvalidOperationException("No running container found");
         }
 
-        await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync($"Removing {container.ContainerName}",
+                _ => _stopAndRemoveContainerCommand.ExecuteAsync(container.Id));
 
-        await _createContainerCommand.ExecuteAsync(container);
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync($"Creating container for {container.ContainerName}",
+                _ => _createContainerCommand.ExecuteAsync(container));
 
-        await _runContainerCommand.ExecuteAsync(container.ContainerName);
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync($"Launching container for {container.ContainerName}",
+                _ => _runContainerCommand.ExecuteAsync(container.ContainerName));
+        
+        AnsiConsole.WriteLine($"Currently running container {container.ContainerName} has been reset");
 
         return 0;
     }
