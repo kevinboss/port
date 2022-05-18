@@ -49,6 +49,7 @@ internal class AllImagesQuery : IAllImagesQuery
             }
         });
         return imagesListResponses
+            .Where(HasRepoTags)
             .Where(e => IsNotBase(imageConfigs, e))
             .Where(e => IsSnapshotOfBase(imageConfig, e))
             .Select(e =>
@@ -64,6 +65,11 @@ internal class AllImagesQuery : IAllImagesQuery
                     Created = e.Created
                 };
             });
+    }
+
+    private static bool HasRepoTags(ImagesListResponse e)
+    {
+        return e.RepoTags != null;
     }
 
     private async Task<IEnumerable<Image>> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)

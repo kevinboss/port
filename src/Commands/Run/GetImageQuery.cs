@@ -26,7 +26,14 @@ internal class GetImageQuery : IGetImageQuery
                 }
             }
         });
-        return imagesListResponses.SingleOrDefault(e => e.RepoTags.Contains(DockerHelper
-            .JoinImageNameAndTag(imageName, tag)));
+        return imagesListResponses
+            .Where(HasRepoTags)
+            .SingleOrDefault(e =>
+            e.RepoTags.Contains(DockerHelper.JoinImageNameAndTag(imageName, tag)));
+    }
+
+    private static bool HasRepoTags(ImagesListResponse e)
+    {
+        return e.RepoTags != null;
     }
 }
