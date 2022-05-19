@@ -24,7 +24,7 @@ public class IdentifierPrompt : IIdentifierPrompt
             selectionPrompt.AddChoiceGroup($"[yellow]{imageGroup.Identifier} Tags[/]",
                 imageGroup.Images
                     .Where(e => !e.IsSnapshot)
-                    .OrderByDescending(e => e.Tag));
+                    .OrderBy(e => e.Tag));
         }
 
         var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
@@ -44,7 +44,7 @@ public class IdentifierPrompt : IIdentifierPrompt
             selectionPrompt.AddChoiceGroup($"[yellow]{imageGroup.Identifier} Tags[/]",
                 imageGroup.Images
                     .Where(e => !hideMissing || e.Existing)
-                    .OrderByDescending(e => e.Tag));
+                    .OrderBy(e => e.Tag));
         }
 
         var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
