@@ -16,7 +16,7 @@ registrations.AddSingleton<IIdentifierPrompt, IdentifierPrompt>();
 registrations.AddSingleton<ICreateImageCommand, CreateImageCommand>();
 registrations.AddSingleton<ICreateImageFromContainerCommand, CreateImageFromContainerCommand>();
 registrations.AddSingleton<IGetImageQuery, GetImageQuery>();
-registrations.AddSingleton<IGetContainerQuery, GetContainerQuery>();
+registrations.AddSingleton<IGetContainersQuery, GetContainersQuery>();
 registrations.AddSingleton<IGetRunningContainersQuery, GetRunningContainersQuery>();
 registrations.AddSingleton<ICreateContainerCommand, CreateContainerCommand>();
 registrations.AddSingleton<IRunContainerCommand, RunContainerCommand>();

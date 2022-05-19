@@ -54,7 +54,7 @@ internal class AllImagesQuery : IAllImagesQuery
             .Where(e => IsSnapshotOfBase(imageConfig, e))
             .Select(e =>
             {
-                var (imageName, tag) = DockerHelper.GetImageNameAndTag(e.RepoTags.First());
+                var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
                 return new Image
                 {
                     Identifier = imageConfig.Identifier,
@@ -99,7 +99,7 @@ internal class AllImagesQuery : IAllImagesQuery
             }))
             .Any(imageConfig =>
             {
-                var imageNameAndTag = DockerHelper.JoinImageNameAndTag(imageConfig.ImageName, imageConfig.tag);
+                var imageNameAndTag = ImageNameHelper.JoinImageNameAndTag(imageConfig.ImageName, imageConfig.tag);
                 return e.RepoTags.Contains(imageNameAndTag);
             });
     }
@@ -110,7 +110,7 @@ internal class AllImagesQuery : IAllImagesQuery
         {
             imageConfig.ImageName,
             tag
-        }).Select(imageConfig1 => DockerHelper.JoinImageNameAndTag(imageConfig1.ImageName, imageConfig1.tag));
+        }).Select(imageConfig1 => ImageNameHelper.JoinImageNameAndTag(imageConfig1.ImageName, imageConfig1.tag));
         return e.RepoTags.Any(repoTag => imageNameAndTags.Any(repoTag.StartsWith));
     }
 }

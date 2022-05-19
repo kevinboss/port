@@ -25,12 +25,7 @@ internal class GetRunningContainersQuery : IGetRunningContainersQuery
                 Limit = long.MaxValue
             });
         var container = containers.SingleOrDefault(e =>
-            e.State == "running" && imageNames.Contains(DockerHelper.GetImageNameAndTag(e.Image).imageName));
-
-        if (container == null) return null;
-
-        var containerName = container.Names.Single().Remove(0, 1);
-        var imageNameAndTag = DockerHelper.GetImageNameAndTag(container.Image);
-        return new Container(container.ID, containerName, imageNameAndTag.imageName, imageNameAndTag.tag, container.Ports);
+            e.State == "running" && imageNames.Contains(ImageNameHelper.GetImageNameAndTag(e.Image).imageName));
+        return container != null ? new Container(container) : null;
     }
 }
