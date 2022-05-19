@@ -14,6 +14,6 @@ internal class RemoveImageCommand : IRemoveImageCommand
 
     public Task ExecuteAsync(string imageName, string tag)
     {
-        return _dockerClient.Images.DeleteImageAsync(DockerHelper.JoinImageNameAndTag(imageName, tag), new ImageDeleteParameters());
+        return _dockerClient.Images.DeleteImageAsync(ImageNameHelper.JoinImageNameAndTag(imageName, tag), new ImageDeleteParameters());
     }
 }

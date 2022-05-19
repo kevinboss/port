@@ -77,13 +77,7 @@ internal class CreateImageCommand : ICreateImageCommand
         TaskSetUpData data)
     {
         if (data.Description == null || data.ProgressMessage == null) throw new ArgumentException();
-        var progress = new Progress
-        {
-            Id = message.ID,
-            Description = data.Description,
-            ProgressMessage = data.ProgressMessage,
-            Initial = true
-        };
+        var progress = new Progress(true, message.ID, data.Description, data.ProgressMessage);
         launchedTasks.Add(message.ID, progress);
         taskSetUpData.Remove(message.ID);
         _progressSubjekt.OnNext(progress);
@@ -105,15 +99,14 @@ internal class CreateImageCommand : ICreateImageCommand
 
     private void PublishUpdatedProgress(JSONMessage message, Progress currentProgress)
     {
-        var progress = new Progress
+        var progress = new Progress(false,
+            currentProgress.Id,
+            currentProgress.Description,
+            currentProgress.ProgressMessage)
         {
-            Id = currentProgress.Id,
-            Description = currentProgress.Description,
-            ProgressMessage = currentProgress.ProgressMessage,
-            Initial = false
+            Description = message.Status,
+            ProgressMessage = message.ProgressMessage
         };
-        progress.Description = message.Status;
-        progress.ProgressMessage = message.ProgressMessage;
         _progressSubjekt.OnNext(progress);
     }
 

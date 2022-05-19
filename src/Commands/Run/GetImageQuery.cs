@@ -29,7 +29,7 @@ internal class GetImageQuery : IGetImageQuery
         return imagesListResponses
             .Where(HasRepoTags)
             .SingleOrDefault(e =>
-            e.RepoTags.Contains(DockerHelper.JoinImageNameAndTag(imageName, tag)));
+            e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageName, tag)));
     }
 
     private static bool HasRepoTags(ImagesListResponse e)

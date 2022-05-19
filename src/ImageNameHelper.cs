@@ -1,6 +1,6 @@
 namespace dcma;
 
-public static class DockerHelper
+public static class ImageNameHelper
 {
     public static (string imageName, string tag) GetImageNameAndTag(string imageName)
     {

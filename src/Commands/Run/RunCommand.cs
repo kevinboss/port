@@ -1,4 +1,5 @@
 using System.Reactive.Linq;
+using dcma.Commands.Remove;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -10,29 +11,35 @@ public class RunCommand : AsyncCommand<RunSettings>
     private readonly IAllImagesQuery _allImagesQuery;
     private readonly IDownloadImageCommand _downloadImageCommand;
     private readonly IGetImageQuery _getImageQuery;
-    private readonly IGetContainerQuery _getContainerQuery;
+    private readonly IGetContainersQuery _getContainersQuery;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
     private readonly ITerminateContainersCommand _terminateContainersCommand;
     private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
+    private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
+    private readonly IRemoveImageCommand _removeImageCommand;
 
     public RunCommand(IAllImagesQuery allImagesQuery, IIdentifierPrompt identifierPrompt,
-        IDownloadImageCommand downloadImageCommand, IGetImageQuery getImageQuery, IGetContainerQuery getContainerQuery,
+        IDownloadImageCommand downloadImageCommand, IGetImageQuery getImageQuery,
+        IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         ITerminateContainersCommand terminateContainersCommand, Config.Config config,
-        IIdentifierAndTagEvaluator identifierAndTagEvaluator)
+        IIdentifierAndTagEvaluator identifierAndTagEvaluator,
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand)
     {
         _allImagesQuery = allImagesQuery;
         _identifierPrompt = identifierPrompt;
         _downloadImageCommand = downloadImageCommand;
         _getImageQuery = getImageQuery;
-        _getContainerQuery = getContainerQuery;
+        _getContainersQuery = getContainersQuery;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
         _terminateContainersCommand = terminateContainersCommand;
         _config = config;
         _identifierAndTagEvaluator = identifierAndTagEvaluator;
+        _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
+        _removeImageCommand = removeImageCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
@@ -89,8 +96,8 @@ public class RunCommand : AsyncCommand<RunSettings>
 
         var imageName = imageConfig.ImageName;
         var ports = imageConfig.Ports;
-        var containerListResponse = await _getContainerQuery.QueryAsync(imageName, tag);
-        if (containerListResponse == null)
+        var container = await _getContainersQuery.QueryByImageAsync(imageName, tag);
+        if (container == null)
         {
             var imagesListResponse = await _getImageQuery.QueryAsync(imageName, tag);
             if (imagesListResponse == null)
@@ -98,27 +105,39 @@ public class RunCommand : AsyncCommand<RunSettings>
                 await _downloadImageCommand.ExecuteAsync(imageName, tag);
             }
 
+            await RemoveContainerByIdentifierAsync(identifier, tag);
+
             await CreateContainerAsync(identifier, tag, imageName, ports);
         }
 
         await RunContainerAsync(identifier, tag);
     }
 
+    private async Task RemoveContainerByIdentifierAsync(string identifier, string tag)
+    {
+        var containers = await _getContainersQuery.QueryByIdentifierAsync(identifier, tag);
+        foreach (var container1 in containers)
+        {
+            await _stopAndRemoveContainerCommand.ExecuteAsync(container1.Id);
+            await _removeImageCommand.ExecuteAsync(container1.ImageName, container1.Tag);
+        }
+    }
+
     private async Task CreateContainerAsync(string identifier, string tag, string imageName, List<string> ports)
     {
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Creating container for {DockerHelper.JoinImageNameAndTag(identifier, tag)}",
+            .StartAsync($"Creating container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}",
                 _ => _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports));
-        AnsiConsole.WriteLine($"Container for {DockerHelper.JoinImageNameAndTag(identifier, tag)} created");
+        AnsiConsole.WriteLine($"Container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)} created");
     }
 
     private async Task RunContainerAsync(string identifier, string tag)
     {
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching container for {DockerHelper.JoinImageNameAndTag(identifier, tag)}",
+            .StartAsync($"Launching container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}",
                 _ => _runContainerCommand.ExecuteAsync(identifier, tag));
-        AnsiConsole.WriteLine($"Container for {DockerHelper.JoinImageNameAndTag(identifier, tag)} launched");
+        AnsiConsole.WriteLine($"Container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)} launched");
     }
 }
