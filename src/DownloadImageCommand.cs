@@ -19,6 +19,7 @@ internal class DownloadImageCommand : IDownloadImageCommand
         var lockObject = new object();
         var table = new Table();
         table.HideHeaders();
+        table.HideFooters();
         table.Border = TableBorder.None;
         table.AddColumn("Downloads");
         await AnsiConsole.Live(table)

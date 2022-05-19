@@ -19,7 +19,7 @@ internal class CreateContainerCommand : ICreateContainerCommand
             .ToDictionary(e => e[0], e => CreateHostPortList(e[1]));
         return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
-            Name = $"{identifier}.{tag}",
+            Name = ContainerNameHelper.JoinContainerNameAndTag(identifier, tag),
             Image = ImageNameHelper.JoinImageNameAndTag(imageName, tag),
             HostConfig = new HostConfig
             {
