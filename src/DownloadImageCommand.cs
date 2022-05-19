@@ -13,7 +13,7 @@ internal class DownloadImageCommand : IDownloadImageCommand
 
     public async Task ExecuteAsync(string imageName, string tag)
     {
-        AnsiConsole.WriteLine($"Downloading image {DockerHelper.JoinImageNameAndTag(imageName, tag)}");
+        AnsiConsole.WriteLine($"Downloading image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
         AnsiConsole.WriteLine();
         var tasks = new Dictionary<string, string>();
         var lockObject = new object();
@@ -59,6 +59,6 @@ internal class DownloadImageCommand : IDownloadImageCommand
                 }
             });
 
-        AnsiConsole.WriteLine($"Image {DockerHelper.JoinImageNameAndTag(imageName, tag)} downloaded");
+        AnsiConsole.WriteLine($"Image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)} downloaded");
     }
 }

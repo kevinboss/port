@@ -6,18 +6,18 @@ namespace dcma.Commands.Remove;
 internal class RemoveCommand : AsyncCommand<RemoveSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
-    private readonly IGetContainerQuery _getContainerQuery;
+    private readonly IGetContainersQuery _getContainersQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
     private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
-    public RemoveCommand(IIdentifierPrompt identifierPrompt, IGetContainerQuery getContainerQuery, Config.Config config,
+    public RemoveCommand(IIdentifierPrompt identifierPrompt, IGetContainersQuery getContainersQuery, Config.Config config,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator)
     {
         _identifierPrompt = identifierPrompt;
-        _getContainerQuery = getContainerQuery;
+        _getContainersQuery = getContainersQuery;
         _config = config;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _removeImageCommand = removeImageCommand;
@@ -29,7 +29,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Removing {DockerHelper.JoinImageNameAndTag(identifier, tag)}",
+            .StartAsync($"Removing {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}",
                 _ => RemoveImageAsync(identifier, tag));
         return 0;
     }
@@ -49,13 +49,13 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
-        var containerListResponse = await _getContainerQuery.QueryAsync(imageName, tag);
-        if (containerListResponse != null)
+        var container = await _getContainersQuery.QueryByImageAsync(imageName, tag);
+        if (container != null)
         {
-            await _stopAndRemoveContainerCommand.ExecuteAsync(containerListResponse.ID);
+            await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
         }
 
         await _removeImageCommand.ExecuteAsync(imageName, tag);
-        AnsiConsole.WriteLine($"Removed image {DockerHelper.JoinImageNameAndTag(imageName, tag)}");
+        AnsiConsole.WriteLine($"Removed image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
     }
 }

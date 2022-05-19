@@ -13,7 +13,7 @@ internal class IdentifierAndTagEvaluator : IIdentifierAndTagEvaluator
 
     public (string identifier, string tag) Evaluate(string imageIdentifier)
     {
-        if (DockerHelper.TryGetImageNameAndTag(imageIdentifier, out var identifierAndTag))
+        if (ImageNameHelper.TryGetImageNameAndTag(imageIdentifier, out var identifierAndTag))
         {
             return (identifierAndTag.imageName, identifierAndTag.tag);
         }

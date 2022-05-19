@@ -21,7 +21,7 @@ internal class TerminateContainersCommand : ITerminateContainersCommand
             });
 
         foreach (var containerListResponse in containers
-                     .Where(e => DockerHelper.TryGetImageNameAndTag(e.Image, out var nameAndTag)
+                     .Where(e => ImageNameHelper.TryGetImageNameAndTag(e.Image, out var nameAndTag)
                                  && imageNames.Any(imageNameAndTag =>
                                      imageNameAndTag.imageName == nameAndTag.imageName &&
                                      imageNameAndTag.tag == nameAndTag.tag)))
