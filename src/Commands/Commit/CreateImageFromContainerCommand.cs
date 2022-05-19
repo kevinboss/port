@@ -14,11 +14,12 @@ internal class CreateImageFromContainerCommand : ICreateImageFromContainerComman
 
     public Task ExecuteAsync(Container container, string tag)
     {
+        if (tag.Contains('.')) throw new ArgumentException("only [a-zA-Z0-9][a-zA-Z0-9_-] are allowed");
         return _dockerClient.Images.CommitContainerChangesAsync(new CommitContainerChangesParameters
         {
             ContainerID = container.Id,
             RepositoryName = container.ImageName,
-            Tag = $"{container.Tag}.{tag}"
+            Tag = $"{container.Tag}-{tag}"
         });
     }
 }
