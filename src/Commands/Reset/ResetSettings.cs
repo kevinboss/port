@@ -1,6 +1,6 @@
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.Reset;
+namespace port.Commands.Reset;
 
 internal class ResetSettings : CommandSettings
 {

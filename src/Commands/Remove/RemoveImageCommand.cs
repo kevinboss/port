@@ -1,7 +1,7 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace dcma.Commands.Remove;
+namespace port.Commands.Remove;
 
 internal class RemoveImageCommand : IRemoveImageCommand
 {

@@ -1,6 +1,4 @@
-using Docker.DotNet.Models;
-
-namespace dcma.Commands.Commit;
+namespace port.Commands.Commit;
 
 public interface ICreateImageFromContainerCommand
 {

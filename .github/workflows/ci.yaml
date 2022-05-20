@@ -12,8 +12,8 @@ jobs:
         with:
           dotnet-version: 6.0.x
       - name: Install dependencies
-        run: dotnet restore src/dcma.csproj
+        run: dotnet restore src/port.csproj
       - name: Build
-        run: dotnet build src/dcma.csproj --configuration Release --no-restore
+        run: dotnet build src/port.csproj --configuration Release --no-restore
       - name: Test
-        run: dotnet test src/dcma.csproj --no-restore --verbosity normal
+        run: dotnet test src/port.csproj --no-restore --verbosity normal

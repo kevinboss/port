@@ -1,7 +1,7 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace dcma;
+namespace port;
 
 internal class RunContainerCommand : IRunContainerCommand
 {
@@ -12,7 +12,7 @@ internal class RunContainerCommand : IRunContainerCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string identifier, string? tag)
+    public Task ExecuteAsync(string identifier, string tag)
     {
         return _dockerClient.Containers.StartContainerAsync(
             ContainerNameHelper.JoinContainerNameAndTag(identifier, tag),
