@@ -7,11 +7,14 @@ namespace port.Config;
 public static class ConfigFactory
 {
     private const string ConfigFileName = ".port";
+    private const string OldConfigFileName = ".dcma";
 
     public static Config GetOrCreateConfig()
     {
         var configFilePath = GetConfigFilePath();
 
+        RenameIfNecessary(configFilePath);
+        
         if (File.Exists(configFilePath))
         {
             MigrateIfNecessary(configFilePath);
@@ -23,11 +26,26 @@ public static class ConfigFactory
         return config;
     }
 
+    private static void RenameIfNecessary(string configFilePath)
+    {
+        var oldConfigFilePath = GetOldConfigFilePath();
+        if (File.Exists(oldConfigFilePath) && !File.Exists(configFilePath))
+        {
+            File.Move(oldConfigFilePath, configFilePath);
+        }
+    }
+
     private static string GetConfigFilePath()
     {
         var userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var configFilePath = Path.Combine(userProfilePath, ConfigFileName);
         return configFilePath;
+    }
+
+    private static string GetOldConfigFilePath()
+    {
+        var userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return Path.Combine(userProfilePath, OldConfigFileName);
     }
 
     private static void MigrateIfNecessary(string path)
