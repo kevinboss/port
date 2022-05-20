@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 
-namespace dcma.Infrastructure;
+namespace port.Infrastructure;
 
 public sealed class TypeRegistrar : ITypeRegistrar
 {

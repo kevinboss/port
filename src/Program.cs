@@ -1,13 +1,14 @@
-﻿using dcma;
-using dcma.Commands.Commit;
-using dcma.Commands.List;
-using dcma.Commands.Pull;
-using dcma.Commands.Remove;
-using dcma.Commands.Reset;
-using dcma.Commands.Run;
-using dcma.Config;
-using Docker.DotNet;
+﻿using Docker.DotNet;
 using Microsoft.Extensions.DependencyInjection;
+using port;
+using port.Commands.Commit;
+using port.Commands.List;
+using port.Commands.Pull;
+using port.Commands.Remove;
+using port.Commands.Reset;
+using port.Commands.Run;
+using port.Config;
+using port.Infrastructure;
 using Spectre.Console.Cli;
 
 var registrations = new ServiceCollection();
@@ -39,7 +40,7 @@ registrations.AddSingleton(typeof(IDockerClient), provider =>
         .CreateClient();
 });
 
-var registrar = new dcma.Infrastructure.TypeRegistrar(registrations);
+var registrar = new TypeRegistrar(registrations);
 
 var app = new CommandApp(registrar);
 

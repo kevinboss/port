@@ -1,8 +1,6 @@
-using System.Reactive.Linq;
-using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.Pull;
+namespace port.Commands.Pull;
 
 public class PullCommand : AsyncCommand<PullSettings>
 {

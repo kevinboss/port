@@ -1,8 +1,7 @@
-using dcma.Commands.Run;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.Reset;
+namespace port.Commands.Reset;
 
 internal class ResetCommand : AsyncCommand<ResetSettings>
 {

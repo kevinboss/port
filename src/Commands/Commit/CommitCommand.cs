@@ -1,7 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.Commit;
+namespace port.Commands.Commit;
 
 internal class CommitCommand : AsyncCommand<CommitSettings>
 {

@@ -1,7 +1,7 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace dcma.Commands.Commit;
+namespace port.Commands.Commit;
 
 internal class CreateImageFromContainerCommand : ICreateImageFromContainerCommand
 {

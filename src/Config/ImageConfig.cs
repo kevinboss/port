@@ -1,2 +1,2 @@
-namespace dcma.Config;
+namespace port.Config;
 

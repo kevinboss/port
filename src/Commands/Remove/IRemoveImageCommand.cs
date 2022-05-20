@@ -1,4 +1,4 @@
-namespace dcma.Commands.Remove;
+namespace port.Commands.Remove;
 
 public interface IRemoveImageCommand
 {

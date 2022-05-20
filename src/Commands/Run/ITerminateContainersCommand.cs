@@ -1,4 +1,4 @@
-namespace dcma.Commands.Run;
+namespace port.Commands.Run;
 
 public interface ITerminateContainersCommand
 {

@@ -1,6 +1,6 @@
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.Run;
+namespace port.Commands.Run;
 
 public class RunSettings : CommandSettings, IIdentifierSettings
 {

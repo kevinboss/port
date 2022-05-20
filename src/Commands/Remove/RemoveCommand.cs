@@ -1,7 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.Remove;
+namespace port.Commands.Remove;
 
 internal class RemoveCommand : AsyncCommand<RemoveSettings>
 {

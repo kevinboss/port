@@ -1,4 +1,4 @@
-namespace dcma.Config;
+namespace port.Config;
 
 public static class Versions
 {

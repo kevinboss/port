@@ -1,7 +1,7 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace dcma.Commands.Run;
+namespace port.Commands.Run;
 
 internal class GetImageQuery : IGetImageQuery
 {

@@ -2,11 +2,11 @@ using System.Runtime.InteropServices;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace dcma.Config;
+namespace port.Config;
 
 public static class ConfigFactory
 {
-    private const string ConfigFileName = ".dcma";
+    private const string ConfigFileName = ".port";
 
     public static Config GetOrCreateConfig()
     {

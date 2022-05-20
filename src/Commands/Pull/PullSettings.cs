@@ -1,6 +1,6 @@
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.Pull;
+namespace port.Commands.Pull;
 
 public class PullSettings : CommandSettings, IIdentifierSettings
 {
