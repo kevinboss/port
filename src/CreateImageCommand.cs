@@ -1,10 +1,9 @@
-using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace dcma;
+namespace port;
 
 internal class CreateImageCommand : ICreateImageCommand
 {

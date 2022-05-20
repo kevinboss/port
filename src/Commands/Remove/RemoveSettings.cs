@@ -1,6 +1,6 @@
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.Remove;
+namespace port.Commands.Remove;
 
 public class RemoveSettings : CommandSettings, IIdentifierSettings
 {

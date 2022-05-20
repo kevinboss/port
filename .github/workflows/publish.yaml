@@ -34,10 +34,10 @@ jobs:
         shell: bash
         run: |
           tag=$(git describe --tags --abbrev=0)
-          release_name="dcma-$tag-${{ matrix.target }}"
+          release_name="port-$tag-${{ matrix.target }}"
 
           # Build everything
-          dotnet publish src/dcma.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "$release_name"
+          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "$release_name"
 
           # Pack files
           if [ "${{ matrix.target }}" == "win-x64" ]; then
@@ -53,6 +53,6 @@ jobs:
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
-          files: "dcma*"
+          files: "port*"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

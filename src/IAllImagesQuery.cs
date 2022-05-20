@@ -1,4 +1,4 @@
-namespace dcma;
+namespace port;
 
 public interface IAllImagesQuery
 {

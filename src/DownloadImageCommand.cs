@@ -1,6 +1,6 @@
 using Spectre.Console;
 
-namespace dcma;
+namespace port;
 
 internal class DownloadImageCommand : IDownloadImageCommand
 {

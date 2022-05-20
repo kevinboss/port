@@ -1,6 +1,4 @@
-using dcma.Config;
-
-namespace dcma;
+namespace port;
 
 internal class IdentifierAndTagEvaluator : IIdentifierAndTagEvaluator
 {

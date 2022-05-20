@@ -1,7 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-namespace dcma.Commands.List;
+namespace port.Commands.List;
 
 public class ListCommand : AsyncCommand<ListSettings>
 {

@@ -1,6 +1,6 @@
 using Spectre.Console.Cli;
 
-namespace dcma.Infrastructure;
+namespace port.Infrastructure;
 
 public sealed class TypeResolver : ITypeResolver, IDisposable
 {
