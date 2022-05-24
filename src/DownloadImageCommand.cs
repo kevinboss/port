@@ -34,7 +34,7 @@ internal class DownloadImageCommand : IDownloadImageCommand
                                        progress.ProgressMessage == null
                                            ? progress.Description.EscapeMarkup()
                                            : $"{progress.Description} {progress.ProgressMessage}".EscapeMarkup();
-                                   if (progress.Initial)
+                                   if (progress.ProgressState == ProgressState.Initial)
                                    {
                                        tasks.Add(progress.Id, value);
                                        table.AddRow(value);

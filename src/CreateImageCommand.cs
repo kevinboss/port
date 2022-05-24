@@ -58,16 +58,15 @@ internal class CreateImageCommand : ICreateImageCommand
         if (string.IsNullOrEmpty(message.ID))
             return;
 
-        if (publishedProgress.TryGetValue(message.ID, out var currentProgress))
+        if (!publishedProgress.TryGetValue(message.ID, out var currentProgress))
+        {
+            var data = UpdateOrCreateTaskSetUpData(message, taskSetUpData);
+            PublishInitialProgress(message, publishedProgress, taskSetUpData, data);
+        }
+        else
         {
             PublishUpdatedProgress(message, currentProgress);
-            return;
         }
-
-        var data = UpdateOrCreateTaskSetUpData(message, taskSetUpData);
-
-        if (data.Description == null || data.ProgressMessage == null) return;
-        PublishInitialProgress(message, publishedProgress, taskSetUpData, data);
     }
 
     private void PublishInitialProgress(JSONMessage message,
@@ -75,8 +74,7 @@ internal class CreateImageCommand : ICreateImageCommand
         IDictionary<string, TaskSetUpData> taskSetUpData,
         TaskSetUpData data)
     {
-        if (data.Description == null || data.ProgressMessage == null) throw new ArgumentException();
-        var progress = new Progress(true, message.ID, data.Description, data.ProgressMessage);
+        var progress = new Progress(ProgressState.Initial, message.ID, data.Description, data.ProgressMessage);
         launchedTasks.Add(message.ID, progress);
         taskSetUpData.Remove(message.ID);
         _progressSubjekt.OnNext(progress);
@@ -98,8 +96,8 @@ internal class CreateImageCommand : ICreateImageCommand
 
     private void PublishUpdatedProgress(JSONMessage message, Progress currentProgress)
     {
-        var progress = new Progress(false,
-            currentProgress.Id,
+        var progress = new Progress(ProgressState.Downloading, 
+            currentProgress.Id, 
             currentProgress.Description,
             currentProgress.ProgressMessage)
         {
