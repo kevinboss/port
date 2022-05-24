@@ -114,12 +114,24 @@ public class RunCommand : AsyncCommand<RunSettings>
 
     private async Task RemoveContainerByIdentifierAsync(string identifier, string tag)
     {
-        var containers = await _getContainersQuery.QueryByIdentifierAsync(identifier, tag);
-        foreach (var container1 in containers)
+        var containers = (await _getContainersQuery.QueryByIdentifierAsync(identifier, tag)).ToList();
+        if (containers.Any())
         {
-            await _stopAndRemoveContainerCommand.ExecuteAsync(container1.Id);
-            await _removeImageCommand.ExecuteAsync(container1.ImageName, container1.Tag);
+            return;
         }
+
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync($"Removing containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)}",
+                async _ =>
+                {
+                    foreach (var container in containers)
+                    {
+                        await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+                        await _removeImageCommand.ExecuteAsync(container.ImageName, container.Tag);
+                    }
+                });
+        AnsiConsole.WriteLine($"Containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)} removed");
     }
 
     private async Task CreateContainerAsync(string identifier, string tag, string imageName, List<string> ports)

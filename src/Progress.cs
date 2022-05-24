@@ -2,16 +2,23 @@ namespace port;
 
 public class Progress
 {
-    public Progress(bool initial, string id, string description, string? progressMessage)
+    public Progress(ProgressState progressState, string id, string? description, string? progressMessage)
     {
-        Initial = initial;
         Id = id;
         Description = description;
         ProgressMessage = progressMessage;
+        ProgressState = progressState;
     }
 
-    public bool Initial { get; set; }
     public string Id { get; set; }
-    public string Description { get; set; }
+    public string? Description { get; set; }
+    public ProgressState ProgressState { get; set; }
     public string? ProgressMessage { get; set; }
+}
+
+public enum ProgressState
+{
+    Initial,
+    Downloading,
+    Finished
 }
