@@ -115,7 +115,7 @@ public class RunCommand : AsyncCommand<RunSettings>
     private async Task RemoveContainerByIdentifierAsync(string identifier, string tag)
     {
         var containers = (await _getContainersQuery.QueryByIdentifierAsync(identifier, tag)).ToList();
-        if (containers.Any())
+        if (!containers.Any())
         {
             return;
         }
