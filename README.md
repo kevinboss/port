@@ -6,7 +6,7 @@
 ## What is it?
 
 port allows the user to configure multiple images and assign a readable identifier for each image.
-Afterwards the user can run the images (this also shuts down any other running containers using a configured image), create snapshots of the running containers as well as remove the original image as well as snapshots.
+Afterwards the user can run the images (this also shuts down any other running containers using a configured image), create snapshots of the running containers as well as remove the original image or snapshots.
 
 ## How to get it?
 
