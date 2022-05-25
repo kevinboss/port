@@ -20,6 +20,8 @@ Afterwards the user can run the images (this also shuts down any other running c
 
 [Latest release 💾](https://github.com/kevinboss/port/releases/latest)
 
+Then add folder to path `$Env:PATH += ";C:\Path\To\Folder"`
+
 ## Configuration
 
 ```yaml
