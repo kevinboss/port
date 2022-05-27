@@ -1,6 +1,6 @@
 namespace port;
 
-public interface IAllImagesQuery
+internal interface IAllImagesQuery
 {
     IAsyncEnumerable<ImageGroup> QueryAsync();
 }

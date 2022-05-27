@@ -2,7 +2,7 @@ using Spectre.Console;
 
 namespace port;
 
-public class IdentifierPrompt : IIdentifierPrompt
+internal class IdentifierPrompt : IIdentifierPrompt
 {
     private readonly IAllImagesQuery _allImagesQuery;
 
