@@ -1,6 +1,6 @@
 namespace port;
 
-internal interface IGetRunningContainersQuery
+internal interface IGetRunningContainerQuery
 {
     Task<Container?> QueryAsync();
 }

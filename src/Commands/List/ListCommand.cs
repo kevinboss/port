@@ -3,7 +3,7 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.List;
 
-public class ListCommand : AsyncCommand<ListSettings>
+internal class ListCommand : AsyncCommand<ListSettings>
 {
     private readonly IAllImagesQuery _allImagesQuery;
 

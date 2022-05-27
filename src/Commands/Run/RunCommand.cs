@@ -4,7 +4,7 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.Run;
 
-public class RunCommand : AsyncCommand<RunSettings>
+internal class RunCommand : AsyncCommand<RunSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IAllImagesQuery _allImagesQuery;

@@ -8,4 +8,5 @@ public class Image
     public string Name { get; set; } = null!;
     public bool Existing { get; set; }
     public DateTime? Created { get; set; }
+    public bool Running { get; set; }
 }

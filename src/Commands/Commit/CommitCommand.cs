@@ -6,20 +6,20 @@ namespace port.Commands.Commit;
 internal class CommitCommand : AsyncCommand<CommitSettings>
 {
     private readonly ICreateImageFromContainerCommand _createImageFromContainerCommand;
-    private readonly IGetRunningContainersQuery _getRunningContainersQuery;
+    private readonly IGetRunningContainerQuery _getRunningContainerQuery;
 
     public CommitCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
-        IGetRunningContainersQuery getRunningContainersQuery)
+        IGetRunningContainerQuery getRunningContainerQuery)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
-        _getRunningContainersQuery = getRunningContainersQuery;
+        _getRunningContainerQuery = getRunningContainerQuery;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
     {
         var tag = settings.Tag ?? $"{DateTime.Now:yyyyMMddhhmmss}";
 
-        var container = await _getRunningContainersQuery.QueryAsync();
+        var container = await _getRunningContainerQuery.QueryAsync();
         if (container == null)
         {
             throw new InvalidOperationException("No running container found");
