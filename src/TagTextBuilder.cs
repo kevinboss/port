@@ -1,4 +1,5 @@
 using System.Text;
+using Spectre.Console;
 
 namespace port;
 
@@ -12,7 +13,7 @@ public static class TagTextBuilder
         switch (image.IsSnapshot)
         {
             case false when !image.Existing:
-                sb.Append($" [red]missing[/]");
+                sb.Append(" [red]missing[/]");
                 break;
             case false when image.Existing:
                 sb.Append($" ({image.Created.ToString()})");
@@ -21,6 +22,8 @@ public static class TagTextBuilder
                 sb.Append($" ({image.Created.ToString()})");
                 break;
         }
+        if (image.Running) 
+            sb.Append(" [running]".EscapeMarkup());
 
         return sb.ToString();
     }

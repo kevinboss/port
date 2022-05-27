@@ -9,12 +9,15 @@ internal class AllImagesQuery : IAllImagesQuery
     private readonly IDockerClient _dockerClient;
     private readonly Config.Config _config;
     private readonly IGetImageQuery _getImageQuery;
+    private readonly IGetRunningContainerQuery _getRunningContainerQuery;
 
-    public AllImagesQuery(IDockerClient dockerClient, Config.Config config, IGetImageQuery getImageQuery)
+    public AllImagesQuery(IDockerClient dockerClient, Config.Config config, IGetImageQuery getImageQuery,
+        IGetRunningContainerQuery getRunningContainerQuery)
     {
         _dockerClient = dockerClient;
         _config = config;
         _getImageQuery = getImageQuery;
+        _getRunningContainerQuery = getRunningContainerQuery;
     }
 
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
@@ -36,6 +39,7 @@ internal class AllImagesQuery : IAllImagesQuery
         IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
         Config.Config.ImageConfig imageConfig)
     {
+        var runningContainer = await _getRunningContainerQuery.QueryAsync();
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>
@@ -62,7 +66,10 @@ internal class AllImagesQuery : IAllImagesQuery
                     Tag = tag,
                     IsSnapshot = true,
                     Existing = true,
-                    Created = e.Created
+                    Created = e.Created,
+                    Running = runningContainer != null
+                        && imageConfig.Identifier == runningContainer.Identifier
+                        && tag == runningContainer.Tag
                 };
             });
     }
@@ -74,6 +81,7 @@ internal class AllImagesQuery : IAllImagesQuery
 
     private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
     {
+        var runningContainer = await _getRunningContainerQuery.QueryAsync();
         foreach (var tag in imageConfig.ImageTags)
         {
             var imagesListResponse = await _getImageQuery.QueryAsync(imageConfig.ImageName, tag);
@@ -84,7 +92,10 @@ internal class AllImagesQuery : IAllImagesQuery
                 Tag = tag,
                 IsSnapshot = false,
                 Existing = imagesListResponse != null,
-                Created = imagesListResponse?.Created
+                Created = imagesListResponse?.Created,
+                Running = runningContainer != null
+                          && imageConfig.Identifier == runningContainer.Identifier
+                          && tag == runningContainer.Tag
             };
         }
     }
