@@ -11,7 +11,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         _allImagesQuery = allImagesQuery;
     }
 
-    public async Task<(string identifier, string tag)> GetBaseIdentifierFromUserAsync(string command)
+    public async Task<(string identifier, string? tag)> GetBaseIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
@@ -31,7 +31,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         return (selectedImage.Identifier, selectedImage.Tag);
     }
 
-    public async Task<(string identifier, string tag)> GetIdentifierFromUserAsync(string command, bool hideMissing = false)
+    public async Task<(string identifier, string? tag)> GetIdentifierFromUserAsync(string command, bool hideMissing)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
@@ -43,7 +43,8 @@ internal class IdentifierPrompt : IIdentifierPrompt
 
             selectionPrompt.AddChoiceGroup($"[yellow]{imageGroup.Identifier} Tags[/]",
                 imageGroup.Images
-                    .Where(e => !hideMissing || e.Existing)
+                    .Where(e => !hideMissing || e.Existing || e.Tag != null)
+                    .Where(e => e.Tag != null)
                     .OrderBy(e => e.Tag));
         }
 
