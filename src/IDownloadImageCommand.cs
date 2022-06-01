@@ -2,5 +2,5 @@ namespace port;
 
 public interface IDownloadImageCommand
 {
-    Task ExecuteAsync(string imageName, string tag);
+    Task ExecuteAsync(string imageName, string? tag);
 }

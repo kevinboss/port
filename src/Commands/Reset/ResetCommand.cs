@@ -31,20 +31,20 @@ internal class ResetCommand : AsyncCommand<ResetSettings>
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Removing container {ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag)}",
+            .StartAsync($"Removing container {ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag)}",
                 _ => _stopAndRemoveContainerCommand.ExecuteAsync(container.Id));
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Creating container {ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag)}",
+            .StartAsync($"Creating container {ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag)}",
                 _ => _createContainerCommand.ExecuteAsync(container));
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching container {ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag)}",
+            .StartAsync($"Launching container {ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag)}",
                 _ => _runContainerCommand.ExecuteAsync(container));
         
-        AnsiConsole.WriteLine($"Currently running container {container.Identifier} resetted");
+        AnsiConsole.WriteLine($"Currently running container {container.ContainerName} resetted");
 
         return 0;
     }

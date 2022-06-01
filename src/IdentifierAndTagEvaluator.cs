@@ -9,7 +9,7 @@ internal class IdentifierAndTagEvaluator : IIdentifierAndTagEvaluator
         _config = config;
     }
 
-    public (string identifier, string tag) Evaluate(string imageIdentifier)
+    public (string identifier, string? tag) Evaluate(string imageIdentifier)
     {
         if (ImageNameHelper.TryGetImageNameAndTag(imageIdentifier, out var identifierAndTag))
         {

@@ -10,15 +10,28 @@ public class Container
         var containerNameAndTag = ContainerNameHelper.GetContainerNameAndTag(containerName);
         var imageNameAndTag = ImageNameHelper.GetImageNameAndTag(containerListResponse.Image);
         Id = containerListResponse.ID;
-        Identifier = containerNameAndTag.identifier;
-        ImageName = imageNameAndTag.imageName;
-        Tag = imageNameAndTag.tag;
+        ContainerName = containerNameAndTag.containerName;
+        ContainerTag = containerNameAndTag.tag;
+        if (containerNameAndTag.tag == imageNameAndTag.tag)
+        {
+            ImageName = imageNameAndTag.imageName;
+            ImageTag = imageNameAndTag.tag;
+        }
+        else
+        {
+            ImageName = containerListResponse.Image;
+            ImageTag = null;
+        }
+
         Ports = containerListResponse.Ports;
+        Running = containerListResponse.State == "running";
     }
 
     public string Id { get; }
-    public string Identifier { get; }
+    public string ContainerName { get; }
+    public string? ContainerTag { get; }
     public string ImageName { get; }
-    public string Tag { get; }
+    public string? ImageTag { get; }
     public IList<Port> Ports { get; }
+    public bool Running { get; }
 }

@@ -51,29 +51,24 @@ internal class RunCommand : AsyncCommand<RunSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
+    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
     {
         if (settings.ImageIdentifier != null)
         {
             return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _identifierPrompt.GetIdentifierFromUserAsync("run");
+        var identifierAndTag = await _identifierPrompt.GetIdentifierFromUserAsync("run", false);
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
     private async Task TerminateOtherContainers(string identifier, string? tag)
     {
-        var imageNames = new List<(string imageName, string tag)>();
-        await foreach (var imageName in GetImageNamesExceptAsync(identifier, tag))
-        {
-            imageNames.Add(imageName);
-        }
-
+        var imageNames = await GetImageNamesExceptAsync(identifier, tag).ToListAsync();
         await _terminateContainersCommand.ExecuteAsync(imageNames);
     }
 
-    private async IAsyncEnumerable<(string Name, string Tag)> GetImageNamesExceptAsync(string identifier, string? tag)
+    private async IAsyncEnumerable<(string Name, string? Tag)> GetImageNamesExceptAsync(string identifier, string? tag)
     {
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
@@ -84,7 +79,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
         }
     }
 
-    private async Task LaunchImageAsync(string identifier, string tag)
+    private async Task LaunchImageAsync(string identifier, string? tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
@@ -112,7 +107,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
         await RunContainerAsync(identifier, tag);
     }
 
-    private async Task RemoveContainerByIdentifierAsync(string identifier, string tag)
+    private async Task RemoveContainerByIdentifierAsync(string identifier, string? tag)
     {
         var containers = (await _getContainersQuery.QueryByIdentifierAsync(identifier, tag)).ToList();
         if (!containers.Any())
@@ -128,13 +123,14 @@ internal class RunCommand : AsyncCommand<RunSettings>
                     foreach (var container in containers)
                     {
                         await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                        await _removeImageCommand.ExecuteAsync(container.ImageName, container.Tag);
+                        if (container.ImageTag != null)
+                            await _removeImageCommand.ExecuteAsync(container.ImageName, container.ImageTag);
                     }
                 });
         AnsiConsole.WriteLine($"Containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)} removed");
     }
 
-    private async Task CreateContainerAsync(string identifier, string tag, string imageName, List<string> ports)
+    private async Task CreateContainerAsync(string identifier, string? tag, string imageName, List<string> ports)
     {
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
@@ -143,7 +139,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
         AnsiConsole.WriteLine($"Container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)} created");
     }
 
-    private async Task RunContainerAsync(string identifier, string tag)
+    private async Task RunContainerAsync(string identifier, string? tag)
     {
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)

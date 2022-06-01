@@ -12,8 +12,14 @@ internal class RemoveImageCommand : IRemoveImageCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string imageName, string tag)
+    public Task ExecuteAsync(string imageName, string? tag)
     {
-        return _dockerClient.Images.DeleteImageAsync(ImageNameHelper.JoinImageNameAndTag(imageName, tag), new ImageDeleteParameters());
+        if (tag == null)
+        {
+            throw new ArgumentException("Can not remove untagged images");
+        }
+
+        return _dockerClient.Images.DeleteImageAsync(ImageNameHelper.JoinImageNameAndTag(imageName, tag),
+            new ImageDeleteParameters());
     }
 }

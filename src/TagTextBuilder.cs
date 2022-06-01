@@ -8,7 +8,7 @@ public static class TagTextBuilder
     public static string BuildTagText(Image image)
     {
         var imageTypeText = image.IsSnapshot ? "Snapshot" : "Base";
-        var sb = new StringBuilder($"[blue]{image.Tag}");
+        var sb = new StringBuilder($"[blue]{image.Tag ?? "<none>".EscapeMarkup()}");
         sb.Append($" ({imageTypeText})[/]");
         switch (image.IsSnapshot)
         {
@@ -24,6 +24,8 @@ public static class TagTextBuilder
         }
         if (image.Running) 
             sb.Append(" [running]".EscapeMarkup());
+        if (image.CorrespondingContainerUsingDifferentImage) 
+            sb.Append($" [red]{"[container using different image]".EscapeMarkup()}[/]");
 
         return sb.ToString();
     }
