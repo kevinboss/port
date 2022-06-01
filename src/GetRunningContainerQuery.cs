@@ -17,15 +17,17 @@ internal class GetRunningContainerQuery : IGetRunningContainerQuery
     public async Task<Container?> QueryAsync()
     {
         var images = _config.ImageConfigs;
-        var imageNames = images.Select(image => image.ImageName).ToList();
+        var identifiers = images.Select(image => image.Identifier).ToList();
 
         var containers = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
             {
                 Limit = long.MaxValue
             });
-        var container = containers.SingleOrDefault(e =>
-            e.State == "running" && imageNames.Contains(ImageNameHelper.GetImageNameAndTag(e.Image).imageName));
-        return container != null ? new Container(container) : null;
+        return containers
+            .Select(e => new Container(e))
+            .SingleOrDefault(e =>
+            e.Running 
+            && identifiers.Contains(e.ContainerName));
     }
 }

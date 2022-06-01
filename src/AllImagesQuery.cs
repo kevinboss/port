@@ -25,12 +25,15 @@ internal class AllImagesQuery : IAllImagesQuery
         var imageConfigs = _config.ImageConfigs;
         foreach (var imageConfig in imageConfigs)
         {
-            var baseImages = await GetBaseImagesAsync(imageConfig).ToListAsync();
-            var snapshotImages = await GetSnapshotImagesAsync(imageConfigs, imageConfig);
+            var images = await GetBaseImagesAsync(imageConfig).ToListAsync();
+            images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
+            var untaggedImage = await GetUntaggedImageAsync(imageConfig);
+            if (untaggedImage != null)
+                images.Add(untaggedImage);
             yield return new ImageGroup
             {
                 Identifier = imageConfig.Identifier,
-                Images = snapshotImages.Concat(baseImages).ToList()
+                Images = images.ToList()
             };
         }
     }
@@ -59,6 +62,14 @@ internal class AllImagesQuery : IAllImagesQuery
             .Select(e =>
             {
                 var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
+                var running
+                    = runningContainer != null
+                      && imageConfig.Identifier == runningContainer.ContainerName
+                      && tag == runningContainer.ContainerTag;
+                var correspondingContainerUsingDifferentImage
+                    = running
+                      && runningContainer != null
+                      && runningContainer.ContainerTag != runningContainer.ImageTag;
                 return new Image
                 {
                     Identifier = imageConfig.Identifier,
@@ -67,16 +78,10 @@ internal class AllImagesQuery : IAllImagesQuery
                     IsSnapshot = true,
                     Existing = true,
                     Created = e.Created,
-                    Running = runningContainer != null
-                        && imageConfig.Identifier == runningContainer.Identifier
-                        && tag == runningContainer.Tag
+                    Running = running,
+                    CorrespondingContainerUsingDifferentImage = correspondingContainerUsingDifferentImage
                 };
             });
-    }
-
-    private static bool HasRepoTags(ImagesListResponse e)
-    {
-        return e.RepoTags != null;
     }
 
     private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
@@ -85,6 +90,14 @@ internal class AllImagesQuery : IAllImagesQuery
         foreach (var tag in imageConfig.ImageTags)
         {
             var imagesListResponse = await _getImageQuery.QueryAsync(imageConfig.ImageName, tag);
+            var running
+                = runningContainer != null
+                  && imageConfig.Identifier == runningContainer.ContainerName
+                  && tag == runningContainer.ContainerTag;
+            var correspondingContainerUsingDifferentImage
+                = running
+                  && runningContainer != null
+                  && runningContainer.ContainerTag != runningContainer.ImageTag;
             yield return new Image
             {
                 Identifier = imageConfig.Identifier,
@@ -93,11 +106,40 @@ internal class AllImagesQuery : IAllImagesQuery
                 IsSnapshot = false,
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created,
-                Running = runningContainer != null
-                          && imageConfig.Identifier == runningContainer.Identifier
-                          && tag == runningContainer.Tag
+                Running = running,
+                CorrespondingContainerUsingDifferentImage = correspondingContainerUsingDifferentImage
             };
         }
+    }
+
+    private async Task<Image?> GetUntaggedImageAsync(Config.Config.ImageConfig imageConfig)
+    {
+        var runningContainer = await _getRunningContainerQuery.QueryAsync();
+        var imagesListResponse = await _getImageQuery.QueryAsync(imageConfig.ImageName, null);
+        var running
+            = runningContainer != null
+              && imageConfig.Identifier == runningContainer.ContainerName
+              && runningContainer.ContainerTag == null;
+        if (imagesListResponse == null)
+        {
+            return null;
+        }
+
+        return new Image
+        {
+            Identifier = imageConfig.Identifier,
+            Name = imageConfig.ImageName,
+            Tag = null,
+            IsSnapshot = false,
+            Existing = true,
+            Created = imagesListResponse.Created,
+            Running = running
+        };
+    }
+
+    private static bool HasRepoTags(ImagesListResponse e)
+    {
+        return e.RepoTags != null;
     }
 
     private static bool IsNotBase(IEnumerable<Config.Config.ImageConfig> imageConfigs, ImagesListResponse e)

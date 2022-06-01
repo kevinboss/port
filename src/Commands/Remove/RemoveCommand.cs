@@ -34,7 +34,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
+    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
     {
         if (settings.ImageIdentifier != null)
         {
@@ -45,7 +45,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private async Task RemoveImageAsync(string identifier, string tag)
+    private async Task RemoveImageAsync(string identifier, string? tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;

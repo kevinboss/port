@@ -12,7 +12,7 @@ internal class GetImageQuery : IGetImageQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<ImagesListResponse?> QueryAsync(string imageName, string tag)
+    public async Task<ImagesListResponse?> QueryAsync(string imageName, string? tag)
     {
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
         {
@@ -27,13 +27,8 @@ internal class GetImageQuery : IGetImageQuery
             }
         });
         return imagesListResponses
-            .Where(HasRepoTags)
             .SingleOrDefault(e =>
-            e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageName, tag)));
-    }
-
-    private static bool HasRepoTags(ImagesListResponse e)
-    {
-        return e.RepoTags != null;
+                tag == null && e.RepoTags == null
+                || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageName, tag)));
     }
 }

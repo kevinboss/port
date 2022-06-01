@@ -26,7 +26,7 @@ public class PullCommand : AsyncCommand<PullSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string tag)> GetBaseIdentifierAndTagAsync(IIdentifierSettings settings)
+    private async Task<(string identifier, string? tag)> GetBaseIdentifierAndTagAsync(IIdentifierSettings settings)
     {
         if (settings.ImageIdentifier != null)
         {
@@ -37,7 +37,7 @@ public class PullCommand : AsyncCommand<PullSettings>
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private async Task PullImageAsync(string identifier, string tag)
+    private async Task PullImageAsync(string identifier, string? tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)

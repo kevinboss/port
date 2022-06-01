@@ -11,7 +11,7 @@ internal class DownloadImageCommand : IDownloadImageCommand
         _createImageCommand = createImageCommand;
     }
 
-    public async Task ExecuteAsync(string imageName, string tag)
+    public async Task ExecuteAsync(string imageName, string? tag)
     {
         AnsiConsole.WriteLine($"Downloading image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
         AnsiConsole.WriteLine();

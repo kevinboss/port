@@ -3,7 +3,7 @@ namespace port;
 public static class ImageNameHelper
 {
     private const string Separator = ":";
-    public static (string imageName, string tag) GetImageNameAndTag(string imageName)
+    public static (string imageName, string? tag) GetImageNameAndTag(string imageName)
     {
         var idx = imageName.LastIndexOf(Separator, StringComparison.Ordinal);
         if (idx == -1)
@@ -27,8 +27,5 @@ public static class ImageNameHelper
         return true;
     }
 
-    public static string JoinImageNameAndTag(string imageName, string tag)
-    {
-        return $"{imageName}{Separator}{tag}";
-    }
+    public static string JoinImageNameAndTag(string imageName, string? tag) => tag == null ? imageName : $"{imageName}{Separator}{tag}";
 }

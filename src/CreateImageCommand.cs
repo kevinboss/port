@@ -14,7 +14,7 @@ internal class CreateImageCommand : ICreateImageCommand
         _dockerClient = dockerClient;
     }
 
-    public async Task ExecuteAsync(string imageName, string tag)
+    public async Task ExecuteAsync(string imageName, string? tag)
     {
         var progress = new Progress<JSONMessage>();
 

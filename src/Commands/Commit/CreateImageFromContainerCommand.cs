@@ -19,7 +19,7 @@ internal class CreateImageFromContainerCommand : ICreateImageFromContainerComman
         {
             ContainerID = container.Id,
             RepositoryName = container.ImageName,
-            Tag = $"{container.Tag}-{tag}"
+            Tag = $"{container.ContainerTag}-{tag}"
         });
     }
 }

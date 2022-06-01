@@ -12,21 +12,20 @@ internal class TerminateContainersCommand : ITerminateContainersCommand
         _dockerClient = dockerClient;
     }
 
-    public async Task ExecuteAsync(IEnumerable<(string imageName, string tag)> imageNames)
+    public async Task ExecuteAsync(IEnumerable<(string imageName, string? tag)> imageNames)
     {
-        var containers = await _dockerClient.Containers
+        var containers = (await _dockerClient.Containers
             .ListContainersAsync(new ContainersListParameters
             {
                 Limit = long.MaxValue
-            });
+            })).Select(e => new Container(e));
 
-        foreach (var containerListResponse in containers
-                     .Where(e => ImageNameHelper.TryGetImageNameAndTag(e.Image, out var nameAndTag)
-                                 && imageNames.Any(imageNameAndTag =>
-                                     imageNameAndTag.imageName == nameAndTag.imageName &&
-                                     imageNameAndTag.tag == nameAndTag.tag)))
+        foreach (var container in containers
+                     .Where(e => imageNames.Any(imageNameAndTag =>
+                         imageNameAndTag.imageName == e.ImageName &&
+                         imageNameAndTag.tag == e.ImageTag)))
         {
-            await _dockerClient.Containers.StopContainerAsync(containerListResponse.ID,
+            await _dockerClient.Containers.StopContainerAsync(container.Id,
                 new ContainerStopParameters());
         }
     }
