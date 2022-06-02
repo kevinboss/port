@@ -24,8 +24,6 @@ public static class TagTextBuilder
         }
         if (image.Running) 
             sb.Append(" [running]".EscapeMarkup());
-        if (image.CorrespondingContainerUsingDifferentImage) 
-            sb.Append($" [red]{"[container using different image]".EscapeMarkup()}[/]");
 
         return sb.ToString();
     }

@@ -24,11 +24,16 @@ internal class ListCommand : AsyncCommand<ListSettings>
     {
         var imageGroups = _allImagesQuery.QueryAsync();
         var root = new Tree("Images");
-        await foreach (var imageGroup in imageGroups)
+        await foreach (var imageGroup in imageGroups.Where(e =>
+                           imageIdentifier == null || e.Identifier == imageIdentifier))
         {
             if (imageGroup.Identifier == null) continue;
 
-            var imageNode = root.AddNode($"[yellow]{imageGroup.Identifier} Tags[/]");
+
+            var nodeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
+            if (imageGroup.Images.Any(e => e.Tag == null))
+                nodeHeader = $"{nodeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
+            var imageNode = root.AddNode(nodeHeader);
 
             foreach (var image in imageGroup.Images
                          .OrderBy(e => e.Tag))

@@ -9,5 +9,4 @@ public class Image
     public bool Existing { get; set; }
     public DateTime? Created { get; set; }
     public bool Running { get; set; }
-    public bool CorrespondingContainerUsingDifferentImage { get; set; }
 }

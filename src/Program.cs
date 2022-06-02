@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using port;
 using port.Commands.Commit;
 using port.Commands.List;
+using port.Commands.Prune;
 using port.Commands.Pull;
 using port.Commands.Remove;
 using port.Commands.Reset;
@@ -46,12 +47,12 @@ var app = new CommandApp(registrar);
 
 app.Configure(appConfig =>
 {
-    appConfig.AddCommand<RunCommand>("run");
-    appConfig.AddCommand<ListCommand>("list");
-    appConfig.AddCommand<CommitCommand>("commit");
-    appConfig.AddCommand<RemoveCommand>("remove");
     appConfig.AddCommand<PullCommand>("pull");
+    appConfig.AddCommand<RunCommand>("run");
     appConfig.AddCommand<ResetCommand>("reset");
+    appConfig.AddCommand<CommitCommand>("commit");
+    appConfig.AddCommand<ListCommand>("list");
+    appConfig.AddCommand<RemoveCommand>("remove");
 });
 
 return app.Run(args);

@@ -47,6 +47,11 @@ internal class RunCommand : AsyncCommand<RunSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync("Terminating containers of other images", _ => TerminateOtherContainers(identifier, tag));
+        if (tag == null)
+        {
+            throw new InvalidOperationException("Can not launch untagged image");
+        }
+
         await LaunchImageAsync(identifier, tag);
         return 0;
     }
@@ -58,7 +63,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
             return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _identifierPrompt.GetIdentifierFromUserAsync("run", false);
+        var identifierAndTag = await _identifierPrompt.GetDownloadedIdentifierFromUserAsync("run", true);
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
@@ -79,7 +84,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
         }
     }
 
-    private async Task LaunchImageAsync(string identifier, string? tag)
+    private async Task LaunchImageAsync(string identifier, string tag)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
@@ -123,8 +128,11 @@ internal class RunCommand : AsyncCommand<RunSettings>
                     foreach (var container in containers)
                     {
                         await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                        if (container.ImageTag != null)
-                            await _removeImageCommand.ExecuteAsync(container.ImageName, container.ImageTag);
+                        var image = await _getImageQuery.QueryAsync(container.ImageName, container.ImageTag);
+                        if (image == null)
+                            throw new InvalidOperationException(
+                                $"Could not find image {ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ImageTag)}");
+                        await _removeImageCommand.ExecuteAsync(image.ID);
                     }
                 });
         AnsiConsole.WriteLine($"Containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)} removed");
