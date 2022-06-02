@@ -21,9 +21,13 @@ internal class IdentifierPrompt : IIdentifierPrompt
                 continue;
             }
 
-            selectionPrompt.AddChoiceGroup($"[yellow]{imageGroup.Identifier} Tags[/]",
+            var nodeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
+            if (imageGroup.Images.Any(e => e.Tag == null))
+                nodeHeader = $"{nodeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
+            selectionPrompt.AddChoiceGroup(nodeHeader,
                 imageGroup.Images
                     .Where(e => !e.IsSnapshot)
+                    .Where(e => e.Tag != null)
                     .OrderBy(e => e.Tag));
         }
 
@@ -31,7 +35,8 @@ internal class IdentifierPrompt : IIdentifierPrompt
         return (selectedImage.Identifier, selectedImage.Tag);
     }
 
-    public async Task<(string identifier, string? tag)> GetIdentifierFromUserAsync(string command, bool hideMissing)
+    public async Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command,
+        bool hideUntagged = false)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
@@ -41,10 +46,13 @@ internal class IdentifierPrompt : IIdentifierPrompt
                 continue;
             }
 
-            selectionPrompt.AddChoiceGroup($"[yellow]{imageGroup.Identifier} Tags[/]",
+            var nodeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
+            if (imageGroup.Images.Any(e => e.Tag == null))
+                nodeHeader = $"{nodeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
+            selectionPrompt.AddChoiceGroup(nodeHeader,
                 imageGroup.Images
-                    .Where(e => !hideMissing || e.Existing || e.Tag != null)
-                    .Where(e => e.Tag != null)
+                    .Where(e => e.Existing)
+                    .Where(e => !hideUntagged || e.Tag != null)
                     .OrderBy(e => e.Tag));
         }
 
