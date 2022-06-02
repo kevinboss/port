@@ -27,9 +27,7 @@ internal class AllImagesQuery : IAllImagesQuery
         {
             var images = await GetBaseImagesAsync(imageConfig).ToListAsync();
             images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
-            var untaggedImage = await GetUntaggedImageAsync(imageConfig);
-            if (untaggedImage != null)
-                images.Add(untaggedImage);
+            images.AddRange(await GetUntaggedImagesAsync(imageConfig).ToListAsync());
             yield return new ImageGroup
             {
                 Identifier = imageConfig.Identifier,
@@ -43,18 +41,8 @@ internal class AllImagesQuery : IAllImagesQuery
         Config.Config.ImageConfig imageConfig)
     {
         var runningContainer = await _getRunningContainerQuery.QueryAsync();
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
-        {
-            Filters = new Dictionary<string, IDictionary<string, bool>>
-            {
-                {
-                    "reference", new Dictionary<string, bool>
-                    {
-                        { imageConfig.ImageName, true }
-                    }
-                }
-            }
-        });
+        var imageName = imageConfig.ImageName;
+        var imagesListResponses = await GetImagesByNameAsync(imageName);
         return imagesListResponses
             .Where(HasRepoTags)
             .Where(e => IsNotBase(imageConfigs, e))
@@ -78,8 +66,7 @@ internal class AllImagesQuery : IAllImagesQuery
                     IsSnapshot = true,
                     Existing = true,
                     Created = e.Created,
-                    Running = running,
-                    CorrespondingContainerUsingDifferentImage = correspondingContainerUsingDifferentImage
+                    Running = running
                 };
             });
     }
@@ -94,10 +81,6 @@ internal class AllImagesQuery : IAllImagesQuery
                 = runningContainer != null
                   && imageConfig.Identifier == runningContainer.ContainerName
                   && tag == runningContainer.ContainerTag;
-            var correspondingContainerUsingDifferentImage
-                = running
-                  && runningContainer != null
-                  && runningContainer.ContainerTag != runningContainer.ImageTag;
             yield return new Image
             {
                 Identifier = imageConfig.Identifier,
@@ -106,35 +89,49 @@ internal class AllImagesQuery : IAllImagesQuery
                 IsSnapshot = false,
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created,
-                Running = running,
-                CorrespondingContainerUsingDifferentImage = correspondingContainerUsingDifferentImage
+                Running = running
             };
         }
     }
 
-    private async Task<Image?> GetUntaggedImageAsync(Config.Config.ImageConfig imageConfig)
+    private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(Config.Config.ImageConfig imageConfig)
     {
         var runningContainer = await _getRunningContainerQuery.QueryAsync();
-        var imagesListResponse = await _getImageQuery.QueryAsync(imageConfig.ImageName, null);
-        var running
-            = runningContainer != null
-              && imageConfig.Identifier == runningContainer.ContainerName
-              && runningContainer.ContainerTag == null;
-        if (imagesListResponse == null)
+        var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
+        foreach (var imagesListResponse in imagesListResponses.Where(e => e.RepoTags == null))
         {
-            return null;
+            var running
+                = runningContainer != null
+                  && imageConfig.Identifier == runningContainer.ContainerName
+                  && runningContainer.ContainerTag == null;
+            yield return new Image
+            {
+                Identifier = imageConfig.Identifier,
+                Name = imageConfig.ImageName,
+                Tag = null,
+                IsSnapshot = false,
+                Existing = true,
+                Created = imagesListResponse.Created,
+                Running = running
+            };
         }
+    }
 
-        return new Image
+    private async Task<IList<ImagesListResponse>> GetImagesByNameAsync(string imageName)
+    {
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
         {
-            Identifier = imageConfig.Identifier,
-            Name = imageConfig.ImageName,
-            Tag = null,
-            IsSnapshot = false,
-            Existing = true,
-            Created = imagesListResponse.Created,
-            Running = running
-        };
+            Filters = new Dictionary<string, IDictionary<string, bool>>
+            {
+                {
+                    "reference", new Dictionary<string, bool>
+                    {
+                        { imageName, true }
+                    }
+                }
+            }
+        });
+        return imagesListResponses;
     }
 
     private static bool HasRepoTags(ImagesListResponse e)

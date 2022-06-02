@@ -1,3 +1,4 @@
+using port.Commands.Run;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -7,6 +8,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IGetContainersQuery _getContainersQuery;
+    private readonly IGetImageQuery _getImageQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
     private readonly Config.Config _config;
@@ -14,7 +16,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
 
     public RemoveCommand(IIdentifierPrompt identifierPrompt, IGetContainersQuery getContainersQuery, Config.Config config,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
-        IIdentifierAndTagEvaluator identifierAndTagEvaluator)
+        IIdentifierAndTagEvaluator identifierAndTagEvaluator, IGetImageQuery getImageQuery)
     {
         _identifierPrompt = identifierPrompt;
         _getContainersQuery = getContainersQuery;
@@ -22,6 +24,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _removeImageCommand = removeImageCommand;
         _identifierAndTagEvaluator = identifierAndTagEvaluator;
+        _getImageQuery = getImageQuery;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
@@ -41,7 +44,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
             return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _identifierPrompt.GetIdentifierFromUserAsync("remove", true);
+        var identifierAndTag = await _identifierPrompt.GetDownloadedIdentifierFromUserAsync("remove");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
@@ -55,7 +58,10 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
             await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
         }
 
-        await _removeImageCommand.ExecuteAsync(imageName, tag);
+        var image = await _getImageQuery.QueryAsync(imageName, tag);
+        if (image == null)
+            throw new InvalidOperationException($"Could not find image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
+        await _removeImageCommand.ExecuteAsync(image.ID);
         AnsiConsole.WriteLine($"Removed image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
     }
 }
