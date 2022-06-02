@@ -43,22 +43,34 @@ A default .port file will be created in your user profile of you don't manually 
 
 ### run \[identifier\]
 
+Allows the user the run a specified tag (base or snapshot) of an image.
+
 identifier is optional, if not provided the user will be asked to select an image.
 
 ### list \[identifier\]
+
+Lists all images with their respective tags.
 
 identifier is optional, if not provided all images will be listed. If provided all images belonging to the same identifier will be listed.
 
 ### commit -t(ag)
 
+Creates an image from the currently running container.
+
 -t(ag) is optional, if not provied current date-time will be used as the tag.
 
 ### reset
 
+Terminates and removes the currently running container. Then recreates the container using the image the running container was using.
+
 ### remove \[identifier\]
+
+Allows the user the delete a specified tag (base, snapshot or untagged) of an image.
 
 identifier is optional, if not provided the user will be asked to select an image.
 
 ### pull \[identifier\]
+
+Allows the user the pull a specified tag (base or snapshot) of an image.
 
 identifier is optional, if not provided the user will be asked to select an image.
