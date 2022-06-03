@@ -21,9 +21,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
                 continue;
             }
 
-            var nodeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
-            if (imageGroup.Images.Any(e => e.Tag == null))
-                nodeHeader = $"{nodeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
+            var nodeHeader = BuildNodeHeader(imageGroup);
             selectionPrompt.AddChoiceGroup(nodeHeader,
                 imageGroup.Images
                     .Where(e => !e.IsSnapshot)
@@ -35,8 +33,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         return (selectedImage.Identifier, selectedImage.Tag);
     }
 
-    public async Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command,
-        bool hideUntagged = false)
+    public async Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
@@ -46,18 +43,44 @@ internal class IdentifierPrompt : IIdentifierPrompt
                 continue;
             }
 
-            var nodeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
-            if (imageGroup.Images.Any(e => e.Tag == null))
-                nodeHeader = $"{nodeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
+            var nodeHeader = BuildNodeHeader(imageGroup);
             selectionPrompt.AddChoiceGroup(nodeHeader,
                 imageGroup.Images
                     .Where(e => e.Existing)
-                    .Where(e => !hideUntagged || e.Tag != null)
                     .OrderBy(e => e.Tag));
         }
 
         var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
         return (selectedImage.Identifier, selectedImage.Tag);
+    }
+
+    public async Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command)
+    {
+        var selectionPrompt = CreateSelectionPrompt(command);
+        await foreach (var imageGroup in _allImagesQuery.QueryAsync())
+        {
+            if (imageGroup.Identifier == null)
+            {
+                continue;
+            }
+
+            var nodeHeader = BuildNodeHeader(imageGroup);
+            selectionPrompt.AddChoiceGroup(nodeHeader,
+                imageGroup.Images
+                    .Where(e => e.Tag != null)
+                    .OrderBy(e => e.Tag));
+        }
+
+        var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
+        return (selectedImage.Identifier, selectedImage.Tag);
+    }
+
+    private static string BuildNodeHeader(ImageGroup imageGroup)
+    {
+        var nodeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
+        if (imageGroup.Images.Any(e => e.Tag == null))
+            nodeHeader = $"{nodeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
+        return nodeHeader;
     }
 
     private static SelectionPrompt<object> CreateSelectionPrompt(string command)

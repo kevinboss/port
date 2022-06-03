@@ -63,7 +63,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
             return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _identifierPrompt.GetDownloadedIdentifierFromUserAsync("run", true);
+        var identifierAndTag = await _identifierPrompt.GetRunnableIdentifierFromUserAsync("run");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
@@ -128,11 +128,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
                     foreach (var container in containers)
                     {
                         await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                        var image = await _getImageQuery.QueryAsync(container.ImageName, container.ImageTag);
-                        if (image == null)
-                            throw new InvalidOperationException(
-                                $"Could not find image {ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ImageTag)}");
-                        await _removeImageCommand.ExecuteAsync(image.ID);
+                        await _removeImageCommand.ExecuteAsync(ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ImageTag));
                     }
                 });
         AnsiConsole.WriteLine($"Containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)} removed");
