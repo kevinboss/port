@@ -41,8 +41,7 @@ internal class AllImagesQuery : IAllImagesQuery
         Config.Config.ImageConfig imageConfig)
     {
         var runningContainer = await _getRunningContainerQuery.QueryAsync();
-        var imageName = imageConfig.ImageName;
-        var imagesListResponses = await GetImagesByNameAsync(imageName);
+        var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         return imagesListResponses
             .Where(HasRepoTags)
             .Where(e => IsNotBase(imageConfigs, e))
@@ -54,10 +53,10 @@ internal class AllImagesQuery : IAllImagesQuery
                     = runningContainer != null
                       && imageConfig.Identifier == runningContainer.ContainerName
                       && tag == runningContainer.ContainerTag;
-                var correspondingContainerUsingDifferentImage
+                var runningUntaggedImage
                     = running
                       && runningContainer != null
-                      && runningContainer.ContainerTag != runningContainer.ImageTag;
+                      && runningContainer.ImageTag != tag;
                 return new Image
                 {
                     Identifier = imageConfig.Identifier,
@@ -66,7 +65,8 @@ internal class AllImagesQuery : IAllImagesQuery
                     IsSnapshot = true,
                     Existing = true,
                     Created = e.Created,
-                    Running = running
+                    Running = running,
+                    RunningUntaggedImage = runningUntaggedImage
                 };
             });
     }
@@ -81,6 +81,10 @@ internal class AllImagesQuery : IAllImagesQuery
                 = runningContainer != null
                   && imageConfig.Identifier == runningContainer.ContainerName
                   && tag == runningContainer.ContainerTag;
+            var runningUntaggedImage
+                = running
+                  && runningContainer != null
+                  && runningContainer.ImageTag != tag;
             yield return new Image
             {
                 Identifier = imageConfig.Identifier,
@@ -89,7 +93,8 @@ internal class AllImagesQuery : IAllImagesQuery
                 IsSnapshot = false,
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created,
-                Running = running
+                Running = running,
+                RunningUntaggedImage = runningUntaggedImage
             };
         }
     }
@@ -112,7 +117,8 @@ internal class AllImagesQuery : IAllImagesQuery
                 IsSnapshot = false,
                 Existing = true,
                 Created = imagesListResponse.Created,
-                Running = running
+                Running = running,
+                RunningUntaggedImage = false
             };
         }
     }
