@@ -23,10 +23,10 @@ public static class TagTextBuilder
                 break;
         }
 
-        if (image.Running)
+        if (image.Running && !image.RunningUntaggedImage)
             sb.Append(" [running]".EscapeMarkup());
-        if (image.Tag == null)
-            sb.Append($" [blue]{"[uses untagged image]".EscapeMarkup()}[/]");
+        if (image.Running && image.RunningUntaggedImage)
+            sb.Append(" [running untagged image]".EscapeMarkup());
 
         return sb.ToString();
     }
