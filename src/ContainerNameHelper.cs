@@ -28,8 +28,5 @@ public static class ContainerNameHelper
         return true;
     }
 
-    public static string JoinContainerNameAndTag(string containerName, string? tag)
-    {
-        return $"{containerName}{Separator}{tag}";
-    }
+    public static string JoinContainerNameAndTag(string containerName, string? tag) => $"{containerName}{Separator}{tag}";
 }
