@@ -2,6 +2,7 @@ namespace port;
 
 public interface IGetContainersQuery
 {
-    Task<Container?> QueryByImageAsync(string imageName, string? tag);
-    Task<IEnumerable<Container>> QueryByIdentifierAsync(string identifier, string? tag);
+    Task<IEnumerable<Container>> QueryByImageNameAndTagAsync(string imageName, string? tag);
+    Task<IEnumerable<Container>> QueryByImageIdAsync(string imageId);
+    Task<IEnumerable<Container>> QueryByContainerNameAndTagAsync(string containerName, string? tag);
 }
