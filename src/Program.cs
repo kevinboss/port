@@ -53,6 +53,7 @@ app.Configure(appConfig =>
     appConfig.AddCommand<CommitCommand>("commit");
     appConfig.AddCommand<ListCommand>("list");
     appConfig.AddCommand<RemoveCommand>("remove");
+    appConfig.AddCommand<PruneCommand>("prune");
 });
 
 return app.Run(args);

@@ -44,15 +44,18 @@ internal class RunCommand : AsyncCommand<RunSettings>
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
     {
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
+        if (tag == null)
+            throw new InvalidOperationException("Can not launch untagged image");
+
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync("Terminating containers of other images", _ => TerminateOtherContainers(identifier, tag));
-        if (tag == null)
-        {
-            throw new InvalidOperationException("Can not launch untagged image");
-        }
-
-        await LaunchImageAsync(identifier, tag);
+            .StartAsync("Terminating containers of other images",
+                _ => TerminateOtherContainers(identifier, tag));
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync($"Launching {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}",
+                _ => LaunchImageAsync(identifier, tag));
+        AnsiConsole.WriteLine($"Launched {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}");
         return 0;
     }
 
@@ -95,60 +98,36 @@ internal class RunCommand : AsyncCommand<RunSettings>
 
         var imageName = imageConfig.ImageName;
         var ports = imageConfig.Ports;
-        var container = await _getContainersQuery.QueryByImageAsync(imageName, tag);
-        if (container == null)
+        if (await _getImageQuery.QueryAsync(imageName, tag) == null)
+            await _downloadImageCommand.ExecuteAsync(imageName, tag);
+        await RemoveUntaggedContainersAndImageAsync(identifier, tag);
+        var containers = (await _getContainersQuery.QueryByImageNameAndTagAsync(imageName, tag)).ToList();
+        switch (containers.Count)
         {
-            var imagesListResponse = await _getImageQuery.QueryAsync(imageName, tag);
-            if (imagesListResponse == null)
-            {
-                await _downloadImageCommand.ExecuteAsync(imageName, tag);
-            }
-
-            await RemoveContainerByIdentifierAsync(identifier, tag);
-
-            await CreateContainerAsync(identifier, tag, imageName, ports);
+            case > 1:
+                throw new InvalidOperationException(
+                    $"There should only be one container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}");
+            case 0:
+                await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
+                break;
         }
 
-        await RunContainerAsync(identifier, tag);
+        await _runContainerCommand.ExecuteAsync(identifier, tag);
     }
 
-    private async Task RemoveContainerByIdentifierAsync(string identifier, string? tag)
+    private async Task RemoveUntaggedContainersAndImageAsync(string identifier, string tag)
     {
-        var containers = (await _getContainersQuery.QueryByIdentifierAsync(identifier, tag)).ToList();
+        var containers = (await _getContainersQuery.QueryByContainerNameAndTagAsync(identifier, tag)).ToList();
         if (!containers.Any())
         {
             return;
         }
 
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Removing containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)}",
-                async _ =>
-                {
-                    foreach (var container in containers)
-                    {
-                        await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                        await _removeImageCommand.ExecuteAsync(ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ImageTag));
-                    }
-                });
-        AnsiConsole.WriteLine($"Containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)} removed");
-    }
-
-    private async Task CreateContainerAsync(string identifier, string? tag, string imageName, List<string> ports)
-    {
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Creating container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}",
-                _ => _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports));
-        AnsiConsole.WriteLine($"Container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)} created");
-    }
-
-    private async Task RunContainerAsync(string identifier, string? tag)
-    {
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}",
-                _ => _runContainerCommand.ExecuteAsync(identifier, tag));
-        AnsiConsole.WriteLine($"Container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)} launched");
+        foreach (var container in containers.Where(e => e.ImageTag == null))
+        {
+            await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+            await _removeImageCommand.ExecuteAsync(
+                ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ImageTag));
+        }
     }
 }
