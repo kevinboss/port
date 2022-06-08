@@ -31,20 +31,16 @@ internal class ResetCommand : AsyncCommand<ResetSettings>
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Removing container {ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag)}",
-                _ => _stopAndRemoveContainerCommand.ExecuteAsync(container.Id));
-
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Creating container {ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag)}",
-                _ => _createContainerCommand.ExecuteAsync(container));
-
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching container {ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag)}",
-                _ => _runContainerCommand.ExecuteAsync(container));
-        
-        AnsiConsole.WriteLine($"Currently running container {container.ContainerName} resetted");
+            .StartAsync(
+                $"Resetting container {ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag)}",
+                async _ =>
+                {
+                    await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+                    await _createContainerCommand.ExecuteAsync(container);
+                    await _runContainerCommand.ExecuteAsync(container);
+                });
+        AnsiConsole.WriteLine(
+            $"Currently running container {ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag)} resetted");
 
         return 0;
     }

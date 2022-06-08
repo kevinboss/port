@@ -12,20 +12,7 @@ internal class GetContainersQuery : IGetContainersQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<Container?> QueryByImageAsync(string imageName, string? tag)
-    {
-        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
-            new ContainersListParameters
-            {
-                Limit = long.MaxValue
-            });
-        var container = containerListResponses.SingleOrDefault(e =>
-            ImageNameHelper.TryGetImageNameAndTag(e.Image, out var imageNameAndTag)
-            && imageName == imageNameAndTag.imageName && tag == imageNameAndTag.tag);
-        return container != null ? new Container(container) : null;
-    }
-
-    public async Task<IEnumerable<Container>> QueryByIdentifierAsync(string identifier, string? tag)
+    public async Task<IEnumerable<Container>> QueryByImageNameAndTagAsync(string imageName, string? tag)
     {
         var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
@@ -33,11 +20,31 @@ internal class GetContainersQuery : IGetContainersQuery
                 Limit = long.MaxValue
             });
         return containerListResponses
-            .Where(e =>
+            .Select(e => new Container(e))
+            .Where(e => imageName == e.ImageName && tag == e.ImageTag);
+    }
+
+    public async Task<IEnumerable<Container>> QueryByImageIdAsync(string imageId)
+    {
+        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
+            new ContainersListParameters
             {
-                var containerName = e.Names.Single().Remove(0, 1);
-                return ContainerNameHelper.TryGetContainerNameAndTag(containerName, out var containerNameAndTag)
-                       && identifier == containerNameAndTag.identifier && tag == containerNameAndTag.tag;
-            }).Select(e => new Container(e));
+                Limit = long.MaxValue
+            });
+        return containerListResponses
+            .Where(e => e.ImageID == imageId)
+            .Select(e => new Container(e));
+    }
+
+    public async Task<IEnumerable<Container>> QueryByContainerNameAndTagAsync(string containerName, string? tag)
+    {
+        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
+            new ContainersListParameters
+            {
+                Limit = long.MaxValue
+            });
+        return containerListResponses
+            .Select(e => new Container(e))
+            .Where(e => containerName == e.ContainerName && tag == e.ContainerTag);
     }
 }

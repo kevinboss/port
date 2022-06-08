@@ -7,4 +7,5 @@ public interface IIdentifierPrompt
     Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command);
 
     Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command);
+    Task<string> GetUntaggedIdentifierFromUserAsync(string command);
 }

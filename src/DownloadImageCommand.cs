@@ -60,6 +60,6 @@ internal class DownloadImageCommand : IDownloadImageCommand
                 }
             });
 
-        AnsiConsole.WriteLine($"Image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)} downloaded");
+        AnsiConsole.WriteLine($"Finished downloading Image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
     }
 }

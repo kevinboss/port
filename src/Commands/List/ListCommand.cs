@@ -36,6 +36,7 @@ internal class ListCommand : AsyncCommand<ListSettings>
             var imageNode = root.AddNode(nodeHeader);
 
             foreach (var image in imageGroup.Images
+                         .Where(e => e.Tag != null)
                          .OrderBy(e => e.Tag))
             {
                 imageNode.AddNode(TagTextBuilder.BuildTagText(image));
