@@ -23,26 +23,23 @@ internal class ListCommand : AsyncCommand<ListSettings>
     private async Task LoadImages(string? imageIdentifier)
     {
         var imageGroups = _allImagesQuery.QueryAsync();
-        var root = new Tree("Images");
         await foreach (var imageGroup in imageGroups.Where(e =>
                            imageIdentifier == null || e.Identifier == imageIdentifier))
         {
             if (imageGroup.Identifier == null) continue;
 
-
-            var nodeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
+            var treeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
             if (imageGroup.Images.Any(e => e.Tag == null))
-                nodeHeader = $"{nodeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
-            var imageNode = root.AddNode(nodeHeader);
-
+                treeHeader = $"{treeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
+            var root = new Tree(treeHeader);
             foreach (var image in imageGroup.Images
                          .Where(e => e.Tag != null)
                          .OrderBy(e => e.Tag))
             {
-                imageNode.AddNode(TagTextBuilder.BuildTagText(image));
+                root.AddNode(TagTextBuilder.BuildTagText(image));
             }
-        }
 
-        AnsiConsole.Write(root);
+            AnsiConsole.Write(root);
+        }
     }
 }
