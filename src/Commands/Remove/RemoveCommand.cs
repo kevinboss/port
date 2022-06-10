@@ -34,7 +34,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Removing {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}",
-                _ => RemoveImageAsync(identifier, tag));
+                ctx => RemoveImageAsync(identifier, tag, ctx));
         return 0;
     }
 
@@ -49,21 +49,16 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private async Task RemoveImageAsync(string identifier, string? tag)
+    private async Task RemoveImageAsync(string identifier, string? tag, StatusContext ctx)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
         var containers = await _getContainersQuery.QueryByImageNameAndTagAsync(imageName, tag);
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Removing containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)}",
-                async _ =>
-                {
-                    foreach (var container in containers)
-                    {
-                        await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                    }
-                });
+        ctx.Status = $"Removing containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)}";
+        foreach (var container in containers)
+        {
+            await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+        }
         AnsiConsole.WriteLine($"Containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)} removed");
 
         var image = await _getImageQuery.QueryAsync(imageName, tag);
