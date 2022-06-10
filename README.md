@@ -74,3 +74,9 @@ identifier is optional, if not provided the user will be asked to select an imag
 Allows the user the pull a specified tag (base or snapshot) of an image.
 
 identifier is optional, if not provided the user will be asked to select an image.
+
+### prune \[identifier\]
+
+Allows the user the remove untagged versions of an image.
+
+identifier is optional, if not provided the user will be asked to select an image.
