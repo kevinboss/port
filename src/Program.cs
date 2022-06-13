@@ -47,13 +47,20 @@ var app = new CommandApp(registrar);
 
 app.Configure(appConfig =>
 {
-    appConfig.AddCommand<PullCommand>("pull");
-    appConfig.AddCommand<RunCommand>("run");
-    appConfig.AddCommand<ResetCommand>("reset");
-    appConfig.AddCommand<CommitCommand>("commit");
-    appConfig.AddCommand<ListCommand>("list");
-    appConfig.AddCommand<RemoveCommand>("remove");
-    appConfig.AddCommand<PruneCommand>("prune");
+    appConfig.AddCommand<PullCommand>("pull")
+        .WithAlias("p");
+    appConfig.AddCommand<RunCommand>("run")
+        .WithAlias("r");
+    appConfig.AddCommand<ResetCommand>("reset")
+        .WithAlias("rs");
+    appConfig.AddCommand<CommitCommand>("commit")
+        .WithAlias("c");
+    appConfig.AddCommand<ListCommand>("list")
+        .WithAlias("ls");
+    appConfig.AddCommand<RemoveCommand>("remove")
+        .WithAlias("rm");
+    appConfig.AddCommand<PruneCommand>("prune")
+        .WithAlias("pr");
 });
 
 return app.Run(args);
