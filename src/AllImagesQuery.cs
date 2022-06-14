@@ -28,6 +28,11 @@ internal class AllImagesQuery : IAllImagesQuery
             var images = await GetBaseImagesAsync(imageConfig).ToListAsync();
             images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
             images.AddRange(await GetUntaggedImagesAsync(imageConfig).ToListAsync());
+            var imagesById = images.Where(e => e.Id != null).ToDictionary(e => e.Id!, image => image);
+            foreach (var image in images.Where(image => image.ParentId != null))
+            {
+                image.Parent = imagesById[image.ParentId!];
+            }
             yield return new ImageGroup
             {
                 Identifier = imageConfig.Identifier,
@@ -66,7 +71,9 @@ internal class AllImagesQuery : IAllImagesQuery
                     Existing = true,
                     Created = e.Created,
                     Running = running,
-                    RunningUntaggedImage = runningUntaggedImage
+                    RunningUntaggedImage = runningUntaggedImage,
+                    Id = e.ID,
+                    ParentId = string.IsNullOrEmpty(e?.ParentID) ? null : e.ParentID
                 };
             });
     }
@@ -94,7 +101,9 @@ internal class AllImagesQuery : IAllImagesQuery
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created,
                 Running = running,
-                RunningUntaggedImage = runningUntaggedImage
+                RunningUntaggedImage = runningUntaggedImage,
+                Id = imagesListResponse?.ID,
+                ParentId = string.IsNullOrEmpty(imagesListResponse?.ParentID) ? null : imagesListResponse.ParentID
             };
         }
     }
@@ -118,7 +127,9 @@ internal class AllImagesQuery : IAllImagesQuery
                 Existing = true,
                 Created = imagesListResponse.Created,
                 Running = running,
-                RunningUntaggedImage = false
+                RunningUntaggedImage = false,
+                Id = imagesListResponse.ID,
+                ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID
             };
         }
     }

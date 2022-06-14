@@ -10,4 +10,7 @@ public class Image
     public DateTime? Created { get; set; }
     public bool Running { get; set; }
     public bool RunningUntaggedImage { get; set; }
+    public string? Id { get; set; }
+    public string? ParentId { get; set; }
+    public Image? Parent { get; set; }
 }

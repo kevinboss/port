@@ -8,7 +8,7 @@ public static class TagTextBuilder
     public static string BuildTagText(Image image)
     {
         var imageTypeText = image.IsSnapshot ? "Snapshot" : "Base";
-        var sb = new StringBuilder($"[blue]{image.Tag ?? "<none>".EscapeMarkup()}");
+        var sb = new StringBuilder($"[white]{image.Tag ?? "<none>".EscapeMarkup()}");
         sb.Append($" ({imageTypeText})[/]");
         switch (image.IsSnapshot)
         {
@@ -24,9 +24,11 @@ public static class TagTextBuilder
         }
 
         if (image.Running && !image.RunningUntaggedImage)
-            sb.Append(" [running]".EscapeMarkup());
+            sb.Append($" [green]running[/]");
         if (image.Running && image.RunningUntaggedImage)
             sb.Append(" [running untagged image]".EscapeMarkup());
+        if (image.Parent != null)
+            sb.Append($" [based on {image.Parent.Tag}]".EscapeMarkup());
 
         return sb.ToString();
     }
