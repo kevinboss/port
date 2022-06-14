@@ -33,7 +33,6 @@ internal class CreateImageCommand : ICreateImageCommand
     private IDisposable SubscribeToProgressChanged(Progress<JSONMessage> progress)
     {
         var lockObject = new object();
-        var taskSetUpData = new Dictionary<string, TaskSetUpData>();
         var publishedProgress = new Dictionary<string, Progress>();
         return Observable.FromEventPattern<JSONMessage>(
                 h => progress.ProgressChanged += h,
@@ -42,7 +41,7 @@ internal class CreateImageCommand : ICreateImageCommand
             {
                 lock (lockObject)
                 {
-                    HandleProgressMessage(pattern.EventArgs, publishedProgress, taskSetUpData);
+                    HandleProgressMessage(pattern.EventArgs, publishedProgress);
                 }
             });
     }
@@ -51,17 +50,15 @@ internal class CreateImageCommand : ICreateImageCommand
 
     public IObservable<Progress> ProgressObservable => _progressSubjekt.AsObservable();
 
-    private void HandleProgressMessage(JSONMessage message,
-        IDictionary<string, Progress> publishedProgress,
-        IDictionary<string, TaskSetUpData> taskSetUpData)
+    private void HandleProgressMessage(JSONMessage message, IDictionary<string, Progress> publishedProgress)
     {
         if (string.IsNullOrEmpty(message.ID))
             return;
 
         if (!publishedProgress.TryGetValue(message.ID, out var currentProgress))
         {
-            var data = UpdateOrCreateTaskSetUpData(message, taskSetUpData);
-            PublishInitialProgress(message, publishedProgress, taskSetUpData, data);
+            var data = CreateTaskSetUpData(message);
+            PublishInitialProgress(message, publishedProgress, data);
         }
         else
         {
@@ -69,47 +66,45 @@ internal class CreateImageCommand : ICreateImageCommand
         }
     }
 
-    private void PublishInitialProgress(JSONMessage message,
-        IDictionary<string, Progress> launchedTasks,
-        IDictionary<string, TaskSetUpData> taskSetUpData,
-        TaskSetUpData data)
+    private static TaskSetUpData CreateTaskSetUpData(JSONMessage message)
     {
-        var progress = new Progress(ProgressState.Initial, message.ID, data.Description, data.ProgressMessage);
-        launchedTasks.Add(message.ID, progress);
-        taskSetUpData.Remove(message.ID);
-        _progressSubjekt.OnNext(progress);
+        var data = new TaskSetUpData
+        {
+            Description = message.Status,
+            ProgressMessage = message.ProgressMessage,
+            CurrentProgress = message.Progress?.Current,
+            TotalProgress = message.Progress?.Total
+        };
+        return data;
     }
 
-    private static TaskSetUpData UpdateOrCreateTaskSetUpData(JSONMessage message,
-        IDictionary<string, TaskSetUpData> taskSetUpData)
+    private void PublishInitialProgress(JSONMessage message,
+        IDictionary<string, Progress> launchedTasks,
+        TaskSetUpData data)
     {
-        if (!taskSetUpData.TryGetValue(message.ID, out var data))
-        {
-            data = new TaskSetUpData();
-            taskSetUpData.Add(message.ID, data);
-        }
-
-        data.Description = message.Status;
-        data.ProgressMessage = message.ProgressMessage;
-        return data;
+        var progress = new Progress(ProgressState.Initial, message.ID, data);
+        launchedTasks.Add(message.ID, progress);
+        _progressSubjekt.OnNext(progress);
     }
 
     private void PublishUpdatedProgress(JSONMessage message, Progress currentProgress)
     {
-        var progress = new Progress(ProgressState.Downloading, 
-            currentProgress.Id, 
-            currentProgress.Description,
-            currentProgress.ProgressMessage)
+        var progress = new Progress(currentProgress)
         {
+            ProgressState = ProgressState.Downloading,
             Description = message.Status,
-            ProgressMessage = message.ProgressMessage
+            ProgressMessage = message.ProgressMessage,
+            CurrentProgress = message.Progress?.Current,
+            TotalProgress = message.Progress?.Total
         };
         _progressSubjekt.OnNext(progress);
     }
 
-    private class TaskSetUpData
+    internal class TaskSetUpData
     {
         public string? Description { get; set; }
         public string? ProgressMessage { get; set; }
+        public long? CurrentProgress { get; set; }
+        public long? TotalProgress { get; set; }
     }
 }
