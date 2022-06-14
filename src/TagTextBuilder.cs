@@ -26,9 +26,9 @@ public static class TagTextBuilder
         if (image.Running && !image.RunningUntaggedImage)
             sb.Append($" [green]running[/]");
         if (image.Running && image.RunningUntaggedImage)
-            sb.Append(" [running untagged image]".EscapeMarkup());
+            sb.Append(" (running [orange3]untagged image[/])");
         if (image.Parent != null)
-            sb.Append($" [based on {image.Parent.Tag}]".EscapeMarkup());
+            sb.Append($" (based on {image.Parent.Tag ?? "[orange3]untagged image[/]"})");
 
         return sb.ToString();
     }
