@@ -2,5 +2,5 @@ namespace port.Commands.Commit;
 
 public interface ICreateImageFromContainerCommand
 {
-    Task ExecuteAsync(Container container, string tag);
+    Task ExecuteAsync(string containerId, string imageName, string? baseTag, string tag);
 }

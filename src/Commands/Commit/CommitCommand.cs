@@ -7,12 +7,14 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
 {
     private readonly ICreateImageFromContainerCommand _createImageFromContainerCommand;
     private readonly IGetRunningContainerQuery _getRunningContainerQuery;
+    private readonly Config.Config _config;
 
     public CommitCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
-        IGetRunningContainerQuery getRunningContainerQuery)
+        IGetRunningContainerQuery getRunningContainerQuery, Config.Config config)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainerQuery = getRunningContainerQuery;
+        _config = config;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
@@ -25,10 +27,16 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
             throw new InvalidOperationException("No running container found");
         }
 
+        var imageConfig = _config.GetImageByImageName(container.ImageName);
+
+        var baseTag = imageConfig.ImageTags.SingleOrDefault(imageTag =>
+                          container.ImageTag != null && container.ImageTag.StartsWith(imageTag))
+                      ?? container.ImageTag;
+
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync("Creating image from running container",
-                _ => _createImageFromContainerCommand.ExecuteAsync(container, tag));
+                _ => _createImageFromContainerCommand.ExecuteAsync(container.Id, container.ImageName, baseTag, tag));
         AnsiConsole.WriteLine($"Created image with tag {tag}");
 
         return 0;
