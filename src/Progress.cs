@@ -2,11 +2,23 @@ namespace port;
 
 public class Progress
 {
-    public Progress(ProgressState progressState, string id, string? description, string? progressMessage)
+    internal Progress(Progress progress)
+    {
+        Id = progress.Id;
+        Description = progress.Description;
+        ProgressMessage = progress.ProgressMessage;
+        ProgressMessage = progress.ProgressMessage;
+        CurrentProgress = progress.CurrentProgress;
+        ProgressState = progress.ProgressState;
+    }
+
+    internal Progress(ProgressState progressState, string id, CreateImageCommand.TaskSetUpData data)
     {
         Id = id;
-        Description = description;
-        ProgressMessage = progressMessage;
+        Description = data.Description;
+        ProgressMessage = data.ProgressMessage;
+        CurrentProgress = data.CurrentProgress;
+        TotalProgress = data.TotalProgress;
         ProgressState = progressState;
     }
 
@@ -14,6 +26,8 @@ public class Progress
     public string? Description { get; set; }
     public ProgressState ProgressState { get; set; }
     public string? ProgressMessage { get; set; }
+    public long? CurrentProgress { get; set; }
+    public long? TotalProgress { get; set; }
 }
 
 public enum ProgressState

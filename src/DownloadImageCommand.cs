@@ -14,15 +14,17 @@ internal class DownloadImageCommand : IDownloadImageCommand
     public async Task ExecuteAsync(string imageName, string? tag)
     {
         AnsiConsole.WriteLine($"Downloading image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
-        AnsiConsole.WriteLine();
-        var tasks = new Dictionary<string, string>();
+        var tasks = new Dictionary<string, ProgressTask>();
         var lockObject = new object();
-        var table = new Table();
-        table.HideHeaders();
-        table.HideFooters();
-        table.Border = TableBorder.None;
-        table.AddColumn("Downloads");
-        await AnsiConsole.Live(table)
+        await AnsiConsole.Progress()
+            .Columns(
+                new PercentageColumn(),
+                new ProgressBarColumn(),
+                new SpinnerColumn(),
+                new TaskDescriptionColumn
+                {
+                    Alignment = Justify.Left
+                })
             .StartAsync(async ctx =>
             {
                 using (_createImageCommand.ProgressObservable
@@ -30,29 +32,28 @@ internal class DownloadImageCommand : IDownloadImageCommand
                            {
                                lock (lockObject)
                                {
-                                   var value =
-                                       progress.ProgressMessage == null
-                                           ? progress.Description.EscapeMarkup()
-                                           : $"{progress.Description} {progress.ProgressMessage}".EscapeMarkup();
-                                   if (progress.ProgressState == ProgressState.Initial)
+                                   if (progress.Id == tag) return;
+                                   var description = progress.Description?.EscapeMarkup() ?? string.Empty;
+                                   var currentProgress = progress.CurrentProgress ?? 0;
+                                   var totalProgress = progress.TotalProgress ?? 100;
+                                   if (totalProgress == currentProgress && totalProgress == 0)
                                    {
-                                       tasks.Add(progress.Id, value);
-                                       table.AddRow(value);
+                                       currentProgress = 1;
+                                       totalProgress = 1;
+                                   }
+
+                                   if (!tasks.TryGetValue(progress.Id, out var task))
+                                   {
+                                       task = ctx.AddTask(description, true, totalProgress);
+                                       task.Value = currentProgress;
+                                       tasks.Add(progress.Id, task);
                                    }
                                    else
                                    {
-                                       tasks.Remove(progress.Id);
-                                       tasks.Add(progress.Id, value);
+                                       task.Description = description;
+                                       task.Value = currentProgress;
+                                       task.MaxValue = totalProgress;
                                    }
-
-                                   var row = 0;
-                                   foreach (var task in tasks)
-                                   {
-                                       table.UpdateCell(row, 0, task.Value);
-                                       row++;
-                                   }
-
-                                   ctx.Refresh();
                                }
                            }))
                 {
