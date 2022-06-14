@@ -3,12 +3,12 @@
 [![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml)
 
 
-## What is it?
+## What is it
 
 port, the name originating from the idea that only one container may dock simultaneously, is a tool that has been designed to manage multiple images and / or tags of these images.
 It allows the user to run one of these images / tags in a container, creating snapshots of that running container and manage the downloaded images.
 
-## How to get it?
+## How to get it
 
 *Install using scoop*
 
@@ -22,7 +22,7 @@ It allows the user to run one of these images / tags in a container, creating sn
 
 Then add folder to path `$Env:PATH += ";C:\Path\To\Folder"`
 
-## Configuration
+## How to configure it
 
 ```yaml
 version: 1.1
@@ -39,7 +39,9 @@ imageConfigs:
 
 A default .port file will be created in your user profile of you don't manually create one
 
-## Commands
+## How to use it
+
+![Example](https://github.com/kevinboss/port/raw/master/example.gif)
 
 ### run \[identifier\]
 
