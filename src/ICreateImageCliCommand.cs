@@ -1,6 +1,6 @@
 namespace port;
 
-public interface IDownloadImageCommand
+public interface ICreateImageCliCommand
 {
     Task ExecuteAsync(string imageName, string? tag);
 }
