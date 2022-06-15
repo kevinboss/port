@@ -8,7 +8,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IAllImagesQuery _allImagesQuery;
-    private readonly IDownloadImageCommand _downloadImageCommand;
+    private readonly ICreateImageCliCommand _createImageCliCommand;
     private readonly IGetImageQuery _getImageQuery;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly ICreateContainerCommand _createContainerCommand;
@@ -20,7 +20,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
     private readonly IRemoveImageCommand _removeImageCommand;
 
     public RunCommand(IAllImagesQuery allImagesQuery, IIdentifierPrompt identifierPrompt,
-        IDownloadImageCommand downloadImageCommand, IGetImageQuery getImageQuery,
+        ICreateImageCliCommand createImageCliCommand, IGetImageQuery getImageQuery,
         IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         ITerminateContainersCommand terminateContainersCommand, Config.Config config,
@@ -29,7 +29,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
     {
         _allImagesQuery = allImagesQuery;
         _identifierPrompt = identifierPrompt;
-        _downloadImageCommand = downloadImageCommand;
+        _createImageCliCommand = createImageCliCommand;
         _getImageQuery = getImageQuery;
         _getContainersQuery = getContainersQuery;
         _createContainerCommand = createContainerCommand;
@@ -96,7 +96,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
         var imageName = imageConfig.ImageName;
         var ports = imageConfig.Ports;
         if (await _getImageQuery.QueryAsync(imageName, tag) == null)
-            await _downloadImageCommand.ExecuteAsync(imageName, tag);
+            await _createImageCliCommand.ExecuteAsync(imageName, tag);
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
