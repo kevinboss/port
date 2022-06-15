@@ -43,11 +43,13 @@ A default .port file will be created in your user profile of you don't manually 
 
 ![Example](https://github.com/kevinboss/port/raw/master/example.gif)
 
-### run \[identifier\]
+### run \[identifier\] -r(eset)
 
 Allows the user the run a specified tag (base or snapshot) of an image.
 
 identifier is optional, if not provided the user will be asked to select an image.
+
+-r(eset) is optional, if provided will reset the already existing the container (if one exists for the image being run)
 
 ### list \[identifier\]
 
