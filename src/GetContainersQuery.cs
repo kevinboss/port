@@ -21,6 +21,7 @@ internal class GetContainersQuery : IGetContainersQuery
             });
         return containerListResponses
             .Select(e => new Container(e))
+            .Where(e => e.IsPortContainer)
             .Where(e => imageName == e.ImageName && tag == e.ImageTag);
     }
 
@@ -33,7 +34,8 @@ internal class GetContainersQuery : IGetContainersQuery
             });
         return containerListResponses
             .Where(e => e.ImageID == imageId)
-            .Select(e => new Container(e));
+            .Select(e => new Container(e))
+            .Where(e => e.IsPortContainer);
     }
 
     public async Task<IEnumerable<Container>> QueryByContainerNameAndTagAsync(string containerName, string? tag)
@@ -45,6 +47,7 @@ internal class GetContainersQuery : IGetContainersQuery
             });
         return containerListResponses
             .Select(e => new Container(e))
+            .Where(e => e.IsPortContainer)
             .Where(e => containerName == e.ContainerName && tag == e.ContainerTag);
     }
 }

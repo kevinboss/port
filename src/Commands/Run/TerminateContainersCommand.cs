@@ -18,7 +18,9 @@ internal class TerminateContainersCommand : ITerminateContainersCommand
             .ListContainersAsync(new ContainersListParameters
             {
                 Limit = long.MaxValue
-            })).Select(e => new Container(e));
+            }))
+            .Select(e => new Container(e))
+            .Where(e => e.IsPortContainer);
 
         foreach (var container in containers
                      .Where(e => imageNames.Any(imageNameAndTag =>

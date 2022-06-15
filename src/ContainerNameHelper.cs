@@ -15,7 +15,7 @@ public static class ContainerNameHelper
         return (containerName[..idx], containerName[(idx + 1)..]);
     }
 
-    public static bool TryGetContainerNameAndTag(string containerName, out (string identifier, string tag) nameAndTag)
+    public static bool TryGetContainerNameAndTag(string containerName, out (string containerName, string tag) nameAndTag)
     {
         nameAndTag = (containerName, string.Empty);
         var idx = containerName.LastIndexOf(Separator, StringComparison.Ordinal);

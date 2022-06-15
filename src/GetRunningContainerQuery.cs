@@ -26,6 +26,7 @@ internal class GetRunningContainerQuery : IGetRunningContainerQuery
             });
         return containers
             .Select(e => new Container(e))
+            .Where(e => e.IsPortContainer)
             .SingleOrDefault(e =>
             e.Running 
             && identifiers.Contains(e.ContainerName));
