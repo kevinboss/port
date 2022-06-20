@@ -5,6 +5,7 @@ namespace port;
 
 internal class CreateContainerCommand : ICreateContainerCommand
 {
+    private const string PortSeparator = ":";
     private readonly IDockerClient _dockerClient;
 
     public CreateContainerCommand(IDockerClient dockerClient)
@@ -15,8 +16,8 @@ internal class CreateContainerCommand : ICreateContainerCommand
     public Task ExecuteAsync(string identifier, string imageName, string? tag, List<string> ports)
     {
         var portBindings = ports
-            .Select(e => e.Split(":"))
-            .ToDictionary(e => e[0], e => CreateHostPortList(e[1]));
+            .Select(e => e.Split(PortSeparator))
+            .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
         return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Name = ContainerNameHelper.JoinContainerNameAndTag(identifier, tag),
@@ -34,10 +35,10 @@ internal class CreateContainerCommand : ICreateContainerCommand
         var portBindings = container.Ports
             .Select(e => new List<string>
             {
-                e.PrivatePort.ToString(),
-                e.PublicPort.ToString()
+                e.PublicPort.ToString(),
+                e.PrivatePort.ToString()
             })
-            .ToDictionary(e => e[0], e => CreateHostPortList(e[1]));
+            .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
         return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Name = ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag),
