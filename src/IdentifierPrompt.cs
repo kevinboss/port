@@ -16,11 +16,6 @@ internal class IdentifierPrompt : IIdentifierPrompt
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
-            if (imageGroup.Identifier == null)
-            {
-                continue;
-            }
-
             var nodeHeader = BuildNodeHeader(imageGroup);
             selectionPrompt.AddChoiceGroup(nodeHeader,
                 imageGroup.Images
@@ -30,7 +25,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         }
 
         var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
-        return (selectedImage.Identifier, selectedImage.Tag);
+        return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
     public async Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command)
@@ -38,11 +33,6 @@ internal class IdentifierPrompt : IIdentifierPrompt
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
-            if (imageGroup.Identifier == null)
-            {
-                continue;
-            }
-
             var nodeHeader = BuildNodeHeader(imageGroup);
             selectionPrompt.AddChoiceGroup(nodeHeader,
                 imageGroup.Images
@@ -51,7 +41,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         }
 
         var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
-        return (selectedImage.Identifier, selectedImage.Tag);
+        return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
     public async Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command)
@@ -59,11 +49,6 @@ internal class IdentifierPrompt : IIdentifierPrompt
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
-            if (imageGroup.Identifier == null)
-            {
-                continue;
-            }
-
             var nodeHeader = BuildNodeHeader(imageGroup);
             selectionPrompt.AddChoiceGroup(nodeHeader,
                 imageGroup.Images
@@ -72,7 +57,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         }
 
         var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
-        return (selectedImage.Identifier, selectedImage.Tag);
+        return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
     public async Task<string> GetUntaggedIdentifierFromUserAsync(string command)
@@ -80,11 +65,6 @@ internal class IdentifierPrompt : IIdentifierPrompt
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync().Where(e => e.Images.Any(i => i.Tag == null)))
         {
-            if (imageGroup.Identifier == null)
-            {
-                continue;
-            }
-
             selectionPrompt.AddChoice(imageGroup);
         }
 

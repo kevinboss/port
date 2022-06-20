@@ -6,16 +6,9 @@ public class Config
     public string? DockerEndpoint { get; set; }
     public List<ImageConfig> ImageConfigs { get; set; } = new();
 
-    public ImageConfig GetImageByImageName(string imageName)
+    public IEnumerable<ImageConfig> GetImageConfigsByImageName(string imageName)
     {
-        var imageConfig = ImageConfigs.SingleOrDefault(e => e.ImageName == imageName);
-        if (imageConfig == null)
-        {
-            throw new ArgumentException($"There is no config defined for imageName '{imageName}'",
-                nameof(imageName));
-        }
-
-        return imageConfig;
+        return ImageConfigs.Where(e => e.ImageName == imageName);
     }
 
     public ImageConfig GetImageConfigByIdentifier(string identifier)

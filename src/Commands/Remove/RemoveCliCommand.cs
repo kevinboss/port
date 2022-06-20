@@ -64,8 +64,10 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         var image = await _getImageQuery.QueryAsync(imageName, tag);
         if (image == null)
             throw new InvalidOperationException(
-                $"Could not find image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
-        await _removeImageCommand.ExecuteAsync(image.ID);
+                $"Could not find image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");if (string.IsNullOrEmpty(image.Id))
+            throw new InvalidOperationException(
+                $"Image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)} does not have an Id".EscapeMarkup());
+        await _removeImageCommand.ExecuteAsync(image.Id);
         AnsiConsole.WriteLine($"Removed image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
     }
 }

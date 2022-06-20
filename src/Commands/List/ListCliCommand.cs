@@ -26,8 +26,6 @@ internal class ListCommand : AsyncCommand<ListSettings>
         await foreach (var imageGroup in imageGroups.Where(e =>
                            imageIdentifier == null || e.Identifier == imageIdentifier))
         {
-            if (imageGroup.Identifier == null) continue;
-
             var treeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
             if (imageGroup.Images.Any(e => e.Tag == null))
                 treeHeader = $"{treeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";

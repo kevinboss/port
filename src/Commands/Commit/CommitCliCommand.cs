@@ -8,13 +8,15 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
     private readonly ICreateImageFromContainerCommand _createImageFromContainerCommand;
     private readonly IGetRunningContainerQuery _getRunningContainerQuery;
     private readonly Config.Config _config;
+    private readonly IGetImageQuery _getImageQuery;
 
     public CommitCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
-        IGetRunningContainerQuery getRunningContainerQuery, Config.Config config)
+        IGetRunningContainerQuery getRunningContainerQuery, Config.Config config, IGetImageQuery getImageQuery)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainerQuery = getRunningContainerQuery;
         _config = config;
+        _getImageQuery = getImageQuery;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
@@ -27,11 +29,19 @@ internal class CommitCommand : AsyncCommand<CommitSettings>
             throw new InvalidOperationException("No running container found");
         }
 
-        var imageConfig = _config.GetImageByImageName(container.ImageName);
+        var image = await _getImageQuery.QueryAsync(container.ImageName, container.ImageTag);
+        if (image == null)
+        {
+            throw new InvalidOperationException(
+                $"Image of running container {ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ImageTag)} not found");
+        }
 
-        var baseTag = imageConfig.ImageTags.SingleOrDefault(imageTag =>
-                          container.ImageTag != null && container.ImageTag.StartsWith(imageTag))
-                      ?? container.ImageTag;
+        while (image.Parent != null)
+        {
+            image = image.Parent;
+        }
+
+        var baseTag = image.Tag;
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
