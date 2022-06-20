@@ -29,15 +29,15 @@ internal class AllImagesQuery : IAllImagesQuery
             images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
             images.AddRange(await GetUntaggedImagesAsync(imageConfig).ToListAsync());
             var imagesById = images.Where(e => e.Id != null).ToDictionary(e => e.Id!, image => image);
-            foreach (var image in images.Where(image => image.ParentId != null))
+            var imageGroup = new ImageGroup(imageConfig.Identifier);
+            foreach (var image in images)
             {
+                imageGroup.AddImage(image);
+                if (image.ParentId == null) continue;
                 image.Parent = imagesById[image.ParentId!];
             }
-            yield return new ImageGroup
-            {
-                Identifier = imageConfig.Identifier,
-                Images = images.ToList()
-            };
+
+            yield return imageGroup;
         }
     }
 
@@ -64,7 +64,6 @@ internal class AllImagesQuery : IAllImagesQuery
                       && runningContainer.ImageTag != tag;
                 return new Image
                 {
-                    Identifier = imageConfig.Identifier,
                     Name = imageName,
                     Tag = tag,
                     IsSnapshot = true,
@@ -83,7 +82,7 @@ internal class AllImagesQuery : IAllImagesQuery
         var runningContainer = await _getRunningContainerQuery.QueryAsync();
         foreach (var tag in imageConfig.ImageTags)
         {
-            var imagesListResponse = await _getImageQuery.QueryAsync(imageConfig.ImageName, tag);
+            var image = await _getImageQuery.QueryAsync(imageConfig.ImageName, tag);
             var running
                 = runningContainer != null
                   && imageConfig.Identifier == runningContainer.ContainerName
@@ -94,16 +93,15 @@ internal class AllImagesQuery : IAllImagesQuery
                   && runningContainer.ImageTag != tag;
             yield return new Image
             {
-                Identifier = imageConfig.Identifier,
                 Name = imageConfig.ImageName,
                 Tag = tag,
                 IsSnapshot = false,
-                Existing = imagesListResponse != null,
-                Created = imagesListResponse?.Created,
+                Existing = image != null,
+                Created = image?.Created,
                 Running = running,
                 RunningUntaggedImage = runningUntaggedImage,
-                Id = imagesListResponse?.ID,
-                ParentId = string.IsNullOrEmpty(imagesListResponse?.ParentID) ? null : imagesListResponse.ParentID
+                Id = image?.Id,
+                ParentId = image?.ParentId
             };
         }
     }
@@ -120,7 +118,6 @@ internal class AllImagesQuery : IAllImagesQuery
                   && runningContainer.ContainerTag == null;
             yield return new Image
             {
-                Identifier = imageConfig.Identifier,
                 Name = imageConfig.ImageName,
                 Tag = null,
                 IsSnapshot = false,

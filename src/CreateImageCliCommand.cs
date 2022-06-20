@@ -61,6 +61,6 @@ internal class CreateImageCliCommand : ICreateImageCliCommand
                 }
             });
 
-        AnsiConsole.WriteLine($"Finished downloading Image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
+        AnsiConsole.WriteLine($"Finished downloading image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
     }
 }

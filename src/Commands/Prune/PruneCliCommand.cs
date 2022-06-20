@@ -57,8 +57,11 @@ internal class PruneCommand : AsyncCommand<PruneSettings>
         if (image == null)
             throw new InvalidOperationException(
                 $"Could not find image {identifier}:<none>".EscapeMarkup());
+        if (string.IsNullOrEmpty(image.Id))
+            throw new InvalidOperationException(
+                $"Image {identifier}:<none> does not have an Id".EscapeMarkup());
 
-        var containers = await _getContainersQuery.QueryByImageIdAsync(image.ID);
+        var containers = await _getContainersQuery.QueryByImageIdAsync(image.Id);
         ctx.Status = $"Removing containers for {identifier}:<none>".EscapeMarkup();
         foreach (var container in containers)
         {
@@ -66,7 +69,7 @@ internal class PruneCommand : AsyncCommand<PruneSettings>
         }
 
         ctx.Status = $"Containers for {identifier}:<none> removed".EscapeMarkup();
-        await _removeImageCommand.ExecuteAsync(image.ID);
+        await _removeImageCommand.ExecuteAsync(image.Id);
         ctx.Status = $"Removed image {identifier}:<none>".EscapeMarkup();
     }
 }

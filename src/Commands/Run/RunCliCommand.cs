@@ -77,7 +77,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
     {
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
-            foreach (var image in imageGroup.Images.Where(image => image.Identifier != identifier || image.Tag != tag))
+            foreach (var image in imageGroup.Images.Where(image => imageGroup.Identifier != identifier || image.Tag != tag))
             {
                 yield return (image.Name, image.Tag);
             }
