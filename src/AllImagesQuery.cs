@@ -82,7 +82,18 @@ internal class AllImagesQuery : IAllImagesQuery
         var runningContainer = await _getRunningContainerQuery.QueryAsync();
         foreach (var tag in imageConfig.ImageTags)
         {
-            var image = await _getImageQuery.QueryAsync(imageConfig.ImageName, tag);
+            var parameters = new ImagesListParameters
+            {
+                Filters = new Dictionary<string, IDictionary<string, bool>>()
+            };
+            parameters.Filters.Add("reference", new Dictionary<string, bool>
+            {
+                { imageConfig.ImageName, true }
+            });
+            var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
+            var imagesListResponse = imagesListResponses
+                .SingleOrDefault(e =>
+                    e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageConfig.ImageName, tag)));
             var running
                 = runningContainer != null
                   && imageConfig.Identifier == runningContainer.ContainerName
@@ -96,12 +107,13 @@ internal class AllImagesQuery : IAllImagesQuery
                 Name = imageConfig.ImageName,
                 Tag = tag,
                 IsSnapshot = false,
-                Existing = image != null,
-                Created = image?.Created,
+                Existing = imagesListResponse != null,
+                Created = imagesListResponse?.Created,
                 Running = running,
                 RunningUntaggedImage = runningUntaggedImage,
-                Id = image?.Id,
-                ParentId = image?.ParentId
+                Id = imagesListResponse?.ID,
+                ParentId = string.IsNullOrEmpty(imagesListResponse?.ParentID) ? null : imagesListResponse.ParentID
+
             };
         }
     }

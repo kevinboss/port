@@ -16,18 +16,15 @@ internal class GetImageQuery : IGetImageQuery
 
     public async Task<Image?> QueryAsync(string imageName, string? tag)
     {
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
+        var parameters = new ImagesListParameters
         {
-            Filters = new Dictionary<string, IDictionary<string, bool>>
-            {
-                {
-                    "reference", new Dictionary<string, bool>
-                    {
-                        { imageName, true }
-                    }
-                }
-            }
+            Filters = new Dictionary<string, IDictionary<string, bool>>()
+        };
+        parameters.Filters.Add("reference", new Dictionary<string, bool>
+        {
+            { imageName, true }
         });
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
         var imagesListResponse = imagesListResponses
             .SingleOrDefault(e =>
                 tag == null && e.RepoTags == null

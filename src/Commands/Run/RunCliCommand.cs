@@ -9,7 +9,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IAllImagesQuery _allImagesQuery;
     private readonly ICreateImageCliCommand _createImageCliCommand;
-    private readonly IGetImageQuery _getImageQuery;
+    private readonly IDoesImageExistQuery _doesImageExistQuery;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
@@ -20,7 +20,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
     private readonly IRemoveImageCommand _removeImageCommand;
 
     public RunCommand(IAllImagesQuery allImagesQuery, IIdentifierPrompt identifierPrompt,
-        ICreateImageCliCommand createImageCliCommand, IGetImageQuery getImageQuery,
+        ICreateImageCliCommand createImageCliCommand, IDoesImageExistQuery doesImageExistQuery,
         IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         ITerminateContainersCommand terminateContainersCommand, Config.Config config,
@@ -30,7 +30,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
         _allImagesQuery = allImagesQuery;
         _identifierPrompt = identifierPrompt;
         _createImageCliCommand = createImageCliCommand;
-        _getImageQuery = getImageQuery;
+        _doesImageExistQuery = doesImageExistQuery;
         _getContainersQuery = getContainersQuery;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
@@ -77,7 +77,8 @@ internal class RunCommand : AsyncCommand<RunSettings>
     {
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
-            foreach (var image in imageGroup.Images.Where(image => imageGroup.Identifier != identifier || image.Tag != tag))
+            foreach (var image in imageGroup.Images.Where(image =>
+                         imageGroup.Identifier != identifier || image.Tag != tag))
             {
                 yield return (image.Name, image.Tag);
             }
@@ -95,7 +96,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
 
         var imageName = imageConfig.ImageName;
         var ports = imageConfig.Ports;
-        if (await _getImageQuery.QueryAsync(imageName, tag) == null)
+        if (!await _doesImageExistQuery.QueryAsync(imageName, tag))
             await _createImageCliCommand.ExecuteAsync(imageName, tag);
 
         await AnsiConsole.Status()
