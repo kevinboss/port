@@ -9,7 +9,7 @@ jobs:
     name: Release
     strategy:
       matrix:
-        kind: ['linux', 'windows', 'macOS']
+        kind: ['linux', 'windows']
         include:
           - kind: linux
             os: ubuntu-latest
@@ -17,9 +17,10 @@ jobs:
           - kind: windows
             os: windows-latest
             target: win-x64
-          - kind: macOS
-            os: macos-latest
-            target: osx-x64
+          # 109 CHF for an developer account so you can sign your application to allow it to run on Apple Silicon...
+          #- kind: macOS
+          #  os: macos-latest
+          #  target: osx-x64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
