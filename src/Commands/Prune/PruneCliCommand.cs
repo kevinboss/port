@@ -9,20 +9,20 @@ internal class PruneCommand : AsyncCommand<PruneSettings>
 {
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
     private readonly IIdentifierPrompt _identifierPrompt;
-    private readonly IGetImageQuery _getImageQuery;
+    private readonly IGetImageIdQuery _getImageIdQuery;
     private readonly Config.Config _config;
     private readonly IRemoveImageCommand _removeImageCommand;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
 
     public PruneCommand(IIdentifierAndTagEvaluator identifierAndTagEvaluator,
-        IIdentifierPrompt identifierPrompt, IGetImageQuery getImageQuery, Config.Config config,
+        IIdentifierPrompt identifierPrompt, IGetImageIdQuery getImageIdQuery, Config.Config config,
         IRemoveImageCommand removeImageCommand, IGetContainersQuery getContainersQuery,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)
     {
         _identifierAndTagEvaluator = identifierAndTagEvaluator;
         _identifierPrompt = identifierPrompt;
-        _getImageQuery = getImageQuery;
+        _getImageIdQuery = getImageIdQuery;
         _config = config;
         _removeImageCommand = removeImageCommand;
         _getContainersQuery = getContainersQuery;
@@ -53,15 +53,12 @@ internal class PruneCommand : AsyncCommand<PruneSettings>
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
-        var image = await _getImageQuery.QueryAsync(imageName, null);
-        if (image == null)
+        var imageId = await _getImageIdQuery.QueryAsync(imageName, null);
+        if (string.IsNullOrEmpty(imageId))
             throw new InvalidOperationException(
-                $"Could not find image {identifier}:<none>".EscapeMarkup());
-        if (string.IsNullOrEmpty(image.Id))
-            throw new InvalidOperationException(
-                $"Image {identifier}:<none> does not have an Id".EscapeMarkup());
+                $"Image {identifier}:<none> does not exist or does not have an Id".EscapeMarkup());
 
-        var containers = await _getContainersQuery.QueryByImageIdAsync(image.Id);
+        var containers = await _getContainersQuery.QueryByImageIdAsync(imageId);
         ctx.Status = $"Removing containers for {identifier}:<none>".EscapeMarkup();
         foreach (var container in containers)
         {
@@ -69,7 +66,7 @@ internal class PruneCommand : AsyncCommand<PruneSettings>
         }
 
         ctx.Status = $"Containers for {identifier}:<none> removed".EscapeMarkup();
-        await _removeImageCommand.ExecuteAsync(image.Id);
+        await _removeImageCommand.ExecuteAsync(imageId);
         ctx.Status = $"Removed image {identifier}:<none>".EscapeMarkup();
     }
 }
