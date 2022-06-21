@@ -8,7 +8,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IGetContainersQuery _getContainersQuery;
-    private readonly IGetImageQuery _getImageQuery;
+    private readonly IGetImageIdQuery _getImageIdQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
     private readonly Config.Config _config;
@@ -17,7 +17,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
     public RemoveCommand(IIdentifierPrompt identifierPrompt, IGetContainersQuery getContainersQuery,
         Config.Config config,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
-        IIdentifierAndTagEvaluator identifierAndTagEvaluator, IGetImageQuery getImageQuery)
+        IIdentifierAndTagEvaluator identifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery)
     {
         _identifierPrompt = identifierPrompt;
         _getContainersQuery = getContainersQuery;
@@ -25,7 +25,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _removeImageCommand = removeImageCommand;
         _identifierAndTagEvaluator = identifierAndTagEvaluator;
-        _getImageQuery = getImageQuery;
+        _getImageIdQuery = getImageIdQuery;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
@@ -61,13 +61,11 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
         }
         AnsiConsole.WriteLine($"Containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)} removed");
 
-        var image = await _getImageQuery.QueryAsync(imageName, tag);
-        if (image == null)
+        var imageId = await _getImageIdQuery.QueryAsync(imageName, tag);
+        if (imageId == null)
             throw new InvalidOperationException(
-                $"Could not find image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");if (string.IsNullOrEmpty(image.Id))
-            throw new InvalidOperationException(
-                $"Image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)} does not have an Id".EscapeMarkup());
-        await _removeImageCommand.ExecuteAsync(image.Id);
+                $"Image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)} does not exist or does not have an Id".EscapeMarkup());
+        await _removeImageCommand.ExecuteAsync(imageId);
         AnsiConsole.WriteLine($"Removed image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
     }
 }
