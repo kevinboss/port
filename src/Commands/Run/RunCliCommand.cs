@@ -4,37 +4,37 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.Run;
 
-internal class RunCommand : AsyncCommand<RunSettings>
+internal class RunCliCommand : AsyncCommand<RunSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
-    private readonly IAllImagesQuery _allImagesQuery;
     private readonly ICreateImageCliCommand _createImageCliCommand;
     private readonly IDoesImageExistQuery _doesImageExistQuery;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
-    private readonly ITerminateContainersCommand _terminateContainersCommand;
+    private readonly IStopContainerCommand _stopContainerCommand;
     private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
 
-    public RunCommand(IAllImagesQuery allImagesQuery, IIdentifierPrompt identifierPrompt,
+    private const char PortSeparator = ':';
+
+    public RunCliCommand(IIdentifierPrompt identifierPrompt,
         ICreateImageCliCommand createImageCliCommand, IDoesImageExistQuery doesImageExistQuery,
         IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
-        ITerminateContainersCommand terminateContainersCommand, Config.Config config,
+        IStopContainerCommand stopContainerCommand, Config.Config config,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand)
     {
-        _allImagesQuery = allImagesQuery;
         _identifierPrompt = identifierPrompt;
         _createImageCliCommand = createImageCliCommand;
         _doesImageExistQuery = doesImageExistQuery;
         _getContainersQuery = getContainersQuery;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
-        _terminateContainersCommand = terminateContainersCommand;
+        _stopContainerCommand = stopContainerCommand;
         _config = config;
         _identifierAndTagEvaluator = identifierAndTagEvaluator;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
@@ -46,11 +46,7 @@ internal class RunCommand : AsyncCommand<RunSettings>
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
         if (tag == null)
             throw new InvalidOperationException("Can not launch untagged image");
-
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("Terminating containers of other images",
-                _ => TerminateOtherContainers(identifier, tag));
+        await TerminateOtherContainersAsync(identifier, tag);
         await LaunchImageAsync(identifier, tag, settings.Reset);
         AnsiConsole.WriteLine($"Launched {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}");
         return 0;
@@ -67,20 +63,37 @@ internal class RunCommand : AsyncCommand<RunSettings>
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private async Task TerminateOtherContainers(string identifier, string? tag)
+    private Task TerminateOtherContainersAsync(string identifier, string tag)
     {
-        var imageNames = await GetImageNamesExceptAsync(identifier, tag).ToListAsync();
-        await _terminateContainersCommand.ExecuteAsync(imageNames);
+        var imageConfig = _config.GetImageConfigByIdentifier(identifier);
+        if (imageConfig == null)
+        {
+            throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
+                nameof(identifier));
+        }
+
+        var hostPorts = imageConfig.Ports
+            .Select(e => e.Split(PortSeparator)[0])
+            .ToList();
+        var spinnerTex = $"Terminating containers using host ports '{string.Join(", ", hostPorts)}'";
+        return AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync(spinnerTex, async _ =>
+            {
+                var containers = GetRunningContainersUsingHostPortsAsync(hostPorts);
+                await foreach (var container in containers)
+                    await _stopContainerCommand.ExecuteAsync(container.Id);
+            });
     }
 
-    private async IAsyncEnumerable<(string Name, string? Tag)> GetImageNamesExceptAsync(string identifier, string? tag)
+    private async IAsyncEnumerable<Container> GetRunningContainersUsingHostPortsAsync(
+        IReadOnlyCollection<string> hostPorts)
     {
-        await foreach (var imageGroup in _allImagesQuery.QueryAsync())
+        foreach (var container in await _getContainersQuery.QueryRunningAsync())
         {
-            foreach (var image in imageGroup.Images.Where(image =>
-                         imageGroup.Identifier != identifier || image.Tag != tag))
+            if (container.Ports.Any(p => hostPorts.Contains(p.PublicPort.ToString())))
             {
-                yield return (image.Name, image.Tag);
+                yield return container;
             }
         }
     }

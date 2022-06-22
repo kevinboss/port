@@ -6,12 +6,12 @@ namespace port;
 internal class GetImageQuery : IGetImageQuery
 {
     private readonly IDockerClient _dockerClient;
-    private readonly IGetRunningContainerQuery _getRunningContainerQuery;
+    private readonly IGetRunningContainersQuery _getRunningContainersQuery;
 
-    public GetImageQuery(IDockerClient dockerClient, IGetRunningContainerQuery getRunningContainerQuery)
+    public GetImageQuery(IDockerClient dockerClient, IGetRunningContainersQuery getRunningContainersQuery)
     {
         _dockerClient = dockerClient;
-        _getRunningContainerQuery = getRunningContainerQuery;
+        _getRunningContainersQuery = getRunningContainersQuery;
     }
 
     public async Task<Image?> QueryAsync(string imageName, string? tag)
@@ -34,11 +34,11 @@ internal class GetImageQuery : IGetImageQuery
             return null;
         }
 
-        var runningContainer = await _getRunningContainerQuery.QueryAsync();
-        return await ConvertToImage(imageName, tag, imagesListResponse, runningContainer);
+        var runningContainers = await _getRunningContainersQuery.QueryAsync();
+        return await ConvertToImage(imageName, tag, imagesListResponse, runningContainers);
     }
 
-    private async Task<Image?> QueryAsync(string imageName, string id, Container? runningContainer)
+    private async Task<Image?> QueryAsync(string imageName, string id, IReadOnlyCollection<Container> runningContainers)
     {
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
         {
@@ -61,20 +61,19 @@ internal class GetImageQuery : IGetImageQuery
         }
 
         var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
-        return await ConvertToImage(imageName1, tag, imagesListResponse, runningContainer);
+        return await ConvertToImage(imageName1, tag, imagesListResponse, runningContainers);
     }
 
     private async Task<Image?> ConvertToImage(string imageName, string? tag, ImagesListResponse imagesListResponse,
-        Container? runningContainer)
+        IReadOnlyCollection<Container> runningContainers)
     {
-        var running
-            = runningContainer != null
-              && imageName == runningContainer.ImageName
-              && tag == runningContainer.ContainerTag;
+        var runningContainer = runningContainers
+            .SingleOrDefault(c =>
+                imageName == c.ImageName
+                && tag == c.Tag);
+        var running = runningContainer != null;
         var runningUntaggedImage
-            = running
-              && runningContainer != null
-              && runningContainer.ImageTag != tag;
+            = runningContainer != null && runningContainer.ImageTag != tag;
         return new Image
         {
             Name = imageName,
@@ -88,7 +87,7 @@ internal class GetImageQuery : IGetImageQuery
             ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID,
             Parent = string.IsNullOrEmpty(imagesListResponse.ParentID)
                 ? null
-                : await QueryAsync(imageName,imagesListResponse.ParentID, runningContainer)
+                : await QueryAsync(imageName,imagesListResponse.ParentID, runningContainers)
         };
     }
 }

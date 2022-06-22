@@ -4,7 +4,7 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.Remove;
 
-internal class RemoveCommand : AsyncCommand<RemoveSettings>
+internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly IGetContainersQuery _getContainersQuery;
@@ -14,7 +14,7 @@ internal class RemoveCommand : AsyncCommand<RemoveSettings>
     private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
 
-    public RemoveCommand(IIdentifierPrompt identifierPrompt, IGetContainersQuery getContainersQuery,
+    public RemoveCliCommand(IIdentifierPrompt identifierPrompt, IGetContainersQuery getContainersQuery,
         Config.Config config,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery)

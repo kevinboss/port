@@ -12,6 +12,18 @@ internal class GetContainersQuery : IGetContainersQuery
         _dockerClient = dockerClient;
     }
 
+    public async Task<IEnumerable<Container>> QueryRunningAsync()
+    {
+        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
+            new ContainersListParameters
+            {
+                Limit = long.MaxValue
+            });
+        return containerListResponses
+            .Select(e => new Container(e))
+            .Where(e => e.Running);
+    }
+
     public async Task<IEnumerable<Container>> QueryByImageNameAndTagAsync(string imageName, string? tag)
     {
         var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
@@ -48,6 +60,6 @@ internal class GetContainersQuery : IGetContainersQuery
         return containerListResponses
             .Select(e => new Container(e))
             .Where(e => e.IsPortContainer)
-            .Where(e => containerName == e.ContainerName && tag == e.ContainerTag);
+            .Where(e => containerName == e.Identifier && tag == e.Tag);
     }
 }
