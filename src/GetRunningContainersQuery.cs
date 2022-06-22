@@ -3,18 +3,18 @@ using Docker.DotNet.Models;
 
 namespace port;
 
-internal class GetRunningContainerQuery : IGetRunningContainerQuery
+internal class GetRunningContainersQuery : IGetRunningContainersQuery
 {
     private readonly IDockerClient _dockerClient;
     private readonly Config.Config _config;
 
-    public GetRunningContainerQuery(IDockerClient dockerClient, Config.Config config)
+    public GetRunningContainersQuery(IDockerClient dockerClient, Config.Config config)
     {
         _dockerClient = dockerClient;
         _config = config;
     }
 
-    public async Task<Container?> QueryAsync()
+    public async Task<IReadOnlyCollection<Container>> QueryAsync()
     {
         var images = _config.ImageConfigs;
         var identifiers = images.Select(image => image.Identifier).ToList();
@@ -27,8 +27,8 @@ internal class GetRunningContainerQuery : IGetRunningContainerQuery
         return containers
             .Select(e => new Container(e))
             .Where(e => e.IsPortContainer)
-            .SingleOrDefault(e =>
-            e.Running 
-            && identifiers.Contains(e.ContainerName));
+            .Where(e => e.Running)
+            .Where(e => identifiers.Contains(e.Identifier))
+            .ToList();
     }
 }

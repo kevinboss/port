@@ -2,14 +2,14 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.Pull;
 
-public class PullCommand : AsyncCommand<PullSettings>
+public class PullCliCommand : AsyncCommand<PullSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly Config.Config _config;
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
     private readonly ICreateImageCliCommand _createImageCliCommand;
 
-    public PullCommand(IIdentifierPrompt identifierPrompt, Config.Config config,
+    public PullCliCommand(IIdentifierPrompt identifierPrompt, Config.Config config,
         IIdentifierAndTagEvaluator identifierAndTagEvaluator,
         ICreateImageCliCommand createImageCliCommand)
     {

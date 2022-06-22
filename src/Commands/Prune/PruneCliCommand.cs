@@ -5,7 +5,7 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.Prune;
 
-internal class PruneCommand : AsyncCommand<PruneSettings>
+internal class PruneCliCommand : AsyncCommand<PruneSettings>
 {
     private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
     private readonly IIdentifierPrompt _identifierPrompt;
@@ -15,7 +15,7 @@ internal class PruneCommand : AsyncCommand<PruneSettings>
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
 
-    public PruneCommand(IIdentifierAndTagEvaluator identifierAndTagEvaluator,
+    public PruneCliCommand(IIdentifierAndTagEvaluator identifierAndTagEvaluator,
         IIdentifierPrompt identifierPrompt, IGetImageIdQuery getImageIdQuery, Config.Config config,
         IRemoveImageCommand removeImageCommand, IGetContainersQuery getContainersQuery,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)

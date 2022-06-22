@@ -60,6 +60,20 @@ internal class IdentifierPrompt : IIdentifierPrompt
         return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
+    public (string identifier, string? tag) GetIdentifierOfContainerFromUser(
+        IEnumerable<Container> containers,
+        string command)
+    {
+        var selectionPrompt = CreateSelectionPrompt(command);
+        foreach (var container in containers)
+        {
+            selectionPrompt.AddChoice(container);
+        }
+
+        var selectedContainer = (Container)AnsiConsole.Prompt(selectionPrompt);
+        return (selectedContainer.Identifier, selectedContainer.Tag);
+    }
+
     public async Task<string> GetUntaggedIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
@@ -69,7 +83,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         }
 
         var selectedImageGroup = (ImageGroup)AnsiConsole.Prompt(selectionPrompt);
-        return selectedImageGroup.Identifier!;
+        return selectedImageGroup.Identifier;
     }
 
     private static string BuildNodeHeader(ImageGroup imageGroup)
@@ -85,16 +99,14 @@ internal class IdentifierPrompt : IIdentifierPrompt
         return new SelectionPrompt<object>()
             .UseConverter(o =>
             {
-                switch (o)
+                return o switch
                 {
-                    case Image image:
-                        return TagTextBuilder.BuildTagText(image);
-                    case ImageGroup imageGroup:
-                        return $"[yellow]{imageGroup.Identifier}[/]";
-                }
-
-                return o as string ?? throw new InvalidOperationException();
-
+                    Image image => TagTextBuilder.BuildTagText(image),
+                    Container container =>
+                        $"[white]{ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag)}[/]",
+                    ImageGroup imageGroup => $"[white]{imageGroup.Identifier}[/]",
+                    _ => o as string ?? throw new InvalidOperationException()
+                };
             })
             .PageSize(10)
             .Title($"Select image you wish to [green]{command}[/]")

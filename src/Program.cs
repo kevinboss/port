@@ -21,10 +21,10 @@ registrations.AddSingleton<IGetImageQuery, GetImageQuery>();
 registrations.AddSingleton<IGetImageIdQuery, GetImageIdQuery>();
 registrations.AddSingleton<IDoesImageExistQuery, DoesImageExistQuery>();
 registrations.AddSingleton<IGetContainersQuery, GetContainersQuery>();
-registrations.AddSingleton<IGetRunningContainerQuery, GetRunningContainerQuery>();
+registrations.AddSingleton<IGetRunningContainersQuery, GetRunningContainersQuery>();
 registrations.AddSingleton<ICreateContainerCommand, CreateContainerCommand>();
 registrations.AddSingleton<IRunContainerCommand, RunContainerCommand>();
-registrations.AddSingleton<ITerminateContainersCommand, TerminateContainersCommand>();
+registrations.AddSingleton<IStopContainerCommand, StopContainerCommand>();
 registrations.AddSingleton<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
 registrations.AddSingleton<IRemoveImageCommand, RemoveImageCommand>();
 registrations.AddSingleton<ICreateImageCliCommand, CreateImageCliCommand>();
@@ -49,19 +49,19 @@ var app = new CommandApp(registrar);
 
 app.Configure(appConfig =>
 {
-    appConfig.AddCommand<PullCommand>("pull")
+    appConfig.AddCommand<PullCliCommand>("pull")
         .WithAlias("p");
-    appConfig.AddCommand<RunCommand>("run")
+    appConfig.AddCommand<RunCliCommand>("run")
         .WithAlias("r");
-    appConfig.AddCommand<ResetCommand>("reset")
+    appConfig.AddCommand<ResetCliCommand>("reset")
         .WithAlias("rs");
-    appConfig.AddCommand<CommitCommand>("commit")
+    appConfig.AddCommand<CommitCliCommand>("commit")
         .WithAlias("c");
-    appConfig.AddCommand<ListCommand>("list")
+    appConfig.AddCommand<ListCliCommand>("list")
         .WithAlias("ls");
-    appConfig.AddCommand<RemoveCommand>("remove")
+    appConfig.AddCommand<RemoveCliCommand>("remove")
         .WithAlias("rm");
-    appConfig.AddCommand<PruneCommand>("prune")
+    appConfig.AddCommand<PruneCliCommand>("prune")
         .WithAlias("pr");
 });
 
