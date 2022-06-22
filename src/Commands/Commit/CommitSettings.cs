@@ -2,8 +2,11 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.Commit;
 
-public class CommitSettings : CommandSettings
+public class CommitSettings : CommandSettings, IIdentifierSettings
 {
-    [CommandOption("-t|--tag")]
+    [CommandArgument(0, "[ImageIdentifier]")]
+    public string? ImageIdentifier { get; set; }
+
+    [CommandOption("-t|--tag")] 
     public string? Tag { get; set; }
 }

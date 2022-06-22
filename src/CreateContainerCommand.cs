@@ -41,8 +41,8 @@ internal class CreateContainerCommand : ICreateContainerCommand
             .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
         return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
-            Name = ContainerNameHelper.JoinContainerNameAndTag(container.ContainerName, container.ContainerTag),
-            Image = ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ContainerTag),
+            Name = ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag),
+            Image = ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.Tag),
             HostConfig = new HostConfig
             {
                 PortBindings = portBindings

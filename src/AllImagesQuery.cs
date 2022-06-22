@@ -1,6 +1,5 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
-using port.Commands.Run;
 
 namespace port;
 
@@ -8,16 +7,14 @@ internal class AllImagesQuery : IAllImagesQuery
 {
     private readonly IDockerClient _dockerClient;
     private readonly Config.Config _config;
-    private readonly IGetImageQuery _getImageQuery;
-    private readonly IGetRunningContainerQuery _getRunningContainerQuery;
+    private readonly IGetRunningContainersQuery _getRunningContainersQuery;
 
-    public AllImagesQuery(IDockerClient dockerClient, Config.Config config, IGetImageQuery getImageQuery,
-        IGetRunningContainerQuery getRunningContainerQuery)
+    public AllImagesQuery(IDockerClient dockerClient, Config.Config config,
+        IGetRunningContainersQuery getRunningContainersQuery)
     {
         _dockerClient = dockerClient;
         _config = config;
-        _getImageQuery = getImageQuery;
-        _getRunningContainerQuery = getRunningContainerQuery;
+        _getRunningContainersQuery = getRunningContainersQuery;
     }
 
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
@@ -45,7 +42,7 @@ internal class AllImagesQuery : IAllImagesQuery
         IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
         Config.Config.ImageConfig imageConfig)
     {
-        var runningContainer = await _getRunningContainerQuery.QueryAsync();
+        var runningContainers = await _getRunningContainersQuery.QueryAsync();
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         return imagesListResponses
             .Where(HasRepoTags)
@@ -54,14 +51,13 @@ internal class AllImagesQuery : IAllImagesQuery
             .Select(e =>
             {
                 var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
-                var running
-                    = runningContainer != null
-                      && imageConfig.Identifier == runningContainer.ContainerName
-                      && tag == runningContainer.ContainerTag;
+                var runningContainer = runningContainers
+                    .SingleOrDefault(c =>
+                        imageConfig.Identifier == c.Identifier
+                        && tag == c.Tag);
+                var running = runningContainer != null;
                 var runningUntaggedImage
-                    = running
-                      && runningContainer != null
-                      && runningContainer.ImageTag != tag;
+                    = runningContainer != null && runningContainer.ImageTag != tag;
                 return new Image
                 {
                     Name = imageName,
@@ -72,14 +68,14 @@ internal class AllImagesQuery : IAllImagesQuery
                     Running = running,
                     RunningUntaggedImage = runningUntaggedImage,
                     Id = e.ID,
-                    ParentId = string.IsNullOrEmpty(e?.ParentID) ? null : e.ParentID
+                    ParentId = string.IsNullOrEmpty(e.ParentID) ? null : e.ParentID
                 };
             });
     }
 
     private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
     {
-        var runningContainer = await _getRunningContainerQuery.QueryAsync();
+        var runningContainers = await _getRunningContainersQuery.QueryAsync();
         foreach (var tag in imageConfig.ImageTags)
         {
             var parameters = new ImagesListParameters
@@ -93,15 +89,15 @@ internal class AllImagesQuery : IAllImagesQuery
             var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
             var imagesListResponse = imagesListResponses
                 .SingleOrDefault(e =>
-                    e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageConfig.ImageName, tag)));
-            var running
-                = runningContainer != null
-                  && imageConfig.Identifier == runningContainer.ContainerName
-                  && tag == runningContainer.ContainerTag;
+                    e.RepoTags != null &&
+                    e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageConfig.ImageName, tag)));
+            var runningContainer = runningContainers
+                .SingleOrDefault(c =>
+                    imageConfig.Identifier == c.Identifier
+                    && tag == c.Tag);
+            var running = runningContainer != null;
             var runningUntaggedImage
-                = running
-                  && runningContainer != null
-                  && runningContainer.ImageTag != tag;
+                = runningContainer != null && runningContainer.ImageTag != tag;
             yield return new Image
             {
                 Name = imageConfig.ImageName,
@@ -113,21 +109,21 @@ internal class AllImagesQuery : IAllImagesQuery
                 RunningUntaggedImage = runningUntaggedImage,
                 Id = imagesListResponse?.ID,
                 ParentId = string.IsNullOrEmpty(imagesListResponse?.ParentID) ? null : imagesListResponse.ParentID
-
             };
         }
     }
 
     private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(Config.Config.ImageConfig imageConfig)
     {
-        var runningContainer = await _getRunningContainerQuery.QueryAsync();
+        var runningContainers = await _getRunningContainersQuery.QueryAsync();
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         foreach (var imagesListResponse in imagesListResponses.Where(e => e.RepoTags == null))
         {
-            var running
-                = runningContainer != null
-                  && imageConfig.Identifier == runningContainer.ContainerName
-                  && runningContainer.ContainerTag == null;
+            var runningContainer = runningContainers
+                .SingleOrDefault(c =>
+                    c.Identifier == imageConfig.Identifier
+                    && c.Tag == null);
+            var running = runningContainer != null;
             yield return new Image
             {
                 Name = imageConfig.ImageName,

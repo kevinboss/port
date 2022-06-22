@@ -11,13 +11,13 @@ public class Container
         IsPortContainer = ContainerNameHelper.TryGetContainerNameAndTag(containerName, out var containerNameAndTag);
         if (IsPortContainer)
         {
-            ContainerName = containerNameAndTag.containerName;
-            ContainerTag = containerNameAndTag.tag;
+            Identifier = containerNameAndTag.containerName;
+            Tag = containerNameAndTag.tag;
         }
         else
         {
-            ContainerName = containerName;
-            ContainerTag = null;
+            Identifier = containerName;
+            Tag = null;
         }
 
         var imageNameAndTag = ImageNameHelper.GetImageNameAndTag(containerListResponse.Image);
@@ -39,8 +39,8 @@ public class Container
     public bool IsPortContainer { get; set; }
 
     public string Id { get; }
-    public string ContainerName { get; }
-    public string? ContainerTag { get; }
+    public string Identifier { get; }
+    public string? Tag { get; }
     public string ImageName { get; }
     public string? ImageTag { get; }
     public IList<Port> Ports { get; }
