@@ -66,7 +66,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         }
         else
         {
-            var (identifier, tag) = _identifierPrompt.GetIdentifierOfContainerFromUser(containers, "reset");
+            var (identifier, tag) = _identifierPrompt.GetIdentifierOfContainerFromUser(containers, "commit");
             return containers.SingleOrDefault(c => c.Identifier == identifier && c.Tag == tag);
         }
     }
