@@ -57,15 +57,19 @@ Lists all images with their respective tags.
 
 identifier is optional, if not provided all images will be listed. If provided all images belonging to the same identifier will be listed.
 
-### commit -t(ag)
+### commit -t(ag) \[identifier\]
 
 Creates an image from the currently running container.
 
+identifier is optional, if not provided the user will be asked to select a container.
+
 -t(ag) is optional, if not provied current date-time will be used as the tag.
 
-### reset
+### reset \[identifier\]
 
 Terminates and removes the currently running container. Then recreates the container using the image the running container was using.
+
+identifier is optional, if not provided the user will be asked to select a container.
 
 ### remove \[identifier\]
 
