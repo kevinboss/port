@@ -117,7 +117,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             .StartAsync($"Launching {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}", async _ =>
             {
                 await RemoveUntaggedContainersAndImageAsync(identifier, tag);
-                var containers = (await _getContainersQuery.QueryByImageNameAndTagAsync(imageName, tag)).ToList();
+                var containers = (await _getContainersQuery.QueryByContainerNameAndTagAsync(identifier, tag)).ToList();
                 switch (containers.Count)
                 {
                     case > 1:
