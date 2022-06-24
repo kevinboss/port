@@ -1,6 +1,6 @@
 namespace port;
 
-public interface IIdentifierAndTagEvaluator
+public interface IImageIdentifierAndTagEvaluator
 {
     (string identifier, string tag) Evaluate(string imageIdentifier);
 }

@@ -8,10 +8,10 @@ public class Container
     {
         Id = containerListResponse.ID;
         var containerName = containerListResponse.Names.Single().Remove(0, 1);
-        IsPortContainer = ContainerNameHelper.TryGetContainerNameAndTag(containerName, out var containerNameAndTag);
+        IsPortContainer = ContainerNameHelper.TryGetContainerIdentifierAndTag(containerName, out var containerNameAndTag);
         if (IsPortContainer)
         {
-            Identifier = containerNameAndTag.containerName;
+            Identifier = containerNameAndTag.identifier;
             Tag = containerNameAndTag.tag;
         }
         else

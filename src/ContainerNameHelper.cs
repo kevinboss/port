@@ -4,27 +4,27 @@ public static class ContainerNameHelper
 {
     private const string Separator = ".";
     
-    public static (string containerName, string? tag) GetContainerNameAndTag(string containerName)
+    public static (string containerName, string? tag) GetContainerIdentifierAndTag(string nameAndIdentifier)
     {
-        var idx = containerName.LastIndexOf(Separator, StringComparison.Ordinal);
+        var idx = nameAndIdentifier.LastIndexOf(Separator, StringComparison.Ordinal);
         if (idx == -1)
         {
-            throw new ArgumentException($"Does not contain tag separator {Separator}", nameof(containerName));
+            throw new ArgumentException($"Does not contain tag separator {Separator}", nameof(nameAndIdentifier));
         }
 
-        return (containerName[..idx], containerName[(idx + 1)..]);
+        return (nameAndIdentifier[..idx], nameAndIdentifier[(idx + 1)..]);
     }
 
-    public static bool TryGetContainerNameAndTag(string containerName, out (string containerName, string tag) nameAndTag)
+    public static bool TryGetContainerIdentifierAndTag(string nameAndIdentifier, out (string identifier, string tag) nameAndTag)
     {
-        nameAndTag = (containerName, string.Empty);
-        var idx = containerName.LastIndexOf(Separator, StringComparison.Ordinal);
+        nameAndTag = (nameAndIdentifier, string.Empty);
+        var idx = nameAndIdentifier.LastIndexOf(Separator, StringComparison.Ordinal);
         if (idx == -1)
         {
             return false;
         }
 
-        nameAndTag = (containerName[..idx], containerName[(idx + 1)..]);
+        nameAndTag = (nameAndIdentifier[..idx], nameAndIdentifier[(idx + 1)..]);
         return true;
     }
 

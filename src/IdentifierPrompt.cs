@@ -13,7 +13,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
 
     public async Task<(string identifier, string? tag)> GetBaseIdentifierFromUserAsync(string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
+        var selectionPrompt = CreateSelectionPrompt("image", command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
             var nodeHeader = BuildNodeHeader(imageGroup);
@@ -30,7 +30,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
 
     public async Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
+        var selectionPrompt = CreateSelectionPrompt("image", command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
             var nodeHeader = BuildNodeHeader(imageGroup);
@@ -46,7 +46,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
 
     public async Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
+        var selectionPrompt = CreateSelectionPrompt("image", command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync())
         {
             var nodeHeader = BuildNodeHeader(imageGroup);
@@ -60,11 +60,21 @@ internal class IdentifierPrompt : IIdentifierPrompt
         return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
-    public (string identifier, string? tag) GetIdentifierOfContainerFromUser(
-        IEnumerable<Container> containers,
+    public (string identifier, string? tag) GetIdentifierOfContainerFromUser(IReadOnlyCollection<Container> containers,
         string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
+        switch (containers.Count)
+        {
+            case <= 0:
+                throw new ArgumentException("Must contain at least 1 item", nameof(containers));
+            case 1:
+            {
+                var container = containers.Single();
+                return (container.Identifier, container.Tag);
+            }
+        }
+
+        var selectionPrompt = CreateSelectionPrompt("container", command);
         foreach (var container in containers)
         {
             selectionPrompt.AddChoice(container);
@@ -76,7 +86,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
 
     public async Task<string> GetUntaggedIdentifierFromUserAsync(string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
+        var selectionPrompt = CreateSelectionPrompt("image", command);
         await foreach (var imageGroup in _allImagesQuery.QueryAsync().Where(e => e.Images.Any(i => i.Tag == null)))
         {
             selectionPrompt.AddChoice(imageGroup);
@@ -94,7 +104,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         return nodeHeader;
     }
 
-    private static SelectionPrompt<object> CreateSelectionPrompt(string command)
+    private static SelectionPrompt<object> CreateSelectionPrompt(string item, string command)
     {
         return new SelectionPrompt<object>()
             .UseConverter(o =>
@@ -109,7 +119,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
                 };
             })
             .PageSize(10)
-            .Title($"Select image you wish to [green]{command}[/]")
+            .Title($"Select {item} you wish to [green]{command}[/]")
             .MoreChoicesText("[grey](Move up and down to reveal more images)[/]");
     }
 }
