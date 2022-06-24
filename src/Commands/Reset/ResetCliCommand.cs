@@ -9,20 +9,20 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
-    private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
+    private readonly IContainerIdentifierAndTagEvaluator _containerIdentifierAndTagEvaluator;
     private readonly IIdentifierPrompt _identifierPrompt;
 
     public ResetCliCommand(IGetRunningContainersQuery getRunningContainersQuery,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
         ICreateContainerCommand createContainerCommand,
-        IRunContainerCommand runContainerCommand, IIdentifierAndTagEvaluator identifierAndTagEvaluator,
+        IRunContainerCommand runContainerCommand, IContainerIdentifierAndTagEvaluator containerIdentifierAndTagEvaluator,
         IIdentifierPrompt identifierPrompt)
     {
         _getRunningContainersQuery = getRunningContainersQuery;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
-        _identifierAndTagEvaluator = identifierAndTagEvaluator;
+        _containerIdentifierAndTagEvaluator = containerIdentifierAndTagEvaluator;
         _identifierPrompt = identifierPrompt;
     }
 
@@ -39,13 +39,12 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
         return 0;
     }
 
-    private async Task<Container?> GetContainerAsync(IIdentifierSettings settings)
+    private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)
     {
         var containers = await _getRunningContainersQuery.QueryAsync();
-        if (containers.Count <= 0) return containers.SingleOrDefault();
-        if (settings.ImageIdentifier != null)
+        if (settings.ContainerIdentifier != null)
         {
-            var (identifier, tag) = _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
+            var (identifier, tag) = _containerIdentifierAndTagEvaluator.Evaluate(settings.ContainerIdentifier);
             return containers.SingleOrDefault(c => c.Identifier == identifier && c.Tag == tag);
         }
         else

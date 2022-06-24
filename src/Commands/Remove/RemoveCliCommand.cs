@@ -12,19 +12,19 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
     private readonly Config.Config _config;
-    private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
+    private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
 
     public RemoveCliCommand(IIdentifierPrompt identifierPrompt, IGetContainersQuery getContainersQuery,
         Config.Config config,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
-        IIdentifierAndTagEvaluator identifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery)
+        IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery)
     {
         _identifierPrompt = identifierPrompt;
         _getContainersQuery = getContainersQuery;
         _config = config;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _removeImageCommand = removeImageCommand;
-        _identifierAndTagEvaluator = identifierAndTagEvaluator;
+        _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _getImageIdQuery = getImageIdQuery;
     }
 
@@ -38,11 +38,11 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
+    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IImageIdentifierSettings settings)
     {
         if (settings.ImageIdentifier != null)
         {
-            return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
+            return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
         var identifierAndTag = await _identifierPrompt.GetDownloadedIdentifierFromUserAsync("remove");
