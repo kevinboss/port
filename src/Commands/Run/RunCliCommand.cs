@@ -14,7 +14,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     private readonly IRunContainerCommand _runContainerCommand;
     private readonly IStopContainerCommand _stopContainerCommand;
     private readonly Config.Config _config;
-    private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
+    private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
 
@@ -25,7 +25,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         IStopContainerCommand stopContainerCommand, Config.Config config,
-        IIdentifierAndTagEvaluator identifierAndTagEvaluator,
+        IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand)
     {
         _identifierPrompt = identifierPrompt;
@@ -36,7 +36,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         _runContainerCommand = runContainerCommand;
         _stopContainerCommand = stopContainerCommand;
         _config = config;
-        _identifierAndTagEvaluator = identifierAndTagEvaluator;
+        _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _removeImageCommand = removeImageCommand;
     }
@@ -52,11 +52,11 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IIdentifierSettings settings)
+    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IImageIdentifierSettings settings)
     {
         if (settings.ImageIdentifier != null)
         {
-            return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
+            return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
         var identifierAndTag = await _identifierPrompt.GetRunnableIdentifierFromUserAsync("run");

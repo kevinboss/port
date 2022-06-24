@@ -1,6 +1,6 @@
 namespace port;
 
-public interface IIdentifierSettings
+public interface IImageIdentifierSettings
 {
     public string? ImageIdentifier { get; set; }
 }

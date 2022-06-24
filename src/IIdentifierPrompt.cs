@@ -7,8 +7,7 @@ public interface IIdentifierPrompt
 
     Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command);
 
-    (string identifier, string? tag) GetIdentifierOfContainerFromUser(
-        IEnumerable<Container> readOnlyCollection,
+    (string identifier, string? tag) GetIdentifierOfContainerFromUser(IReadOnlyCollection<Container> readOnlyCollection,
         string command);
 
     Task<string> GetUntaggedIdentifierFromUserAsync(string command);

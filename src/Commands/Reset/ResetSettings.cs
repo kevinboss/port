@@ -2,8 +2,8 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.Reset;
 
-internal class ResetSettings : CommandSettings, IIdentifierSettings
+internal class ResetSettings : CommandSettings, IContainerIdentifierSettings
 {
-    [CommandArgument(0, "[ImageIdentifier]")]
-    public string? ImageIdentifier { get; set; }
+    [CommandArgument(0, "[ContainerIdentifier]")]
+    public string? ContainerIdentifier { get; set; }
 }

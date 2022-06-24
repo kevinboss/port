@@ -6,16 +6,16 @@ public class PullCliCommand : AsyncCommand<PullSettings>
 {
     private readonly IIdentifierPrompt _identifierPrompt;
     private readonly Config.Config _config;
-    private readonly IIdentifierAndTagEvaluator _identifierAndTagEvaluator;
+    private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly ICreateImageCliCommand _createImageCliCommand;
 
     public PullCliCommand(IIdentifierPrompt identifierPrompt, Config.Config config,
-        IIdentifierAndTagEvaluator identifierAndTagEvaluator,
+        IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
         ICreateImageCliCommand createImageCliCommand)
     {
         _identifierPrompt = identifierPrompt;
         _config = config;
-        _identifierAndTagEvaluator = identifierAndTagEvaluator;
+        _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _createImageCliCommand = createImageCliCommand;
     }
 
@@ -26,11 +26,11 @@ public class PullCliCommand : AsyncCommand<PullSettings>
         return 0;
     }
 
-    private async Task<(string identifier, string? tag)> GetBaseIdentifierAndTagAsync(IIdentifierSettings settings)
+    private async Task<(string identifier, string? tag)> GetBaseIdentifierAndTagAsync(IImageIdentifierSettings settings)
     {
         if (settings.ImageIdentifier != null)
         {
-            return _identifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
+            return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
         var identifierAndTag = await _identifierPrompt.GetBaseIdentifierFromUserAsync("pull");
