@@ -17,7 +17,9 @@ internal class GetRunningContainersQuery : IGetRunningContainersQuery
     public async Task<IReadOnlyCollection<Container>> QueryAsync()
     {
         var images = _config.ImageConfigs;
-        var identifiers = images.Select(image => image.Identifier).ToList();
+        var containerNames = images.SelectMany(image
+            => image.ImageTags.Select(tag => ContainerNameHelper.BuildContainerName(image.Identifier, tag)))
+            .ToList();
 
         var containers = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
@@ -26,9 +28,8 @@ internal class GetRunningContainersQuery : IGetRunningContainersQuery
             });
         return containers
             .Select(e => new Container(e))
-            .Where(e => e.IsPortContainer)
             .Where(e => e.Running)
-            .Where(e => identifiers.Contains(e.Identifier))
+            .Where(e => containerNames.Any(cn => e.Name.StartsWith(cn)))
             .ToList();
     }
 }

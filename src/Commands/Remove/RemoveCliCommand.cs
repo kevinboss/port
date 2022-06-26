@@ -1,4 +1,3 @@
-using port.Commands.Run;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -33,7 +32,7 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Removing {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}",
+            .StartAsync($"Removing {ImageNameHelper.BuildImageName(identifier, tag)}",
                 ctx => RemoveImageAsync(identifier, tag, ctx));
         return 0;
     }
@@ -54,18 +53,18 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
         var containers = await _getContainersQuery.QueryByImageNameAndTagAsync(imageName, tag);
-        ctx.Status = $"Removing containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)}";
+        ctx.Status = $"Removing containers for image '{ImageNameHelper.BuildImageName(identifier, tag)}'";
         foreach (var container in containers)
         {
             await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
         }
-        AnsiConsole.WriteLine($"Containers for {ContainerNameHelper.JoinContainerNameAndTag(identifier, tag)} removed");
+        AnsiConsole.WriteLine($"Containers for image '{ImageNameHelper.BuildImageName(identifier, tag)}' removed");
 
         var imageId = await _getImageIdQuery.QueryAsync(imageName, tag);
         if (imageId == null)
             throw new InvalidOperationException(
-                $"Image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)} does not exist or does not have an Id".EscapeMarkup());
+                $"Image '{ImageNameHelper.BuildImageName(imageName, tag)}' does not exist or does not have an Id".EscapeMarkup());
         await _removeImageCommand.ExecuteAsync(imageId);
-        AnsiConsole.WriteLine($"Removed image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
+        AnsiConsole.WriteLine($"Removed image {ImageNameHelper.BuildImageName(imageName, tag)}");
     }
 }

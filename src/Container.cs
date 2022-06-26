@@ -8,20 +8,11 @@ public class Container
     {
         Id = containerListResponse.ID;
         var containerName = containerListResponse.Names.Single().Remove(0, 1);
-        IsPortContainer = ContainerNameHelper.TryGetContainerIdentifierAndTag(containerName, out var containerNameAndTag);
-        if (IsPortContainer)
-        {
-            Identifier = containerNameAndTag.identifier;
-            Tag = containerNameAndTag.tag;
-        }
-        else
-        {
-            Identifier = containerName;
-            Tag = null;
-        }
+        
+        Name = containerName;
 
         var imageNameAndTag = ImageNameHelper.GetImageNameAndTag(containerListResponse.Image);
-        if (IsPortContainer && containerNameAndTag.tag == imageNameAndTag.tag)
+        if (imageNameAndTag.tag != null && containerName.EndsWith(imageNameAndTag.tag))
         {
             ImageName = imageNameAndTag.imageName;
             ImageTag = imageNameAndTag.tag;
@@ -36,11 +27,8 @@ public class Container
         Running = containerListResponse.State == "running";
     }
 
-    public bool IsPortContainer { get; set; }
-
     public string Id { get; }
-    public string Identifier { get; }
-    public string? Tag { get; }
+    public string Name { get; }
     public string ImageName { get; }
     public string? ImageTag { get; }
     public IList<Port> Ports { get; }

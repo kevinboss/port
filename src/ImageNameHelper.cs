@@ -27,5 +27,5 @@ public static class ImageNameHelper
         return true;
     }
 
-    public static string JoinImageNameAndTag(string imageName, string? tag) => tag == null ? imageName : $"{imageName}{Separator}{tag}";
+    public static string BuildImageName(string imageName, string? tag) => tag == null ? imageName : $"{imageName}{Separator}{tag}";
 }

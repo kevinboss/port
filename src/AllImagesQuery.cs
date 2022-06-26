@@ -25,16 +25,29 @@ internal class AllImagesQuery : IAllImagesQuery
             var images = await GetBaseImagesAsync(imageConfig).ToListAsync();
             images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
             images.AddRange(await GetUntaggedImagesAsync(imageConfig).ToListAsync());
-            var imagesById = images.Where(e => e.Id != null).ToDictionary(e => e.Id!, image => image);
-            var imageGroup = new ImageGroup(imageConfig.Identifier);
-            foreach (var image in images)
-            {
-                imageGroup.AddImage(image);
-                if (image.ParentId == null) continue;
-                image.Parent = imagesById[image.ParentId!];
-            }
+            yield return CreateImageGroup(images, imageConfig);
+        }
+    }
 
-            yield return imageGroup;
+    private static ImageGroup CreateImageGroup(List<Image> images, Config.Config.ImageConfig imageConfig)
+    {
+        var imageGroup = new ImageGroup(imageConfig.Identifier);
+        SetParents(images, imageGroup);
+        return imageGroup;
+    }
+
+    private static void SetParents(List<Image> images, ImageGroup imageGroup)
+    {
+        var imagesWithIds = images.Where(e => e.Id != null).ToList();
+        var imageIds = imagesWithIds.Select(i => i.Id).ToList();
+        if (imageIds.Count != imageIds.Distinct().Count())
+            throw new InvalidOperationException("Multiple images with the same image id exist");
+        var imagesById = imagesWithIds.ToDictionary(e => e.Id!, image => image);
+        foreach (var image in images)
+        {
+            imageGroup.AddImage(image);
+            if (image.ParentId == null) continue;
+            image.Parent = imagesById[image.ParentId!];
         }
     }
 
@@ -53,8 +66,8 @@ internal class AllImagesQuery : IAllImagesQuery
                 var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
                 var runningContainer = runningContainers
                     .SingleOrDefault(c =>
-                        imageConfig.Identifier == c.Identifier
-                        && tag == c.Tag);
+                        tag != null &&
+                        c.Name == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
                 var running = runningContainer != null;
                 var runningUntaggedImage
                     = runningContainer != null && runningContainer.ImageTag != tag;
@@ -66,7 +79,7 @@ internal class AllImagesQuery : IAllImagesQuery
                     Existing = true,
                     Created = e.Created,
                     Running = running,
-                    RunningUntaggedImage = runningUntaggedImage,
+                    RelatedContainerIsRunningUntaggedImage = runningUntaggedImage,
                     Id = e.ID,
                     ParentId = string.IsNullOrEmpty(e.ParentID) ? null : e.ParentID
                 };
@@ -90,11 +103,10 @@ internal class AllImagesQuery : IAllImagesQuery
             var imagesListResponse = imagesListResponses
                 .SingleOrDefault(e =>
                     e.RepoTags != null &&
-                    e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageConfig.ImageName, tag)));
+                    e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag)));
             var runningContainer = runningContainers
                 .SingleOrDefault(c =>
-                    imageConfig.Identifier == c.Identifier
-                    && tag == c.Tag);
+                    c.Name == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
             var running = runningContainer != null;
             var runningUntaggedImage
                 = runningContainer != null && runningContainer.ImageTag != tag;
@@ -106,7 +118,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created,
                 Running = running,
-                RunningUntaggedImage = runningUntaggedImage,
+                RelatedContainerIsRunningUntaggedImage = runningUntaggedImage,
                 Id = imagesListResponse?.ID,
                 ParentId = string.IsNullOrEmpty(imagesListResponse?.ParentID) ? null : imagesListResponse.ParentID
             };
@@ -121,8 +133,8 @@ internal class AllImagesQuery : IAllImagesQuery
         {
             var runningContainer = runningContainers
                 .SingleOrDefault(c =>
-                    c.Identifier == imageConfig.Identifier
-                    && c.Tag == null);
+                    c.ImageName == imageConfig.ImageName
+                    && c.ImageTag == null);
             var running = runningContainer != null;
             yield return new Image
             {
@@ -132,7 +144,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 Existing = true,
                 Created = imagesListResponse.Created,
                 Running = running,
-                RunningUntaggedImage = false,
+                RelatedContainerIsRunningUntaggedImage = false,
                 Id = imagesListResponse.ID,
                 ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID
             };
@@ -171,7 +183,7 @@ internal class AllImagesQuery : IAllImagesQuery
             }))
             .Any(imageConfig =>
             {
-                var imageNameAndTag = ImageNameHelper.JoinImageNameAndTag(imageConfig.ImageName, imageConfig.tag);
+                var imageNameAndTag = ImageNameHelper.BuildImageName(imageConfig.ImageName, imageConfig.tag);
                 return e.RepoTags.Contains(imageNameAndTag);
             });
     }
@@ -182,7 +194,7 @@ internal class AllImagesQuery : IAllImagesQuery
         {
             imageConfig.ImageName,
             tag
-        }).Select(imageConfig1 => ImageNameHelper.JoinImageNameAndTag(imageConfig1.ImageName, imageConfig1.tag));
+        }).Select(imageConfig1 => ImageNameHelper.BuildImageName(imageConfig1.ImageName, imageConfig1.tag));
         return e.RepoTags.Any(repoTag => imageNameAndTags.Any(repoTag.StartsWith));
     }
 }

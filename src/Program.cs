@@ -29,7 +29,6 @@ registrations.AddSingleton<IStopAndRemoveContainerCommand, StopAndRemoveContaine
 registrations.AddSingleton<IRemoveImageCommand, RemoveImageCommand>();
 registrations.AddSingleton<ICreateImageCliCommand, CreateImageCliCommand>();
 registrations.AddSingleton<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
-registrations.AddSingleton<IContainerIdentifierAndTagEvaluator, ContainerIdentifierAndTagEvaluator>();
 registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
 {

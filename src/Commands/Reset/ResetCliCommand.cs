@@ -9,20 +9,18 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
-    private readonly IContainerIdentifierAndTagEvaluator _containerIdentifierAndTagEvaluator;
     private readonly IIdentifierPrompt _identifierPrompt;
 
     public ResetCliCommand(IGetRunningContainersQuery getRunningContainersQuery,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
         ICreateContainerCommand createContainerCommand,
-        IRunContainerCommand runContainerCommand, IContainerIdentifierAndTagEvaluator containerIdentifierAndTagEvaluator,
+        IRunContainerCommand runContainerCommand,
         IIdentifierPrompt identifierPrompt)
     {
         _getRunningContainersQuery = getRunningContainersQuery;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
-        _containerIdentifierAndTagEvaluator = containerIdentifierAndTagEvaluator;
         _identifierPrompt = identifierPrompt;
     }
 
@@ -44,14 +42,11 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
         var containers = await _getRunningContainersQuery.QueryAsync();
         if (settings.ContainerIdentifier != null)
         {
-            var (identifier, tag) = _containerIdentifierAndTagEvaluator.Evaluate(settings.ContainerIdentifier);
-            return containers.SingleOrDefault(c => c.Identifier == identifier && c.Tag == tag);
+            return containers.SingleOrDefault(c => c.Name == settings.ContainerIdentifier);
         }
-        else
-        {
-            var (identifier, tag) = _identifierPrompt.GetIdentifierOfContainerFromUser(containers, "reset");
-            return containers.SingleOrDefault(c => c.Identifier == identifier && c.Tag == tag);
-        }
+
+        var identifier = _identifierPrompt.GetIdentifierOfContainerFromUser(containers, "reset");
+        return containers.SingleOrDefault(c => c.Name == identifier);
     }
 
 
@@ -60,7 +55,7 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync(
-                $"Resetting container {ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag)}",
+                $"Resetting container '{container.Name}'",
                 async _ =>
                 {
                     await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
@@ -68,6 +63,6 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
                     await _runContainerCommand.ExecuteAsync(container);
                 });
         AnsiConsole.WriteLine(
-            $"Currently running container {ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag)} resetted");
+            $"Currently running container '{container.Name}' resetted");
     }
 }

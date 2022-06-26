@@ -26,7 +26,7 @@ internal class GetImageIdQuery : IGetImageIdQuery
         return imagesListResponses
             .SingleOrDefault(e =>
                 tag == null && e.RepoTags == null
-                || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageName, tag)))
+                || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageName, tag)))
             ?.ID;
     }
 }
