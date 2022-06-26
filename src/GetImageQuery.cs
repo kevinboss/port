@@ -28,7 +28,7 @@ internal class GetImageQuery : IGetImageQuery
         var imagesListResponse = imagesListResponses
             .SingleOrDefault(e =>
                 tag == null && e.RepoTags == null
-                || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageName, tag)));
+                || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageName, tag)));
         if (imagesListResponse == null)
         {
             return null;
@@ -70,7 +70,7 @@ internal class GetImageQuery : IGetImageQuery
         var runningContainer = runningContainers
             .SingleOrDefault(c =>
                 imageName == c.ImageName
-                && tag == c.Tag);
+                && tag == c.ImageTag);
         var running = runningContainer != null;
         var runningUntaggedImage
             = runningContainer != null && runningContainer.ImageTag != tag;
@@ -82,7 +82,7 @@ internal class GetImageQuery : IGetImageQuery
             Existing = true,
             Created = imagesListResponse.Created,
             Running = running,
-            RunningUntaggedImage = runningUntaggedImage,
+            RelatedContainerIsRunningUntaggedImage = runningUntaggedImage,
             Id = imagesListResponse.ID,
             ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID,
             Parent = string.IsNullOrEmpty(imagesListResponse.ParentID)

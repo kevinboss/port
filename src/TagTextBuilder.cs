@@ -23,9 +23,9 @@ public static class TagTextBuilder
                 break;
         }
 
-        if (image.Running && !image.RunningUntaggedImage)
+        if (image.Running && !image.RelatedContainerIsRunningUntaggedImage)
             sb.Append($" [green]running[/]");
-        if (image.Running && image.RunningUntaggedImage)
+        if (image.Running && image.RelatedContainerIsRunningUntaggedImage)
             sb.Append(" (running [orange3]untagged image[/])");
         if (image.Parent != null)
             sb.Append($" (based on {image.Parent.Tag ?? "[orange3]untagged image[/]"})");

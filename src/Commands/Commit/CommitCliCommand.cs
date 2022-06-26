@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -9,17 +8,14 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
     private readonly ICreateImageFromContainerCommand _createImageFromContainerCommand;
     private readonly IGetRunningContainersQuery _getRunningContainersQuery;
     private readonly IGetImageQuery _getImageQuery;
-    private readonly IContainerIdentifierAndTagEvaluator _containerIdentifierAndTagEvaluator;
     private readonly IIdentifierPrompt _identifierPrompt;
 
     public CommitCliCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
-        IGetRunningContainersQuery getRunningContainersQuery, IGetImageQuery getImageQuery,
-        IContainerIdentifierAndTagEvaluator containerIdentifierAndTagEvaluator, IIdentifierPrompt identifierPrompt)
+        IGetRunningContainersQuery getRunningContainersQuery, IGetImageQuery getImageQuery, IIdentifierPrompt identifierPrompt)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainersQuery = getRunningContainersQuery;
         _getImageQuery = getImageQuery;
-        _containerIdentifierAndTagEvaluator = containerIdentifierAndTagEvaluator;
         _identifierPrompt = identifierPrompt;
     }
 
@@ -44,7 +40,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         if (image == null)
         {
             throw new InvalidOperationException(
-                $"Image of running container {ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ImageTag)} not found");
+                $"Image of running container {ImageNameHelper.BuildImageName(container.ImageName, container.ImageTag)} not found");
         }
 
         while (image.Parent != null)
@@ -56,7 +52,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Creating image from running container {ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag)}",
+            .StartAsync($"Creating image from running container '{container.Name}'",
                 _ => _createImageFromContainerCommand.ExecuteAsync(container.Id, container.ImageName, baseTag, tag));
         AnsiConsole.WriteLine($"Created image with tag {tag}");
     }
@@ -66,13 +62,10 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         var containers = await _getRunningContainersQuery.QueryAsync();
         if (settings.ContainerIdentifier != null)
         {
-            var (identifier, tag) = _containerIdentifierAndTagEvaluator.Evaluate(settings.ContainerIdentifier);
-            return containers.SingleOrDefault(c => c.Identifier == identifier && c.Tag == tag);
+            return containers.SingleOrDefault(c => c.Name == settings.ContainerIdentifier);
         }
-        else
-        {
-            var (identifier, tag) = _identifierPrompt.GetIdentifierOfContainerFromUser(containers, "commit");
-            return containers.SingleOrDefault(c => c.Identifier == identifier && c.Tag == tag);
-        }
+
+        var identifier = _identifierPrompt.GetIdentifierOfContainerFromUser(containers, "commit");
+        return containers.SingleOrDefault(c => c.Name == identifier);
     }
 }

@@ -13,15 +13,15 @@ internal class CreateContainerCommand : ICreateContainerCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string identifier, string imageName, string? tag, List<string> ports)
+    public Task ExecuteAsync(string identifier, string imageName, string tag, List<string> ports)
     {
         var portBindings = ports
             .Select(e => e.Split(PortSeparator))
             .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
         return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
-            Name = ContainerNameHelper.JoinContainerNameAndTag(identifier, tag),
-            Image = ImageNameHelper.JoinImageNameAndTag(imageName, tag),
+            Name = ContainerNameHelper.BuildContainerName(identifier, tag),
+            Image = ImageNameHelper.BuildImageName(imageName, tag),
             HostConfig = new HostConfig
             {
                 PortBindings = portBindings
@@ -41,8 +41,8 @@ internal class CreateContainerCommand : ICreateContainerCommand
             .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
         return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
-            Name = ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag),
-            Image = ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.Tag),
+            Name = container.Name,
+            Image = ImageNameHelper.BuildImageName(container.ImageName, container.ImageTag),
             HostConfig = new HostConfig
             {
                 PortBindings = portBindings
