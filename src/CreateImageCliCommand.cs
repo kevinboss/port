@@ -13,7 +13,7 @@ internal class CreateImageCliCommand : ICreateImageCliCommand
 
     public async Task ExecuteAsync(string imageName, string? tag)
     {
-        AnsiConsole.WriteLine($"Downloading image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
+        AnsiConsole.WriteLine($"Downloading image {ImageNameHelper.BuildImageName(imageName, tag)}");
         var tasks = new Dictionary<string, ProgressTask>();
         var lockObject = new object();
         await AnsiConsole.Progress()
@@ -61,6 +61,6 @@ internal class CreateImageCliCommand : ICreateImageCliCommand
                 }
             });
 
-        AnsiConsole.WriteLine($"Finished downloading image {ImageNameHelper.JoinImageNameAndTag(imageName, tag)}");
+        AnsiConsole.WriteLine($"Finished downloading image {ImageNameHelper.BuildImageName(imageName, tag)}");
     }
 }

@@ -8,7 +8,7 @@ public class Image
     public bool Existing { get; set; }
     public DateTime? Created { get; set; }
     public bool Running { get; set; }
-    public bool RunningUntaggedImage { get; set; }
+    public bool RelatedContainerIsRunningUntaggedImage { get; set; }
     public string? Id { get; set; }
     public string? ParentId { get; set; }
     public Image? Parent { get; set; }

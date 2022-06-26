@@ -48,7 +48,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             throw new InvalidOperationException("Can not launch untagged image");
         await TerminateOtherContainersAsync(identifier, tag);
         await LaunchImageAsync(identifier, tag, settings.Reset);
-        AnsiConsole.WriteLine($"Launched {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}");
+        AnsiConsole.WriteLine($"Launched {ImageNameHelper.BuildImageName(identifier, tag)}");
         return 0;
     }
 
@@ -114,23 +114,20 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
 
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}", async _ =>
+            .StartAsync($"Launching {ImageNameHelper.BuildImageName(identifier, tag)}", async _ =>
             {
-                await RemoveUntaggedContainersAndImageAsync(identifier, tag);
-                var containers = (await _getContainersQuery.QueryByContainerNameAndTagAsync(identifier, tag)).ToList();
+                await RemoveUntaggedContainersAndImageAsync(identifier);
+                var containers = (await _getContainersQuery.QueryByContainerNameAsync(ContainerNameHelper.BuildContainerName(identifier, tag))).ToList();
                 switch (containers.Count)
                 {
-                    case > 1:
-                        throw new InvalidOperationException(
-                            $"There should only be one container for {ImageNameHelper.JoinImageNameAndTag(identifier, tag)}");
                     case 1 when resetContainer:
                         await _stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
                         await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
                         break;
+                    case 1 when !resetContainer:
+                        break;
                     case 0:
                         await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
-                        break;
-                    case 1 when !resetContainer:
                         break;
                 }
 
@@ -138,9 +135,9 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             });
     }
 
-    private async Task RemoveUntaggedContainersAndImageAsync(string identifier, string tag)
+    private async Task RemoveUntaggedContainersAndImageAsync(string identifier)
     {
-        var containers = (await _getContainersQuery.QueryByContainerNameAndTagAsync(identifier, tag)).ToList();
+        var containers = (await _getContainersQuery.QueryByContainerNameAsync(identifier)).ToList();
         if (!containers.Any())
         {
             return;
@@ -150,7 +147,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         {
             await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
             await _removeImageCommand.ExecuteAsync(
-                ImageNameHelper.JoinImageNameAndTag(container.ImageName, container.ImageTag));
+                ImageNameHelper.BuildImageName(container.ImageName, container.ImageTag));
         }
     }
 }

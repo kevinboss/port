@@ -26,6 +26,6 @@ internal class DoesImageExistQuery : IDoesImageExistQuery
         return imagesListResponses
             .Any(e =>
                 tag == null && e.RepoTags == null
-                || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.JoinImageNameAndTag(imageName, tag)));
+                || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageName, tag)));
     }
 }

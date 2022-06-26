@@ -60,7 +60,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
-    public (string identifier, string? tag) GetIdentifierOfContainerFromUser(IReadOnlyCollection<Container> containers,
+    public string GetIdentifierOfContainerFromUser(IReadOnlyCollection<Container> containers,
         string command)
     {
         switch (containers.Count)
@@ -70,7 +70,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
             case 1:
             {
                 var container = containers.Single();
-                return (container.Identifier, container.Tag);
+                return container.Name;
             }
         }
 
@@ -81,7 +81,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
         }
 
         var selectedContainer = (Container)AnsiConsole.Prompt(selectionPrompt);
-        return (selectedContainer.Identifier, selectedContainer.Tag);
+        return selectedContainer.Name;
     }
 
     public async Task<string> GetUntaggedIdentifierFromUserAsync(string command)
@@ -113,7 +113,7 @@ internal class IdentifierPrompt : IIdentifierPrompt
                 {
                     Image image => TagTextBuilder.BuildTagText(image),
                     Container container =>
-                        $"[white]{ContainerNameHelper.JoinContainerNameAndTag(container.Identifier, container.Tag)}[/]",
+                        $"[white]{container.Name}[/]",
                     ImageGroup imageGroup => $"[white]{imageGroup.Identifier}[/]",
                     _ => o as string ?? throw new InvalidOperationException()
                 };
