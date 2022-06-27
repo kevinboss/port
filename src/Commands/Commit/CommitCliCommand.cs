@@ -8,15 +8,15 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
     private readonly ICreateImageFromContainerCommand _createImageFromContainerCommand;
     private readonly IGetRunningContainersQuery _getRunningContainersQuery;
     private readonly IGetImageQuery _getImageQuery;
-    private readonly IIdentifierPrompt _identifierPrompt;
+    private readonly IContainerNamePrompt _containerNamePrompt;
 
     public CommitCliCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
-        IGetRunningContainersQuery getRunningContainersQuery, IGetImageQuery getImageQuery, IIdentifierPrompt identifierPrompt)
+        IGetRunningContainersQuery getRunningContainersQuery, IGetImageQuery getImageQuery, IContainerNamePrompt containerNamePrompt)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainersQuery = getRunningContainersQuery;
         _getImageQuery = getImageQuery;
-        _identifierPrompt = identifierPrompt;
+        _containerNamePrompt = containerNamePrompt;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
@@ -65,7 +65,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             return containers.SingleOrDefault(c => c.Name == settings.ContainerIdentifier);
         }
 
-        var identifier = _identifierPrompt.GetIdentifierOfContainerFromUser(containers, "commit");
+        var identifier = _containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "commit");
         return containers.SingleOrDefault(c => c.Name == identifier);
     }
 }

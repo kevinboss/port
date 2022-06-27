@@ -14,7 +14,8 @@ using Spectre.Console.Cli;
 
 var registrations = new ServiceCollection();
 registrations.AddSingleton<IAllImagesQuery, AllImagesQuery>();
-registrations.AddSingleton<IIdentifierPrompt, IdentifierPrompt>();
+registrations.AddSingleton<IImageIdentifierPrompt, ImageIdentifierPrompt>();
+registrations.AddSingleton<IContainerNamePrompt, ContainerNamePrompt>();
 registrations.AddSingleton<ICreateImageCommand, CreateImageCommand>();
 registrations.AddSingleton<ICreateImageFromContainerCommand, CreateImageFromContainerCommand>();
 registrations.AddSingleton<IGetImageQuery, GetImageQuery>();

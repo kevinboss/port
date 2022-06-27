@@ -1,14 +1,11 @@
 namespace port;
 
-public interface IIdentifierPrompt
+public interface IImageIdentifierPrompt
 {
     Task<(string identifier, string? tag)> GetBaseIdentifierFromUserAsync(string command);
     Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command);
 
     Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command);
-
-    string GetIdentifierOfContainerFromUser(IReadOnlyCollection<Container> readOnlyCollection,
-        string command);
 
     Task<string> GetUntaggedIdentifierFromUserAsync(string command);
 }

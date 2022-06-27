@@ -4,16 +4,16 @@ namespace port.Commands.Pull;
 
 public class PullCliCommand : AsyncCommand<PullSettings>
 {
-    private readonly IIdentifierPrompt _identifierPrompt;
+    private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
     private readonly Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly ICreateImageCliCommand _createImageCliCommand;
 
-    public PullCliCommand(IIdentifierPrompt identifierPrompt, Config.Config config,
+    public PullCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
         ICreateImageCliCommand createImageCliCommand)
     {
-        _identifierPrompt = identifierPrompt;
+        _imageIdentifierPrompt = imageIdentifierPrompt;
         _config = config;
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _createImageCliCommand = createImageCliCommand;
@@ -33,7 +33,7 @@ public class PullCliCommand : AsyncCommand<PullSettings>
             return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _identifierPrompt.GetBaseIdentifierFromUserAsync("pull");
+        var identifierAndTag = await _imageIdentifierPrompt.GetBaseIdentifierFromUserAsync("pull");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
