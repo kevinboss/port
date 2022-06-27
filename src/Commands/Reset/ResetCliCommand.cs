@@ -9,19 +9,19 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
-    private readonly IIdentifierPrompt _identifierPrompt;
+    private readonly IContainerNamePrompt _containerNamePrompt;
 
     public ResetCliCommand(IGetRunningContainersQuery getRunningContainersQuery,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
         ICreateContainerCommand createContainerCommand,
         IRunContainerCommand runContainerCommand,
-        IIdentifierPrompt identifierPrompt)
+        IContainerNamePrompt containerNamePrompt)
     {
         _getRunningContainersQuery = getRunningContainersQuery;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
-        _identifierPrompt = identifierPrompt;
+        _containerNamePrompt = containerNamePrompt;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, ResetSettings settings)
@@ -45,7 +45,7 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
             return containers.SingleOrDefault(c => c.Name == settings.ContainerIdentifier);
         }
 
-        var identifier = _identifierPrompt.GetIdentifierOfContainerFromUser(containers, "reset");
+        var identifier = _containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "reset");
         return containers.SingleOrDefault(c => c.Name == identifier);
     }
 
