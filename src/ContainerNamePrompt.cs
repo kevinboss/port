@@ -12,14 +12,11 @@ internal class ContainerNamePrompt : IContainerNamePrompt
             case <= 0:
                 throw new ArgumentException("Must contain at least 1 item", nameof(containers));
             case 1:
-            {
-                var container = containers.Single();
-                return container.Name;
-            }
+                return containers.Single().Name;
         }
 
         var selectionPrompt = CreateSelectionPrompt(command);
-        foreach (var container in containers)
+        foreach (var container in containers.OrderBy(i => i.Name))
         {
             selectionPrompt.AddChoice(container);
         }
