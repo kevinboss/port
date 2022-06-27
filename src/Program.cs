@@ -8,6 +8,7 @@ using port.Commands.Pull;
 using port.Commands.Remove;
 using port.Commands.Reset;
 using port.Commands.Run;
+using port.Commands.Stop;
 using port.Config;
 using port.Infrastructure;
 using Spectre.Console.Cli;
@@ -35,13 +36,9 @@ registrations.AddSingleton(typeof(IDockerClient), provider =>
 {
     var config = provider.GetService<Config>();
     if (config?.DockerEndpoint == null)
-    {
         throw new InvalidOperationException("Docker endpoint has not been configured");
-    }
-
     var endpoint = new Uri(config.DockerEndpoint);
-    return new DockerClientConfiguration(endpoint)
-        .CreateClient();
+    return new DockerClientConfiguration(endpoint).CreateClient();
 });
 
 var registrar = new TypeRegistrar(registrations);
@@ -64,6 +61,8 @@ app.Configure(appConfig =>
         .WithAlias("rm");
     appConfig.AddCommand<PruneCliCommand>("prune")
         .WithAlias("pr");
+    appConfig.AddCommand<StopCliCommand>("stop")
+        .WithAlias("s");
 });
 
 return app.Run(args);

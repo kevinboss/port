@@ -1,7 +1,7 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace port.Commands.Run;
+namespace port;
 
 internal class StopContainerCommand : IStopContainerCommand
 {
@@ -12,9 +12,6 @@ internal class StopContainerCommand : IStopContainerCommand
         _dockerClient = dockerClient;
     }
 
-    public async Task ExecuteAsync(string containerId)
-    {
-        await _dockerClient.Containers.StopContainerAsync(containerId,
-            new ContainerStopParameters());
-    }
+    public async Task ExecuteAsync(string containerId) =>
+        await _dockerClient.Containers.StopContainerAsync(containerId, new ContainerStopParameters());
 }
