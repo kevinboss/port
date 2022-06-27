@@ -14,7 +14,9 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
     public async Task<(string identifier, string? tag)> GetBaseIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
-        await foreach (var imageGroup in _allImagesQuery.QueryAsync())
+        await foreach (var imageGroup in _allImagesQuery
+                           .QueryAsync()
+                           .OrderBy(i => i.Identifier))
         {
             var nodeHeader = BuildNodeHeader(imageGroup);
             selectionPrompt.AddChoiceGroup(nodeHeader,
@@ -31,7 +33,9 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
     public async Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
-        await foreach (var imageGroup in _allImagesQuery.QueryAsync())
+        await foreach (var imageGroup in _allImagesQuery
+                           .QueryAsync()
+                           .OrderBy(i => i.Identifier))
         {
             var nodeHeader = BuildNodeHeader(imageGroup);
             selectionPrompt.AddChoiceGroup(nodeHeader,
@@ -47,7 +51,9 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
     public async Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
-        await foreach (var imageGroup in _allImagesQuery.QueryAsync())
+        await foreach (var imageGroup in _allImagesQuery
+                           .QueryAsync()
+                           .OrderBy(i => i.Identifier))
         {
             var nodeHeader = BuildNodeHeader(imageGroup);
             selectionPrompt.AddChoiceGroup(nodeHeader,
@@ -63,7 +69,10 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
     public async Task<string> GetUntaggedIdentifierFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
-        await foreach (var imageGroup in _allImagesQuery.QueryAsync().Where(e => e.Images.Any(i => i.Tag == null)))
+        await foreach (var imageGroup in _allImagesQuery
+                           .QueryAsync()
+                           .Where(e => e.Images.Any(i => i.Tag == null))
+                           .OrderBy(i => i.Identifier))
         {
             selectionPrompt.AddChoice(imageGroup);
         }
