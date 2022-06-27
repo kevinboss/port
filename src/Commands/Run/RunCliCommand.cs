@@ -6,7 +6,7 @@ namespace port.Commands.Run;
 
 internal class RunCliCommand : AsyncCommand<RunSettings>
 {
-    private readonly IIdentifierPrompt _identifierPrompt;
+    private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
     private readonly ICreateImageCliCommand _createImageCliCommand;
     private readonly IDoesImageExistQuery _doesImageExistQuery;
     private readonly IGetContainersQuery _getContainersQuery;
@@ -20,7 +20,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
 
     private const char PortSeparator = ':';
 
-    public RunCliCommand(IIdentifierPrompt identifierPrompt,
+    public RunCliCommand(IImageIdentifierPrompt imageIdentifierPrompt,
         ICreateImageCliCommand createImageCliCommand, IDoesImageExistQuery doesImageExistQuery,
         IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
@@ -28,7 +28,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand)
     {
-        _identifierPrompt = identifierPrompt;
+        _imageIdentifierPrompt = imageIdentifierPrompt;
         _createImageCliCommand = createImageCliCommand;
         _doesImageExistQuery = doesImageExistQuery;
         _getContainersQuery = getContainersQuery;
@@ -59,7 +59,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _identifierPrompt.GetRunnableIdentifierFromUserAsync("run");
+        var identifierAndTag = await _imageIdentifierPrompt.GetRunnableIdentifierFromUserAsync("run");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 

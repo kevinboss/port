@@ -5,7 +5,7 @@ namespace port.Commands.Remove;
 
 internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
 {
-    private readonly IIdentifierPrompt _identifierPrompt;
+    private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly IGetImageIdQuery _getImageIdQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
@@ -13,12 +13,12 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
     private readonly Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
 
-    public RemoveCliCommand(IIdentifierPrompt identifierPrompt, IGetContainersQuery getContainersQuery,
+    public RemoveCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, IGetContainersQuery getContainersQuery,
         Config.Config config,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery)
     {
-        _identifierPrompt = identifierPrompt;
+        _imageIdentifierPrompt = imageIdentifierPrompt;
         _getContainersQuery = getContainersQuery;
         _config = config;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
@@ -44,7 +44,7 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
             return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _identifierPrompt.GetDownloadedIdentifierFromUserAsync("remove");
+        var identifierAndTag = await _imageIdentifierPrompt.GetDownloadedIdentifierFromUserAsync("remove");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
@@ -53,12 +53,12 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
         var containers = await _getContainersQuery.QueryByImageNameAndTagAsync(imageName, tag);
-        ctx.Status = $"Removing containers for image '{ImageNameHelper.BuildImageName(identifier, tag)}'";
+        ctx.Status = $"Removing containers using image '{ImageNameHelper.BuildImageName(imageName, tag)}'";
         foreach (var container in containers)
         {
             await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
         }
-        AnsiConsole.WriteLine($"Containers for image '{ImageNameHelper.BuildImageName(identifier, tag)}' removed");
+        AnsiConsole.WriteLine($"Containers using image '{ImageNameHelper.BuildImageName(imageName, tag)}' removed");
 
         var imageId = await _getImageIdQuery.QueryAsync(imageName, tag);
         if (imageId == null)

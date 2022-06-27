@@ -7,7 +7,7 @@ namespace port.Commands.Prune;
 internal class PruneCliCommand : AsyncCommand<PruneSettings>
 {
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
-    private readonly IIdentifierPrompt _identifierPrompt;
+    private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
     private readonly IGetImageIdQuery _getImageIdQuery;
     private readonly Config.Config _config;
     private readonly IRemoveImageCommand _removeImageCommand;
@@ -15,12 +15,12 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
 
     public PruneCliCommand(IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IIdentifierPrompt identifierPrompt, IGetImageIdQuery getImageIdQuery, Config.Config config,
+        IImageIdentifierPrompt imageIdentifierPrompt, IGetImageIdQuery getImageIdQuery, Config.Config config,
         IRemoveImageCommand removeImageCommand, IGetContainersQuery getContainersQuery,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)
     {
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
-        _identifierPrompt = identifierPrompt;
+        _imageIdentifierPrompt = imageIdentifierPrompt;
         _getImageIdQuery = getImageIdQuery;
         _config = config;
         _removeImageCommand = removeImageCommand;
@@ -45,7 +45,7 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
             return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier).identifier;
         }
 
-        return await _identifierPrompt.GetUntaggedIdentifierFromUserAsync("prune");
+        return await _imageIdentifierPrompt.GetUntaggedIdentifierFromUserAsync("prune");
     }
 
     private async Task RemoveUntaggedImagesAsync(string identifier, StatusContext ctx)
