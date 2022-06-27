@@ -116,8 +116,9 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Launching {ImageNameHelper.BuildImageName(identifier, tag)}", async _ =>
             {
-                await RemoveUntaggedContainersAndImageAsync(identifier);
-                var containers = (await _getContainersQuery.QueryByContainerNameAsync(ContainerNameHelper.BuildContainerName(identifier, tag))).ToList();
+                var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
+                await RemoveUntaggedContainersAndImageAsync(containerName);
+                var containers = (await _getContainersQuery.QueryByContainerNameAsync(containerName)).ToList();
                 switch (containers.Count)
                 {
                     case 1 when resetContainer:
