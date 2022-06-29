@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml)
 
-
 ## What is it
 
 port, the name originating from the idea that only one container may dock simultaneously, is a tool that has been designed to manage multiple images and / or tags of these images.
@@ -10,13 +9,13 @@ It allows the user to run one of these images / tags in a container, creating sn
 
 ## How to get it
 
-*Install using scoop*
+### Install using scoop
 
 `scoop bucket add maple 'https://github.com/kevinboss/maple.git'`
 
 `scoop install port`
 
-*Install manually*
+### Install manually
 
 [Latest release 💾](https://github.com/kevinboss/port/releases/latest)
 
