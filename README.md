@@ -88,3 +88,9 @@ identifier is optional, if not provided the user will be asked to select an imag
 Allows the user the remove untagged versions of an image.
 
 identifier is optional, if not provided the user will be asked to select an image.
+
+### stop \[identifier\]
+
+Stops the currently running container.
+
+identifier is optional, if not provided the user will be asked to select a container.
