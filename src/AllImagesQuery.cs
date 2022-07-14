@@ -67,7 +67,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 var runningContainer = runningContainers
                     .SingleOrDefault(c =>
                         tag != null &&
-                        c.Name == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
+                        c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
                 var running = runningContainer != null;
                 var runningUntaggedImage
                     = runningContainer != null && runningContainer.ImageTag != tag;
@@ -106,7 +106,7 @@ internal class AllImagesQuery : IAllImagesQuery
                     e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag)));
             var runningContainer = runningContainers
                 .SingleOrDefault(c =>
-                    c.Name == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
+                    c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
             var running = runningContainer != null;
             var runningUntaggedImage
                 = runningContainer != null && runningContainer.ImageTag != tag;
@@ -133,7 +133,7 @@ internal class AllImagesQuery : IAllImagesQuery
         {
             var runningContainer = runningContainers
                 .SingleOrDefault(c =>
-                    c.ImageName == imageConfig.ImageName
+                    c.ImageIdentifier == imageConfig.ImageName
                     && c.ImageTag == null);
             var running = runningContainer != null;
             yield return new Image

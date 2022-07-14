@@ -69,7 +69,7 @@ internal class GetImageQuery : IGetImageQuery
     {
         var runningContainer = runningContainers
             .SingleOrDefault(c =>
-                imageName == c.ImageName
+                imageName == c.ImageIdentifier
                 && tag == c.ImageTag);
         var running = runningContainer != null;
         var runningUntaggedImage

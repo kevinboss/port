@@ -27,7 +27,7 @@ public class Config
     {
         public string Identifier { get; set; } = null!;
         public string ImageName { get; set; } = null!;
-        public List<string> ImageTags { get; set; } = null!;
+        public List<string?> ImageTags { get; set; } = null!;
         public List<string> Ports { get; set; } = new();
     }
 }

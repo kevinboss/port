@@ -12,17 +12,17 @@ internal class ContainerNamePrompt : IContainerNamePrompt
             case <= 0:
                 throw new ArgumentException("Must contain at least 1 item", nameof(containers));
             case 1:
-                return containers.Single().Name;
+                return containers.Single().ContainerName;
         }
 
         var selectionPrompt = CreateSelectionPrompt(command);
-        foreach (var container in containers.OrderBy(i => i.Name))
+        foreach (var container in containers.OrderBy(i => i.ContainerName))
         {
             selectionPrompt.AddChoice(container);
         }
 
         var selectedContainer = (Container)AnsiConsole.Prompt(selectionPrompt);
-        return selectedContainer.Name;
+        return selectedContainer.ContainerName;
     }
 
     private static SelectionPrompt<object> CreateSelectionPrompt(string command)
@@ -33,7 +33,7 @@ internal class ContainerNamePrompt : IContainerNamePrompt
                 return o switch
                 {
                     Container container =>
-                        $"[white]{container.Name}[/]",
+                        $"[white]{container.ContainerName}[/]",
                     _ => o as string ?? throw new InvalidOperationException()
                 };
             })
