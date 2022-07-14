@@ -13,21 +13,24 @@ internal class CreateContainerCommand : ICreateContainerCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string identifier, string imageName, string tag, List<string> ports)
+    public async Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tag,
+        IEnumerable<string> ports)
     {
         var portBindings = ports
             .Select(e => e.Split(PortSeparator))
             .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
-        return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
+        var containerName = ContainerNameHelper.BuildContainerName(containerIdentifier, tag);
+        await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
-            Name = ContainerNameHelper.BuildContainerName(identifier, tag),
-            Image = ImageNameHelper.BuildImageName(imageName, tag),
+            Name = containerName,
+            Image = ImageNameHelper.BuildImageName(imageIdentifier, tag),
             HostConfig = new HostConfig
             {
                 PortBindings = portBindings
             },
             ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct())
         });
+        return containerName;
     }
 
     public Task ExecuteAsync(Container container)
@@ -41,14 +44,38 @@ internal class CreateContainerCommand : ICreateContainerCommand
             .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
         return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
-            Name = container.Name,
-            Image = ImageNameHelper.BuildImageName(container.ImageName, container.ImageTag),
+            Name = container.ContainerName,
+            Image = ImageNameHelper.BuildImageName(container.ImageIdentifier, container.ImageTag),
             HostConfig = new HostConfig
             {
                 PortBindings = portBindings
             },
             ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct())
         });
+    }
+
+    public async Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tag,
+        IList<Port> ports)
+    {
+        var portBindings = ports
+            .Select(e => new List<string>
+            {
+                e.PublicPort.ToString(),
+                e.PrivatePort.ToString()
+            })
+            .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
+        var containerName = ContainerNameHelper.BuildContainerName(containerIdentifier, tag);
+        await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
+        {
+            Name = containerName,
+            Image = ImageNameHelper.BuildImageName(imageIdentifier, tag),
+            HostConfig = new HostConfig
+            {
+                PortBindings = portBindings
+            },
+            ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct())
+        });
+        return containerName;
     }
 
     private static IList<PortBinding> CreateHostPortList(string hostPort)

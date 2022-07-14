@@ -36,11 +36,11 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
         var containers = await _getRunningContainersQuery.QueryAsync();
         if (settings.ContainerIdentifier != null)
         {
-            return containers.SingleOrDefault(c => c.Name == settings.ContainerIdentifier);
+            return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);
         }
 
         var identifier = _containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "stop");
-        return containers.SingleOrDefault(c => c.Name == identifier);
+        return containers.SingleOrDefault(c => c.ContainerName == identifier);
     }
 
 
@@ -49,9 +49,9 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync(
-                $"Stopping container '{container.Name}'",
+                $"Stopping container '{container.ContainerName}'",
                 async _ => { await _stopContainerCommand.ExecuteAsync(container.Id); });
         AnsiConsole.WriteLine(
-            $"Currently running container '{container.Name}' stopped");
+            $"Currently running container '{container.ContainerName}' stopped");
     }
 }

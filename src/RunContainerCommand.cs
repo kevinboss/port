@@ -12,10 +12,10 @@ internal class RunContainerCommand : IRunContainerCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string identifier, string tag)
+    public Task ExecuteAsync(string containerName)
     {
         return _dockerClient.Containers.StartContainerAsync(
-            ContainerNameHelper.BuildContainerName(identifier, tag),
+            containerName,
             new ContainerStartParameters()
         );
     }
@@ -23,7 +23,7 @@ internal class RunContainerCommand : IRunContainerCommand
     public Task ExecuteAsync(Container container)
     {
         return _dockerClient.Containers.StartContainerAsync(
-            container.Name,
+            container.ContainerName,
             new ContainerStartParameters()
         );
     }

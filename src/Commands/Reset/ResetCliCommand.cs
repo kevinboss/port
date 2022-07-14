@@ -42,11 +42,11 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
         var containers = await _getRunningContainersQuery.QueryAsync();
         if (settings.ContainerIdentifier != null)
         {
-            return containers.SingleOrDefault(c => c.Name == settings.ContainerIdentifier);
+            return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);
         }
 
         var identifier = _containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "reset");
-        return containers.SingleOrDefault(c => c.Name == identifier);
+        return containers.SingleOrDefault(c => c.ContainerName == identifier);
     }
 
 
@@ -55,7 +55,7 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync(
-                $"Resetting container '{container.Name}'",
+                $"Resetting container '{container.ContainerName}'",
                 async _ =>
                 {
                     await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
@@ -63,6 +63,6 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
                     await _runContainerCommand.ExecuteAsync(container);
                 });
         AnsiConsole.WriteLine(
-            $"Currently running container '{container.Name}' resetted");
+            $"Currently running container '{container.ContainerName}' resetted");
     }
 }

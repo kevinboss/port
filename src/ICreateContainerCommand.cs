@@ -1,7 +1,11 @@
+using Docker.DotNet.Models;
+
 namespace port;
 
 public interface ICreateContainerCommand
 {
-    Task ExecuteAsync(string identifier, string imageName, string tag, List<string> ports);
+    Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tag, IEnumerable<string> ports);
     Task ExecuteAsync(Container container);
+    Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tag,
+        IList<Port> containerPorts);
 }
