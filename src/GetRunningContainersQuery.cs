@@ -29,7 +29,7 @@ internal class GetRunningContainersQuery : IGetRunningContainersQuery
         return containers
             .Select(e => new Container(e))
             .Where(e => e.Running)
-            .Where(e => containerNames.Any(cn => e.Name.StartsWith(cn)))
+            .Where(e => containerNames.Any(cn => e.ContainerName.StartsWith(cn)))
             .ToList();
     }
 }

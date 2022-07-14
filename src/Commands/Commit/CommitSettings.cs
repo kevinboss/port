@@ -9,4 +9,7 @@ public class CommitSettings : CommandSettings, IContainerIdentifierSettings
 
     [CommandOption("-t|--tag")] 
     public string? Tag { get; set; }
+
+    [CommandOption("-s|--switch")] 
+    public bool Switch { get; set; }
 }

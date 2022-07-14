@@ -98,7 +98,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         }
     }
 
-    private async Task LaunchImageAsync(string identifier, string tag, bool resetContainer)
+    private async Task LaunchImageAsync(string identifier, string? tag, bool resetContainer)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
@@ -123,22 +123,22 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
                 {
                     case 1 when resetContainer:
                         await _stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
-                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
+                        containerName = await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
                         break;
                     case 1 when !resetContainer:
                         break;
                     case 0:
-                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
+                        containerName = await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
                         break;
                 }
 
-                await _runContainerCommand.ExecuteAsync(identifier, tag);
+                await _runContainerCommand.ExecuteAsync(containerName);
             });
     }
 
-    private async Task RemoveUntaggedContainersAndImageAsync(string identifier)
+    private async Task RemoveUntaggedContainersAndImageAsync(string containerName)
     {
-        var containers = (await _getContainersQuery.QueryByContainerNameAsync(identifier)).ToList();
+        var containers = (await _getContainersQuery.QueryByContainerNameAsync(containerName)).ToList();
         if (!containers.Any())
         {
             return;
@@ -148,7 +148,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         {
             await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
             await _removeImageCommand.ExecuteAsync(
-                ImageNameHelper.BuildImageName(container.ImageName, container.ImageTag));
+                ImageNameHelper.BuildImageName(container.ImageIdentifier, container.ImageTag));
         }
     }
 }
