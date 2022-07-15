@@ -9,20 +9,20 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
     private readonly IGetRunningContainersQuery _getRunningContainersQuery;
     private readonly IGetImageQuery _getImageQuery;
     private readonly IContainerNamePrompt _containerNamePrompt;
-    private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
+    private readonly IStopContainerCommand _stopContainerCommand;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
 
     public CommitCliCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
         IGetRunningContainersQuery getRunningContainersQuery, IGetImageQuery getImageQuery,
-        IContainerNamePrompt containerNamePrompt, IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
+        IContainerNamePrompt containerNamePrompt, IStopContainerCommand stopContainerCommand,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainersQuery = getRunningContainersQuery;
         _getImageQuery = getImageQuery;
         _containerNamePrompt = containerNamePrompt;
-        _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
+        _stopContainerCommand = stopContainerCommand;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
     }
@@ -58,7 +58,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Stopping running container '{container.ContainerName}'",
-                _ => _stopAndRemoveContainerCommand.ExecuteAsync(container.Id));
+                _ => _stopContainerCommand.ExecuteAsync(container.Id));
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Launching {ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag)}", async _ =>
