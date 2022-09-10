@@ -5,7 +5,7 @@
 
 ## What is it
 
-port, the name originating from the idea that only one container may be unloaded at once, is a tool that has been designed to manage multiple images and / or tags of these images.
+port is a tool that has been designed to manage multiple images and / or tags of these images.
 It allows the user to run one of these images / tags in a container, creating snapshots of that running container and manage the downloaded images.
 
 ## How to get it
