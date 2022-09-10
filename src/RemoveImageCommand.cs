@@ -1,7 +1,9 @@
+using System.Net;
 using Docker.DotNet;
 using Docker.DotNet.Models;
+using port.Commands;
 
-namespace port.Commands.Remove;
+namespace port;
 
 internal class RemoveImageCommand : IRemoveImageCommand
 {
@@ -23,9 +25,17 @@ internal class RemoveImageCommand : IRemoveImageCommand
             new ImageDeleteParameters());
     }
 
-    public Task ExecuteAsync(string id)
+    public async Task<ImageRemovalResult> ExecuteAsync(string id)
     {
-        return _dockerClient.Images.DeleteImageAsync(id,
-            new ImageDeleteParameters());
+        try
+        {
+            await _dockerClient.Images.DeleteImageAsync(id,
+                new ImageDeleteParameters());
+            return new ImageRemovalResult(id, true);
+        }
+        catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.Conflict)
+        {
+            return new ImageRemovalResult(id, false);
+        }
     }
 }

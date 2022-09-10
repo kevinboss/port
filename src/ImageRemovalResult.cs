@@ -1,4 +1,4 @@
-namespace port.Commands;
+namespace port;
 
 internal class ImageRemovalResult
 {
