@@ -1,4 +1,5 @@
-using port.Commands.Remove;
+using System.Net;
+using Docker.DotNet;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -16,7 +17,6 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     private readonly Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
-    private readonly IRemoveImageCommand _removeImageCommand;
 
     private const char PortSeparator = ':';
 
@@ -26,7 +26,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         IStopContainerCommand stopContainerCommand, Config.Config config,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand)
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)
     {
         _imageIdentifierPrompt = imageIdentifierPrompt;
         _createImageCliCommand = createImageCliCommand;
@@ -38,7 +38,6 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         _config = config;
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
-        _removeImageCommand = removeImageCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
@@ -112,12 +111,12 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         if (!await _doesImageExistQuery.QueryAsync(imageName, tag))
             await _createImageCliCommand.ExecuteAsync(imageName, tag);
 
+        var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
+        
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Launching {ImageNameHelper.BuildImageName(identifier, tag)}", async _ =>
             {
-                var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
-                await RemoveUntaggedContainersAndImageAsync(containerName);
                 var containers = (await _getContainersQuery.QueryByContainerNameAsync(containerName)).ToList();
                 switch (containers.Count)
                 {
@@ -134,21 +133,5 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
 
                 await _runContainerCommand.ExecuteAsync(containerName);
             });
-    }
-
-    private async Task RemoveUntaggedContainersAndImageAsync(string containerName)
-    {
-        var containers = (await _getContainersQuery.QueryByContainerNameAsync(containerName)).ToList();
-        if (!containers.Any())
-        {
-            return;
-        }
-
-        foreach (var container in containers.Where(e => e.ImageTag == null))
-        {
-            await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-            await _removeImageCommand.ExecuteAsync(
-                ImageNameHelper.BuildImageName(container.ImageIdentifier, container.ImageTag));
-        }
     }
 }
