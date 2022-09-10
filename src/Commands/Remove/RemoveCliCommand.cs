@@ -1,3 +1,5 @@
+using System.Net;
+using Docker.DotNet;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -30,10 +32,19 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
     public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
     {
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
-        await AnsiConsole.Status()
+        var result = await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Removing {ImageNameHelper.BuildImageName(identifier, tag)}",
                 ctx => RemoveImageAsync(identifier, tag, ctx));
+        foreach (var imageRemovalResult in result)
+        {
+            if (imageRemovalResult.Successful)
+                AnsiConsole.WriteLine($"Removed image '{imageRemovalResult.ImageId}'");
+            else
+                AnsiConsole.MarkupLine(
+                    $"[orange3]Unable to removed image '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
+        }
+
         return 0;
     }
 
@@ -48,7 +59,8 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private async Task RemoveImageAsync(string identifier, string? tag, StatusContext ctx)
+    private async Task<IEnumerable<ImageRemovalResult>> RemoveImageAsync(string identifier, string? tag,
+        StatusContext ctx)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
@@ -58,13 +70,28 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         {
             await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
         }
-        AnsiConsole.WriteLine($"Containers using image '{ImageNameHelper.BuildImageName(imageName, tag)}' removed");
 
-        var imageId = await _getImageIdQuery.QueryAsync(imageName, tag);
-        if (imageId == null)
+        ctx.Status = $"Containers using image '{ImageNameHelper.BuildImageName(imageName, tag)}' removed";
+
+        var imageIds = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToList();
+        if (!imageIds.Any())
             throw new InvalidOperationException(
-                $"Image '{ImageNameHelper.BuildImageName(imageName, tag)}' does not exist or does not have an Id".EscapeMarkup());
-        await _removeImageCommand.ExecuteAsync(imageId);
-        AnsiConsole.WriteLine($"Removed image {ImageNameHelper.BuildImageName(imageName, tag)}");
+                $"No images for '{ImageNameHelper.BuildImageName(imageName, tag)}' do exist".EscapeMarkup());
+
+        ctx.Status = $"Now removing {imageIds.Count} images";
+        var result = new List<ImageRemovalResult>();
+        foreach (var imageId in imageIds)
+        {
+            try
+            {
+                await _removeImageCommand.ExecuteAsync(imageId);
+            }
+            catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.Conflict)
+            {
+                result.Add(new ImageRemovalResult(imageId, false));
+            }
+        }
+
+        return result;
     }
 }

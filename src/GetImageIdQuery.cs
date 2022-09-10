@@ -12,7 +12,7 @@ internal class GetImageIdQuery : IGetImageIdQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<string?> QueryAsync(string imageName, string? tag)
+    public async Task<IEnumerable<string>> QueryAsync(string imageName, string? tag)
     {
         var parameters = new ImagesListParameters
         {
@@ -24,9 +24,9 @@ internal class GetImageIdQuery : IGetImageIdQuery
         });
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
         return imagesListResponses
-            .SingleOrDefault(e =>
+            .Where(e =>
                 tag == null && e.RepoTags == null
                 || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageName, tag)))
-            ?.ID;
+            .Select(e => e.ID);
     }
 }
