@@ -78,15 +78,8 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
             }
 
             ctx.Status = $"Containers using '{imageId}' removed".EscapeMarkup();
-
-            try
-            {
-                await _removeImageCommand.ExecuteAsync(imageId);
-            }
-            catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.Conflict)
-            {
-                result.Add(new ImageRemovalResult(imageId, false));
-            }
+            
+            result.Add(await _removeImageCommand.ExecuteAsync(imageId));
         }
 
         return result;
