@@ -10,7 +10,7 @@
     <ItemGroup>
       <PackageReference Include="Docker.DotNet" Version="3.125.11" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
-      <PackageReference Include="Spectre.Console" Version="0.44.0" />
+      <PackageReference Include="Spectre.Console" Version="0.45.0" />
       <PackageReference Include="System.Linq.Async" Version="6.0.1" />
       <PackageReference Include="System.Reactive" Version="5.0.0" />
       <PackageReference Include="yamldotnet" Version="12.0.0" />
