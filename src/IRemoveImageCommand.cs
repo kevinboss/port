@@ -1,5 +1,3 @@
-using port.Commands;
-
 namespace port;
 
 internal interface IRemoveImageCommand
