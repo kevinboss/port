@@ -1,5 +1,3 @@
-using System.Net;
-using Docker.DotNet;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -39,10 +37,10 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         foreach (var imageRemovalResult in result)
         {
             if (imageRemovalResult.Successful)
-                AnsiConsole.WriteLine($"Removed image '{imageRemovalResult.ImageId}'");
+                AnsiConsole.WriteLine($"Removed image with id '{imageRemovalResult.ImageId}'");
             else
                 AnsiConsole.MarkupLine(
-                    $"[orange3]Unable to removed image '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
+                    $"[orange3]Unable to removed image with id '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
         }
 
         return 0;

@@ -1,6 +1,3 @@
-using System.Net;
-using Docker.DotNet;
-using port.Commands.Remove;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -15,11 +12,12 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
     private readonly IRemoveImageCommand _removeImageCommand;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
+    private readonly IAllImagesQuery _allImagesQuery;
 
     public PruneCliCommand(IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
         IImageIdentifierPrompt imageIdentifierPrompt, IGetImageIdQuery getImageIdQuery, Config.Config config,
         IRemoveImageCommand removeImageCommand, IGetContainersQuery getContainersQuery,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IAllImagesQuery allImagesQuery)
     {
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _imageIdentifierPrompt = imageIdentifierPrompt;
@@ -28,34 +26,46 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
         _removeImageCommand = removeImageCommand;
         _getContainersQuery = getContainersQuery;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
+        _allImagesQuery = allImagesQuery;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, PruneSettings settings)
     {
-        var identifier = await GetIdentifierAsync(settings);
-        var result = await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("Removing untagged images",
-                ctx => RemoveUntaggedImagesAsync(identifier, ctx));
-        foreach (var imageRemovalResult in result)
+        var identifiers = GetIdentifiersAsync(settings);
+        await foreach (var identifier in identifiers)
         {
-            if (imageRemovalResult.Successful)
-                AnsiConsole.WriteLine($"Removed image '{imageRemovalResult.ImageId}'");
-            else
-                AnsiConsole.MarkupLine(
-                    $"[orange3]Unable to removed image '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
+            var result = await AnsiConsole.Status()
+                .Spinner(Spinner.Known.Dots)
+                .StartAsync($"Removing untagged images for identifier '{identifier}'",
+                    ctx => RemoveUntaggedImagesAsync(identifier, ctx));
+            foreach (var imageRemovalResult in result)
+            {
+                if (imageRemovalResult.Successful)
+                    AnsiConsole.WriteLine($"Removed image with id '{imageRemovalResult.ImageId}'");
+                else
+                    AnsiConsole.MarkupLine(
+                        $"[orange3]Unable to removed image with id '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
+            }
         }
+
+
         return 0;
     }
 
-    private async Task<string> GetIdentifierAsync(IImageIdentifierSettings settings)
+    private async IAsyncEnumerable<string> GetIdentifiersAsync(IImageIdentifierSettings settings)
     {
         if (settings.ImageIdentifier != null)
         {
-            return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier).identifier;
+            yield return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier).identifier;
         }
 
-        return await _imageIdentifierPrompt.GetUntaggedIdentifierFromUserAsync("prune");
+        await foreach (var identifier in _allImagesQuery
+                           .QueryAsync()
+                           .Where(e => e.Images.Any(i => i.Tag == null))
+                           .Select(e => e.Identifier))
+        {
+            yield return identifier;
+        }
     }
 
     private async Task<List<ImageRemovalResult>> RemoveUntaggedImagesAsync(string identifier, StatusContext ctx)
@@ -78,7 +88,7 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
             }
 
             ctx.Status = $"Containers using '{imageId}' removed".EscapeMarkup();
-            
+
             result.Add(await _removeImageCommand.ExecuteAsync(imageId));
         }
 

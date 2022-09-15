@@ -66,21 +66,6 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
         return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
-    public async Task<string> GetUntaggedIdentifierFromUserAsync(string command)
-    {
-        var selectionPrompt = CreateSelectionPrompt(command);
-        await foreach (var imageGroup in _allImagesQuery
-                           .QueryAsync()
-                           .Where(e => e.Images.Any(i => i.Tag == null))
-                           .OrderBy(i => i.Identifier))
-        {
-            selectionPrompt.AddChoice(imageGroup);
-        }
-
-        var selectedImageGroup = (ImageGroup)AnsiConsole.Prompt(selectionPrompt);
-        return selectedImageGroup.Identifier;
-    }
-
     private static string BuildNodeHeader(ImageGroup imageGroup)
     {
         var nodeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
