@@ -93,4 +93,4 @@ identifier is optional, if not provided the user will be asked to select an imag
 
 Stops the currently running container.
 
-identifier is optional, if not provided the user will be asked to select a container.
+identifier is optional, if not provided all identifiers will be pruned.
