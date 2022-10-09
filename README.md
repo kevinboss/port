@@ -10,7 +10,7 @@ It allows the user to run one of these images / tags in a container, creating sn
 
 ## How to get it
 
-### Install using scoop
+### Install using [scoop](https://scoop.sh)
 
 `scoop bucket add maple 'https://github.com/kevinboss/maple.git'`
 
