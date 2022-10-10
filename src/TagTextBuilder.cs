@@ -15,6 +15,8 @@ public static class TagTextBuilder
             sb.Append("Snapshot");
             if (image.Parent != null)
                 sb.Append($" based on {image.Parent.Tag ?? "[orange3]untagged image[/]"}");
+            else
+                sb.Append(" based on [red]unknown image[/]");
         }
         else
             sb.Append("Base");
