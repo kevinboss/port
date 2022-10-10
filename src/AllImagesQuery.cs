@@ -47,7 +47,7 @@ internal class AllImagesQuery : IAllImagesQuery
         {
             imageGroup.AddImage(image);
             if (image.ParentId == null) continue;
-            image.Parent = imagesById[image.ParentId!];
+            if (imagesById.TryGetValue(image.ParentId!, out var parent)) image.Parent = parent;
         }
     }
 
