@@ -60,8 +60,17 @@ internal class GetImageQuery : IGetImageQuery
             return null;
         }
 
-        var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
-        return await ConvertToImage(imageName1, tag, imagesListResponse, runningContainers);
+        if (imagesListResponse.RepoTags != null)
+        {
+            var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
+            return await ConvertToImage(imageName1, tag, imagesListResponse, runningContainers);
+        }
+
+        var digest = imagesListResponse.RepoDigests?.SingleOrDefault();
+        if (digest != null && DigestHelper.TryGetImageNameAndId(digest, out var nameNameAndId))
+            return await ConvertToImage(nameNameAndId.imageName, null, imagesListResponse, runningContainers);
+
+        return null;
     }
 
     private async Task<Image?> ConvertToImage(string imageName, string? tag, ImagesListResponse imagesListResponse,
@@ -87,7 +96,7 @@ internal class GetImageQuery : IGetImageQuery
             ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID,
             Parent = string.IsNullOrEmpty(imagesListResponse.ParentID)
                 ? null
-                : await QueryAsync(imageName,imagesListResponse.ParentID, runningContainers)
+                : await QueryAsync(imageName, imagesListResponse.ParentID, runningContainers)
         };
     }
 }
