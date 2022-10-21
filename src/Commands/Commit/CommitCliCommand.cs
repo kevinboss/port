@@ -76,7 +76,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         string? baseTag;
         if (image == null)
         {
-            baseTag = container.ImageTag;
+            baseTag = container.ContainerTag;
         }
         else
         {
