@@ -12,11 +12,13 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
     private readonly IStopContainerCommand _stopContainerCommand;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
+    private readonly IGetDigestsByIdQuery _getDigestsByIdQuery;
 
     public CommitCliCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
         IGetRunningContainersQuery getRunningContainersQuery, IGetImageQuery getImageQuery,
         IContainerNamePrompt containerNamePrompt, IStopContainerCommand stopContainerCommand,
-        ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand)
+        ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
+        IGetDigestsByIdQuery getDigestsByIdQuery)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainersQuery = getRunningContainersQuery;
@@ -25,6 +27,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         _stopContainerCommand = stopContainerCommand;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
+        _getDigestsByIdQuery = getDigestsByIdQuery;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
@@ -73,12 +76,15 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
     private async Task<string?> CommitContainerAsync(Container container, string tag)
     {
         var image = await _getImageQuery.QueryAsync(container.ImageIdentifier, container.ImageTag);
-        string? baseTag;
+        string imageName;
+        string? baseTag = null;
         if (image == null)
         {
-            baseTag = ContainerNameHelper.TryGetContainerNameAndTag(container.ContainerName, out var identifierAndTag) 
-                ? identifierAndTag.tag 
-                : container.ContainerName;
+            var digests = await _getDigestsByIdQuery.QueryAsync(container.ImageIdentifier);
+            var digest = digests?.SingleOrDefault();
+            if (digest == null || !DigestHelper.TryGetImageNameAndId(digest, out var nameNameAndId))
+                throw new InvalidOperationException($"Unable to determine image name from running container '{container.ContainerName}'");
+            imageName = nameNameAndId.imageName;
         }
         else
         {
@@ -87,18 +93,25 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
                 image = image.Parent;
             }
 
+            imageName = image.Name;
             baseTag = image.Tag;
         }
-
+        
+        baseTag ??= (ContainerNameHelper.TryGetContainerNameAndTag(container.ContainerName, out var identifierAndTag) 
+            ? identifierAndTag.tag 
+            : container.ContainerName);
+        
         string? newTag = null;
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Creating image from running container '{container.ContainerName}'", async _ =>
-                newTag =
+            {
+                return newTag =
                     await _createImageFromContainerCommand.ExecuteAsync(container.Id,
-                        container.ImageIdentifier,
+                        imageName,
                         baseTag,
-                        tag));
+                        tag);
+            });
         AnsiConsole.WriteLine($"Created image with tag {tag}");
         return newTag;
     }
