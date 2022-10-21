@@ -73,18 +73,20 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
     private async Task<string?> CommitContainerAsync(Container container, string tag)
     {
         var image = await _getImageQuery.QueryAsync(container.ImageIdentifier, container.ImageTag);
+        string? baseTag;
         if (image == null)
         {
-            throw new InvalidOperationException(
-                $"Image of running container {ImageNameHelper.BuildImageName(container.ImageIdentifier, container.ImageTag)} not found");
+            baseTag = container.ImageTag;
         }
-
-        while (image.Parent != null)
+        else
         {
-            image = image.Parent;
-        }
+            while (image.Parent != null)
+            {
+                image = image.Parent;
+            }
 
-        var baseTag = image.Tag;
+            baseTag = image.Tag;
+        }
 
         string? newTag = null;
         await AnsiConsole.Status()
