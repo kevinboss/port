@@ -2,8 +2,9 @@ namespace port;
 
 public interface IImageIdentifierPrompt
 {
-    Task<(string identifier, string? tag)> GetBaseIdentifierFromUserAsync(string command);
-    Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command);
+    string GetBaseIdentifierFromUser(string command);
+    Task<(string identifier, string? tag)> GetBaseIdentifierAndTagFromUserAsync(string command);
+    Task<(string identifier, string? tag)> GetDownloadedIdentifierAndTagFromUserAsync(string command);
 
-    Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command);
+    Task<(string identifier, string? tag)> GetRunnableIdentifierAndTagFromUserAsync(string command);
 }

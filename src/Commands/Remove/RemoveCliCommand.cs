@@ -53,7 +53,7 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
             return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _imageIdentifierPrompt.GetDownloadedIdentifierFromUserAsync("remove");
+        var identifierAndTag = await _imageIdentifierPrompt.GetDownloadedIdentifierAndTagFromUserAsync("remove");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 

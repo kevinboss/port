@@ -33,7 +33,7 @@ public class PullCliCommand : AsyncCommand<PullSettings>
             return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _imageIdentifierPrompt.GetBaseIdentifierFromUserAsync("pull");
+        var identifierAndTag = await _imageIdentifierPrompt.GetBaseIdentifierAndTagFromUserAsync("pull");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 

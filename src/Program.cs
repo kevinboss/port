@@ -2,7 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using port;
 using port.Commands.Commit;
+using port.Commands.Export;
+using port.Commands.Import;
 using port.Commands.List;
+using port.Commands.Orphan;
 using port.Commands.Prune;
 using port.Commands.Pull;
 using port.Commands.Remove;
@@ -32,6 +35,10 @@ registrations.AddSingleton<IStopAndRemoveContainerCommand, StopAndRemoveContaine
 registrations.AddSingleton<IRemoveImageCommand, RemoveImageCommand>();
 registrations.AddSingleton<ICreateImageCliCommand, CreateImageCliCommand>();
 registrations.AddSingleton<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
+registrations.AddSingleton<IExportImageCommand, ExportImageCommand>();
+registrations.AddSingleton<IProgressSubscriber, ProgressSubscriber>();
+registrations.AddSingleton<IOrphanImageCommand, OrphanImageCommand>();
+registrations.AddSingleton<IImportImageCommand, ImportImageCommand>();
 registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
 {

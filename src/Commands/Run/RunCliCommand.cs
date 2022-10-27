@@ -56,7 +56,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _imageIdentifierPrompt.GetRunnableIdentifierFromUserAsync("run");
+        var identifierAndTag = await _imageIdentifierPrompt.GetRunnableIdentifierAndTagFromUserAsync("run");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
