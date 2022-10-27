@@ -5,13 +5,27 @@ namespace port;
 internal class ImageIdentifierPrompt : IImageIdentifierPrompt
 {
     private readonly IAllImagesQuery _allImagesQuery;
+    private readonly Config.Config _config;
 
-    public ImageIdentifierPrompt(IAllImagesQuery allImagesQuery)
+    public ImageIdentifierPrompt(IAllImagesQuery allImagesQuery, Config.Config config)
     {
         _allImagesQuery = allImagesQuery;
+        _config = config;
     }
 
-    public async Task<(string identifier, string? tag)> GetBaseIdentifierFromUserAsync(string command)
+    public string GetBaseIdentifierFromUser(string command)
+    {
+        var selectionPrompt = CreateSelectionPrompt(command);
+         foreach (var imageConfig in _config.ImageConfigs)
+        {
+            selectionPrompt.AddChoice(imageConfig);
+        }
+
+        var selectedImageConfig = (Config.Config.ImageConfig)AnsiConsole.Prompt(selectionPrompt);
+        return selectedImageConfig.Identifier;
+    }
+
+    public async Task<(string identifier, string? tag)> GetBaseIdentifierAndTagFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery
@@ -30,7 +44,7 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
         return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
-    public async Task<(string identifier, string? tag)> GetDownloadedIdentifierFromUserAsync(string command)
+    public async Task<(string identifier, string? tag)> GetDownloadedIdentifierAndTagFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery
@@ -48,7 +62,7 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
         return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
-    public async Task<(string identifier, string? tag)> GetRunnableIdentifierFromUserAsync(string command)
+    public async Task<(string identifier, string? tag)> GetRunnableIdentifierAndTagFromUserAsync(string command)
     {
         var selectionPrompt = CreateSelectionPrompt(command);
         await foreach (var imageGroup in _allImagesQuery
@@ -83,6 +97,7 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
                 {
                     Image image => TagTextBuilder.BuildTagText(image),
                     ImageGroup imageGroup => $"[white]{imageGroup.Identifier}[/]",
+                    Config.Config.ImageConfig imageConfig => $"[white]{imageConfig.Identifier}[/]",
                     _ => o as string ?? throw new InvalidOperationException()
                 };
             })
