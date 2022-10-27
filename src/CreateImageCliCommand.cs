@@ -13,7 +13,6 @@ internal class CreateImageCliCommand : ICreateImageCliCommand
 
     public async Task ExecuteAsync(string imageName, string? tag)
     {
-        AnsiConsole.WriteLine($"Downloading image {ImageNameHelper.BuildImageName(imageName, tag)}");
         var tasks = new Dictionary<string, ProgressTask>();
         var lockObject = new object();
         await AnsiConsole.Progress()
@@ -27,40 +26,42 @@ internal class CreateImageCliCommand : ICreateImageCliCommand
                 })
             .StartAsync(async ctx =>
             {
-                using (_createImageCommand.ProgressObservable
-                           .Subscribe(progress =>
-                           {
-                               lock (lockObject)
-                               {
-                                   if (progress.Id == tag) return;
-                                   var description = progress.Description?.EscapeMarkup() ?? string.Empty;
-                                   var currentProgress = progress.CurrentProgress ?? 0;
-                                   var totalProgress = progress.TotalProgress ?? 100;
-                                   if (totalProgress == currentProgress && totalProgress == 0)
-                                   {
-                                       currentProgress = 1;
-                                       totalProgress = 1;
-                                   }
-
-                                   if (!tasks.TryGetValue(progress.Id, out var task))
-                                   {
-                                       task = ctx.AddTask(description, true, totalProgress);
-                                       task.Value = currentProgress;
-                                       tasks.Add(progress.Id, task);
-                                   }
-                                   else
-                                   {
-                                       task.Description = description;
-                                       task.Value = currentProgress;
-                                       task.MaxValue = totalProgress;
-                                   }
-                               }
-                           }))
-                {
-                    await _createImageCommand.ExecuteAsync(imageName, tag);
-                }
+                _createImageCommand.ProgressObservable
+                    .Subscribe(progress => UpdateProgressTasks(tag, lockObject, progress, tasks, ctx));
+                await _createImageCommand.ExecuteAsync(imageName, tag);
             });
+    }
 
-        AnsiConsole.WriteLine($"Finished downloading image {ImageNameHelper.BuildImageName(imageName, tag)}");
+    private static void UpdateProgressTasks(string? tag, object lockObject, Progress progress,
+        IDictionary<string, ProgressTask> tasks,
+        ProgressContext ctx)
+    {
+        lock (lockObject)
+        {
+            var description = progress.Description?.EscapeMarkup() ?? string.Empty;
+            var currentProgress = progress.CurrentProgress ?? 0;
+            var totalProgress = progress.TotalProgress ?? 100;
+            if (totalProgress == currentProgress && totalProgress == 0)
+            {
+                currentProgress = 1;
+                totalProgress = 1;
+            }
+
+            var key = progress.Id == tag ? Progress.NullId : progress.Id;
+            if (!tasks.TryGetValue(key, out var task))
+            {
+                task = ctx.AddTask(description, true, totalProgress);
+                task.Value = currentProgress;
+                if (progress.CurrentProgress == null && progress.TotalProgress == null)
+                    task.IsIndeterminate();
+                tasks.Add(key, task);
+            }
+            else
+            {
+                task.Description = description;
+                task.MaxValue = totalProgress;
+                task.Value = progress.Id == Progress.NullId ? totalProgress : currentProgress;
+            }
+        }
     }
 }

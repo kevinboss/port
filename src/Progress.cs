@@ -2,6 +2,8 @@ namespace port;
 
 public class Progress
 {
+    internal const string NullId = nameof(NullId);
+    
     internal Progress(Progress progress)
     {
         Id = progress.Id;
@@ -12,7 +14,7 @@ public class Progress
         ProgressState = progress.ProgressState;
     }
 
-    internal Progress(ProgressState progressState, string id, CreateImageCommand.TaskSetUpData data)
+    internal Progress(ProgressState progressState, string id, ProgressSubscriber.TaskSetUpData data)
     {
         Id = id;
         Description = data.Description;
