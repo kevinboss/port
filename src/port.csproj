@@ -9,7 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="Docker.DotNet" Version="3.125.12" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
       <PackageReference Include="Spectre.Console" Version="0.45.0" />
       <PackageReference Include="Spectre.Console.Cli" Version="0.45.0" />
       <PackageReference Include="System.Linq.Async" Version="6.0.1" />
