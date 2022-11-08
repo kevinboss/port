@@ -30,27 +30,43 @@ jobs:
         uses: actions/setup-dotnet@v3.0.3
         with:
           dotnet-version: 6.0.x
+          
+      - name: Create build data
+        shell: bash
+        id: build-data
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          echo ::set-output name=tag::$tag
+          echo ::set-output name=release_name::"port-$tag-${{ matrix.target }}"
 
       - name: Build
         shell: bash
         run: |
-          tag=$(git describe --tags --abbrev=0)
-          release_name="port-$tag-${{ matrix.target }}"
-
           # Build everything
-          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "$release_name"
+          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}"
 
           # Pack files
           if [ "${{ matrix.target }}" == "win-x64" ]; then
             # Pack to zip for Windows
-            7z a -tzip "${release_name}.zip" "./${release_name}/*"
+            7z a -tzip "${{ steps.build-data.outputs.release_name }}.zip" "./${{ steps.build-data.outputs.release_name }}/*"
           else
-          tar czvf "${release_name}.tar.gz" "$release_name"
+          tar czvf "${{ steps.build-data.outputs.release_name }}.tar.gz" "${{ steps.build-data.outputs.release_name }}"
           fi
 
-          # Delete output directory
-          rm -r "$release_name"
+      - name: msi
+        if: ${{ matrix.target == 'win-x64' }}
+        uses: vedantmgoyal2009/winget-releaser@v1
+        with:
+          identifier: kevinboss.port
+          installers-regex: '\${{ steps.build-data.outputs.release_name }}.zip$'
+          token: ${{ secrets.WINGET_TOKEN }}
+          release-tag: ${{ steps.build-data.outputs.tag }}
 
+      - name: Delete output directory
+        shell: bash
+        run: |
+          rm -r ${{ steps.build-data.outputs.release_name }}
+      
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
