@@ -53,15 +53,6 @@ jobs:
           tar czvf "${{ steps.build-data.outputs.release_name }}.tar.gz" "${{ steps.build-data.outputs.release_name }}"
           fi
 
-      - name: msi
-        if: ${{ matrix.target == 'win-x64' }}
-        uses: vedantmgoyal2009/winget-releaser@v1
-        with:
-          identifier: kevinboss.port
-          installers-regex: '\${{ steps.build-data.outputs.release_name }}.zip$'
-          token: ${{ secrets.WINGET_TOKEN }}
-          release-tag: ${{ steps.build-data.outputs.tag }}
-
       - name: Delete output directory
         shell: bash
         run: |
