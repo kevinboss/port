@@ -10,7 +10,7 @@ jobs:
         uses: vedantmgoyal2009/winget-releaser@v1
         with:
           identifier: kevinboss.port
-          installers-regex: '\${{ steps.build-data.outputs.release_name }}.zip$'
+          installers-regex: '\win-x64.zip$'
           token: ${{ secrets.WINGET_TOKEN }}
           release-tag: ${{ steps.build-data.outputs.tag }}
           delete-previous-version: false
