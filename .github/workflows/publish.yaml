@@ -17,10 +17,6 @@ jobs:
           - kind: windows
             os: windows-latest
             target: win-x64
-          # 109 CHF for an developer account so you can sign your application to allow it to run on Apple Silicon...
-          #- kind: macOS
-          #  os: macos-latest
-          #  target: osx-x64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -42,17 +38,20 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          # Build everything
           dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}"
 
-          # Pack files
-          if [ "${{ matrix.target }}" == "win-x64" ]; then
-            # Pack to zip for Windows
-            7z a -tzip "${{ steps.build-data.outputs.release_name }}.zip" "./${{ steps.build-data.outputs.release_name }}/*"
-            cp "./${{ steps.build-data.outputs.release_name }}/port.exe" .
-          else
+      - name: Package Windows
+        shell: bash
+        run: |
+          7z a -tzip "${{ steps.build-data.outputs.release_name }}.zip" "./${{ steps.build-data.outputs.release_name }}/*"
+          cp "./${{ steps.build-data.outputs.release_name }}/port.exe" .
+        if: ${{ matrix.target == 'win-x64'}}
+
+      - name: Package Linux
+        shell: bash
+        run: |
           tar czvf "${{ steps.build-data.outputs.release_name }}.tar.gz" "${{ steps.build-data.outputs.release_name }}"
-          fi
+        if: ${{ matrix.target == 'linux-x64'}}
 
       - name: Delete output directory
         shell: bash
