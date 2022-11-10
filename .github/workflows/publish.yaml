@@ -49,6 +49,7 @@ jobs:
           if [ "${{ matrix.target }}" == "win-x64" ]; then
             # Pack to zip for Windows
             7z a -tzip "${{ steps.build-data.outputs.release_name }}.zip" "./${{ steps.build-data.outputs.release_name }}/*"
+            cp "./${{ steps.build-data.outputs.release_name }}/port.exe" .
           else
           tar czvf "${{ steps.build-data.outputs.release_name }}.tar.gz" "${{ steps.build-data.outputs.release_name }}"
           fi
