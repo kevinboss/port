@@ -16,6 +16,10 @@ It allows the user to run one of these images / tags in a container, creating sn
 
 `scoop install port`
 
+### Install using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/)
+
+`winget install kevinboss.port`
+
 ### Install manually
 
 [Latest release 💾](https://github.com/kevinboss/port/releases/latest)
