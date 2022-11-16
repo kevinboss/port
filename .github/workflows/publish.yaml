@@ -31,14 +31,14 @@ jobs:
         shell: bash
         id: build-data
         run: |
-          tag=$(git describe --tags --abbrev=0)
+          tag={{ github.event.release.tag_name }}
           echo ::set-output name=tag::$tag
-          echo ::set-output name=release_name::"port-$tag-${{ matrix.target }}"
+          echo ::set-output name=release_name::"port-v$tag-${{ matrix.target }}"
 
       - name: Build
         shell: bash
         run: |
-          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}"
+          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}" /p:Version="${{ steps.build-data.outputs.tag }}"
 
       - name: Package Windows
         shell: bash
