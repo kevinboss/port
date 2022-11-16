@@ -36,7 +36,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}" /p:Version=${{ steps.build-data.outputs.version }}
+          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}" -p:Version=${{ steps.build-data.outputs.version }}
 
       - name: Package Windows
         shell: bash
