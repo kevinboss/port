@@ -9,11 +9,8 @@ jobs:
     name: Release
     strategy:
       matrix:
-        kind: ['linux', 'windows']
+        kind: ['windows']
         include:
-          - kind: linux
-            os: ubuntu-latest
-            target: linux-x64
           - kind: windows
             os: windows-latest
             target: win-x64
@@ -38,7 +35,8 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}" /p:Version="${{ steps.build-data.outputs.tag }} | cut -c2-"
+          version=$(${{ steps.build-data.outputs.tag }} | cut -c2-)
+          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}" /p:Version="$version"
 
       - name: Package Windows
         shell: bash
