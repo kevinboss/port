@@ -30,7 +30,7 @@ jobs:
         run: |
           tag=$(git describe --tags --abbrev=0)
           echo ::set-output name=tag::$tag
-          echo ::set-output name=version::$tag | cut -c2-
+          echo ::set-output name=version::${tag:1}
           echo ::set-output name=release_name::"port-$tag-${{ matrix.target }}"
 
       - name: Build
