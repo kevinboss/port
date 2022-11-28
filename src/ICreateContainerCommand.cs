@@ -4,8 +4,9 @@ namespace port;
 
 public interface ICreateContainerCommand
 {
-    Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tag, IEnumerable<string> ports);
+    Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tag,
+        IEnumerable<string> ports, IList<string> environment);
     Task ExecuteAsync(Container container);
     Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tag,
-        IList<Port> containerPorts);
+        IDictionary<string, IList<PortBinding>> portBindings, IList<string> environment);
 }
