@@ -39,7 +39,7 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
 
     private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)
     {
-        var containers = await _getRunningContainersQuery.QueryAsync();
+        var containers =  await _getRunningContainersQuery.QueryAsync().ToListAsync();
         if (settings.ContainerIdentifier != null)
         {
             return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);

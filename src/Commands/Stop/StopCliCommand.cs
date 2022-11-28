@@ -33,7 +33,7 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
 
     private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)
     {
-        var containers = await _getRunningContainersQuery.QueryAsync();
+        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         if (settings.ContainerIdentifier != null)
         {
             return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);

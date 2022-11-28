@@ -93,6 +93,10 @@ public static class ConfigFactory
                 Ports = new List<string>
                 {
                     "80:80"
+                },
+                Environment = new List<string>
+                {
+                    "80:80"
                 }
             }
         }

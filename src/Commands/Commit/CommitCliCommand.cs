@@ -67,7 +67,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             .StartAsync($"Launching {ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag)}", async _ =>
             {
                 var containerName = await _createContainerCommand.ExecuteAsync(container.ContainerIdentifier,
-                    container.ImageIdentifier, newTag, container.Ports);
+                    container.ImageIdentifier, newTag, container.PortBindings, container.Environment);
                 await _runContainerCommand.ExecuteAsync(containerName);
             });
         AnsiConsole.WriteLine($"Launched {ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag)}");
@@ -118,7 +118,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
 
     private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)
     {
-        var containers = await _getRunningContainersQuery.QueryAsync();
+        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         if (settings.ContainerIdentifier != null)
         {
             return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);

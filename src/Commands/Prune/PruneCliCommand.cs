@@ -80,7 +80,7 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
         var result = new List<ImageRemovalResult>();
         foreach (var imageId in imageIds)
         {
-            var containers = await _getContainersQuery.QueryByImageIdAsync(imageId);
+            var containers = await _getContainersQuery.QueryByImageIdAsync(imageId).ToListAsync();
             ctx.Status = $"Removing containers using '{imageId}'".EscapeMarkup();
             foreach (var container in containers)
             {

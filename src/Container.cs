@@ -4,7 +4,7 @@ namespace port;
 
 public class Container
 {
-    public Container(ContainerListResponse containerListResponse)
+    public Container(ContainerListResponse containerListResponse, ContainerInspectResponse inspectContainerResponse)
     {
         Id = containerListResponse.ID;
         var containerName = containerListResponse.Names.Single().Remove(0, 1);
@@ -23,8 +23,9 @@ public class Container
             ImageTag = null;
         }
 
-        Ports = containerListResponse.Ports;
-        Running = containerListResponse.State == "running";
+        PortBindings = inspectContainerResponse.HostConfig.PortBindings;
+        Environment = inspectContainerResponse.Config.Env;
+        Running = inspectContainerResponse.State.Running;
     }
 
     public string Id { get; }
@@ -35,6 +36,7 @@ public class Container
     public string? ContainerTag => ImageTag;
     public string ImageIdentifier { get; }
     public string? ImageTag { get; }
-    public IList<Port> Ports { get; }
+    public IDictionary<string, IList<PortBinding>> PortBindings { get; }
     public bool Running { get; }
+    public IList<string> Environment { get; set; }
 }

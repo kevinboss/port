@@ -62,7 +62,7 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
-        var containers = await _getContainersQuery.QueryByImageNameAndTagAsync(imageName, tag);
+        var containers = await _getContainersQuery.QueryByImageNameAndTagAsync(imageName, tag).ToListAsync();
         ctx.Status = $"Removing containers using image '{ImageNameHelper.BuildImageName(imageName, tag)}'";
         foreach (var container in containers)
         {

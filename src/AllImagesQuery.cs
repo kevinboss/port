@@ -55,7 +55,7 @@ internal class AllImagesQuery : IAllImagesQuery
         IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
         Config.Config.ImageConfig imageConfig)
     {
-        var runningContainers = await _getRunningContainersQuery.QueryAsync();
+        var runningContainers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         return imagesListResponses
             .Where(HasRepoTags)
@@ -88,7 +88,7 @@ internal class AllImagesQuery : IAllImagesQuery
 
     private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
     {
-        var runningContainers = await _getRunningContainersQuery.QueryAsync();
+        var runningContainers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         foreach (var tag in imageConfig.ImageTags)
         {
             var parameters = new ImagesListParameters
@@ -127,7 +127,7 @@ internal class AllImagesQuery : IAllImagesQuery
 
     private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(Config.Config.ImageConfig imageConfig)
     {
-        var runningContainers = await _getRunningContainersQuery.QueryAsync();
+        var runningContainers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         foreach (var imagesListResponse in imagesListResponses.Where(e => e.RepoTags == null))
         {

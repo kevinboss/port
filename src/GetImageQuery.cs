@@ -34,7 +34,7 @@ internal class GetImageQuery : IGetImageQuery
             return null;
         }
 
-        var runningContainers = await _getRunningContainersQuery.QueryAsync();
+        var runningContainers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         return await ConvertToImage(imageName, tag, imagesListResponse, runningContainers);
     }
 
