@@ -1,4 +1,4 @@
-![port](https://socialify.git.ci/kevinboss/port/image?font=KoHo&language=1&logo=https%3A%2F%2Fi.imgur.com%2FKXUk91q.png&name=1&owner=1&pattern=Charlie%20Brown&stargazers=1&theme=Light)
+![port](https://socialify.git.ci/kevinboss/port/image?font=KoHo&language=0&logo=https%3A%2F%2Fi.imgur.com%2FKXUk91q.png&name=1&owner=1&pattern=Charlie%20Brown&stargazers=1&theme=Dark)
 
 # port
 
@@ -41,6 +41,8 @@ imageConfigs:
   - vscode
   ports:
   - 80:80
+  environment:
+  - DEBUG=1
 ```
 
 A default .port file will be created in your user profile of you don't manually create one
