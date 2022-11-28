@@ -14,22 +14,27 @@ internal class GetRunningContainersQuery : IGetRunningContainersQuery
         _config = config;
     }
 
-    public async Task<IReadOnlyCollection<Container>> QueryAsync()
+    public async IAsyncEnumerable<Container> QueryAsync()
     {
         var images = _config.ImageConfigs;
         var containerNames = images.SelectMany(image
             => image.ImageTags.Select(tag => ContainerNameHelper.BuildContainerName(image.Identifier, tag)))
             .ToList();
 
-        var containers = await _dockerClient.Containers.ListContainersAsync(
+        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
             {
                 Limit = long.MaxValue
             });
-        return containers
-            .Select(e => new Container(e))
-            .Where(e => e.Running)
-            .Where(e => containerNames.Any(cn => e.ContainerName.StartsWith(cn)))
-            .ToList();
+        foreach (var containerListResponse in containerListResponses)
+        {
+            var inspectContainerResponse =
+                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            var container = new Container(containerListResponse, inspectContainerResponse);
+            if (container.Running && containerNames.Any(cn => container.ContainerName.StartsWith(cn)))
+            {
+                yield return container;
+            }
+        }
     }
 }

@@ -83,16 +83,18 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             });
     }
 
-    private async IAsyncEnumerable<Container> GetRunningContainersUsingHostPortsAsync(
-        IReadOnlyCollection<string> hostPorts)
+    private IAsyncEnumerable<Container> GetRunningContainersUsingHostPortsAsync(
+        IEnumerable<string> hostPorts)
     {
-        foreach (var container in await _getContainersQuery.QueryRunningAsync())
-        {
-            if (container.Ports.Any(p => hostPorts.Contains(p.PublicPort.ToString())))
+        return _getContainersQuery.QueryRunningAsync()
+            .Where(container =>
             {
-                yield return container;
-            }
-        }
+                var usedHostPorts = container.PortBindings
+                    .SelectMany(pb => pb.Value
+                        .Select(hp => hp.HostPort));
+                return container.PortBindings
+                    .Any(p => { return hostPorts.Any(p => usedHostPorts.Contains(p)); });
+            });
     }
 
     private async Task LaunchImageAsync(string identifier, string? tag, bool resetContainer)
@@ -106,26 +108,29 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
 
         var imageName = imageConfig.ImageName;
         var ports = imageConfig.Ports;
+        var environment = imageConfig.Environment;
         if (!await _doesImageExistQuery.QueryAsync(imageName, tag))
             await _createImageCliCommand.ExecuteAsync(imageName, tag);
 
         var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
-        
+
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Launching {ImageNameHelper.BuildImageName(identifier, tag)}", async _ =>
             {
-                var containers = (await _getContainersQuery.QueryByContainerNameAsync(containerName)).ToList();
+                var containers = await _getContainersQuery.QueryByContainerNameAsync(containerName).ToListAsync();
                 switch (containers.Count)
                 {
                     case 1 when resetContainer:
                         await _stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
-                        containerName = await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
+                        containerName =
+                            await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports, environment);
                         break;
                     case 1 when !resetContainer:
                         break;
                     case 0:
-                        containerName = await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports);
+                        containerName =
+                            await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports, environment);
                         break;
                 }
 

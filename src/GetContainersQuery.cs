@@ -12,53 +12,77 @@ internal class GetContainersQuery : IGetContainersQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<IEnumerable<Container>> QueryRunningAsync()
+    public async IAsyncEnumerable<Container> QueryRunningAsync()
     {
         var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
             {
                 Limit = long.MaxValue
             });
-        return containerListResponses
-            .Select(e => new Container(e))
-            .Where(e => e.Running);
+        foreach (var containerListResponse in containerListResponses)
+        {
+            var inspectContainerResponse =
+                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            var container = new Container(containerListResponse, inspectContainerResponse);
+            if (container.Running)
+            {
+                yield return container;
+            }
+        }
     }
 
-    public async Task<IEnumerable<Container>> QueryByImageNameAndTagAsync(string imageName, string? tag)
+    public async IAsyncEnumerable<Container> QueryByImageNameAndTagAsync(string imageName, string? tag)
     {
         var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
             {
                 Limit = long.MaxValue
             });
-        return containerListResponses
-            .Select(e => new Container(e))
-            
-            .Where(e => imageName == e.ImageIdentifier && tag == e.ImageTag);
+        foreach (var containerListResponse in containerListResponses)
+        {
+            var inspectContainerResponse =
+                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            var container = new Container(containerListResponse, inspectContainerResponse);
+            if (imageName == container.ImageIdentifier && tag == container.ImageTag)
+            {
+                yield return container;
+            }
+        }
     }
 
-    public async Task<IEnumerable<Container>> QueryByImageIdAsync(string imageId)
+    public async IAsyncEnumerable<Container> QueryByImageIdAsync(string imageId)
     {
         var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
             {
                 Limit = long.MaxValue
             });
-        return containerListResponses
-            .Where(e => e.ImageID == imageId)
-            .Select(e => new Container(e))
-            ;
+        foreach (var containerListResponse in containerListResponses)
+        {
+            if (containerListResponse.ImageID != imageId) continue;
+            var inspectContainerResponse =
+                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            var container = new Container(containerListResponse, inspectContainerResponse);
+            yield return container;
+        }
     }
 
-    public async Task<IEnumerable<Container>> QueryByContainerNameAsync(string containerName)
+    public async IAsyncEnumerable<Container> QueryByContainerNameAsync(string containerName)
     {
         var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
             {
                 Limit = long.MaxValue
             });
-        return containerListResponses
-            .Select(e => new Container(e))
-            .Where(e => containerName == e.ContainerName);
+        foreach (var containerListResponse in containerListResponses)
+        {
+            var inspectContainerResponse =
+                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            var container = new Container(containerListResponse, inspectContainerResponse);
+            if (containerName == container.ContainerName)
+            {
+                yield return container;
+            }
+        }
     }
 }
