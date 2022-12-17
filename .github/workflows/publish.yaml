@@ -29,9 +29,9 @@ jobs:
         id: build-data
         run: |
           tag=$(git describe --tags --abbrev=0)
-          echo ::set-output name=tag::$tag
-          echo ::set-output name=version::${tag:1}
-          echo ::set-output name=release_name::"port-$tag-${{ matrix.target }}"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "version=${tag:1}" >> $GITHUB_OUTPUT
+          echo "release_name=port-$tag-${{ matrix.target }}" >> $GITHUB_OUTPUT
 
       - name: Build
         shell: bash
