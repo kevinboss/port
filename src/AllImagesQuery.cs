@@ -22,11 +22,21 @@ internal class AllImagesQuery : IAllImagesQuery
         var imageConfigs = _config.ImageConfigs;
         foreach (var imageConfig in imageConfigs)
         {
-            var images = await GetBaseImagesAsync(imageConfig).ToListAsync();
-            images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
-            images.AddRange(await GetUntaggedImagesAsync(imageConfig).ToListAsync());
+            var images = await QueryByImageConfigAsync(imageConfig, imageConfigs);
             yield return CreateImageGroup(images, imageConfig);
         }
+    }
+
+    public async Task<List<Image>> QueryByImageConfigAsync(Config.Config.ImageConfig imageConfig) =>
+        await QueryByImageConfigAsync(imageConfig, _config.ImageConfigs);
+
+    private async Task<List<Image>> QueryByImageConfigAsync(Config.Config.ImageConfig imageConfig,
+        IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs)
+    {
+        var images = await GetBaseImagesAsync(imageConfig).ToListAsync();
+        images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
+        images.AddRange(await GetUntaggedImagesAsync(imageConfig).ToListAsync());
+        return images;
     }
 
     private static ImageGroup CreateImageGroup(List<Image> images, Config.Config.ImageConfig imageConfig)

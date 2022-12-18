@@ -6,27 +6,21 @@ namespace port.Commands.Prune;
 internal class PruneCliCommand : AsyncCommand<PruneSettings>
 {
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
-    private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
     private readonly IGetImageIdQuery _getImageIdQuery;
     private readonly Config.Config _config;
-    private readonly IRemoveImageCommand _removeImageCommand;
-    private readonly IGetContainersQuery _getContainersQuery;
-    private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IAllImagesQuery _allImagesQuery;
+    private readonly IRemoveImagesCliDependentCommand _removeImagesCliDependentCommand;
 
     public PruneCliCommand(IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IImageIdentifierPrompt imageIdentifierPrompt, IGetImageIdQuery getImageIdQuery, Config.Config config,
-        IRemoveImageCommand removeImageCommand, IGetContainersQuery getContainersQuery,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IAllImagesQuery allImagesQuery)
+        IGetImageIdQuery getImageIdQuery, Config.Config config,
+        IAllImagesQuery allImagesQuery,
+        IRemoveImagesCliDependentCommand removeImagesCliDependentCommand)
     {
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
-        _imageIdentifierPrompt = imageIdentifierPrompt;
         _getImageIdQuery = getImageIdQuery;
         _config = config;
-        _removeImageCommand = removeImageCommand;
-        _getContainersQuery = getContainersQuery;
-        _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _allImagesQuery = allImagesQuery;
+        _removeImagesCliDependentCommand = removeImagesCliDependentCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, PruneSettings settings)
@@ -75,23 +69,7 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
         var imageIds = (await _getImageIdQuery.QueryAsync(imageName, null)).ToList();
         if (!imageIds.Any())
             throw new InvalidOperationException(
-                $"No images for '{identifier}:<none>' do exist".EscapeMarkup());
-
-        var result = new List<ImageRemovalResult>();
-        foreach (var imageId in imageIds)
-        {
-            var containers = await _getContainersQuery.QueryByImageIdAsync(imageId).ToListAsync();
-            ctx.Status = $"Removing containers using '{imageId}'".EscapeMarkup();
-            foreach (var container in containers)
-            {
-                await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-            }
-
-            ctx.Status = $"Containers using '{imageId}' removed".EscapeMarkup();
-
-            result.Add(await _removeImageCommand.ExecuteAsync(imageId));
-        }
-
-        return result;
+                "No images to remove found".EscapeMarkup());
+        return await _removeImagesCliDependentCommand.ExecuteAsync(imageIds, ctx);
     }
 }

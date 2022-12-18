@@ -6,7 +6,7 @@ namespace port.Commands.Run;
 internal class RunCliCommand : AsyncCommand<RunSettings>
 {
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
-    private readonly ICreateImageCliCommand _createImageCliCommand;
+    private readonly ICreateImageCliChildCommand _createImageCliChildCommand;
     private readonly IDoesImageExistQuery _doesImageExistQuery;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly ICreateContainerCommand _createContainerCommand;
@@ -19,7 +19,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     private const char PortSeparator = ':';
 
     public RunCliCommand(IImageIdentifierPrompt imageIdentifierPrompt,
-        ICreateImageCliCommand createImageCliCommand, IDoesImageExistQuery doesImageExistQuery,
+        ICreateImageCliChildCommand createImageCliChildCommand, IDoesImageExistQuery doesImageExistQuery,
         IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         IStopContainerCommand stopContainerCommand, Config.Config config,
@@ -27,7 +27,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)
     {
         _imageIdentifierPrompt = imageIdentifierPrompt;
-        _createImageCliCommand = createImageCliCommand;
+        _createImageCliChildCommand = createImageCliChildCommand;
         _doesImageExistQuery = doesImageExistQuery;
         _getContainersQuery = getContainersQuery;
         _createContainerCommand = createContainerCommand;
@@ -110,7 +110,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         var ports = imageConfig.Ports;
         var environment = imageConfig.Environment;
         if (!await _doesImageExistQuery.QueryAsync(imageName, tag))
-            await _createImageCliCommand.ExecuteAsync(imageName, tag);
+            await _createImageCliChildCommand.ExecuteAsync(imageName, tag);
 
         var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
 
