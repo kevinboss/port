@@ -6,13 +6,6 @@ jobs:
   publish:
     runs-on: windows-latest
     steps:
-      - name: Wait for Release
-        uses: lewagon/wait-on-check-action@v1.2.0
-        with:
-          ref: ${{ github.ref }}
-          check-name: 'Release'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
       - name: Publish port to WinGet
         uses: vedantmgoyal2009/winget-releaser@v1
         with:
