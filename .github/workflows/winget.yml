@@ -11,7 +11,7 @@ jobs:
         id: wait-for-release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          checkName: Release
+          checkName: Release (windows)
       - name: Publish port to WinGet
         uses: vedantmgoyal2009/winget-releaser@v1
         if: steps.wait-for-build.outputs.conclusion == 'success'
