@@ -7,16 +7,16 @@ public class PullCliCommand : AsyncCommand<PullSettings>
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
     private readonly Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
-    private readonly ICreateImageCliCommand _createImageCliCommand;
+    private readonly ICreateImageCliChildCommand _createImageCliChildCommand;
 
     public PullCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        ICreateImageCliCommand createImageCliCommand)
+        ICreateImageCliChildCommand createImageCliChildCommand)
     {
         _imageIdentifierPrompt = imageIdentifierPrompt;
         _config = config;
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
-        _createImageCliCommand = createImageCliCommand;
+        _createImageCliChildCommand = createImageCliChildCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, PullSettings settings)
@@ -47,6 +47,6 @@ public class PullCliCommand : AsyncCommand<PullSettings>
         }
 
         var imageName = imageConfig.ImageName;
-        await _createImageCliCommand.ExecuteAsync(imageName, tag);
+        await _createImageCliChildCommand.ExecuteAsync(imageName, tag);
     }
 }
