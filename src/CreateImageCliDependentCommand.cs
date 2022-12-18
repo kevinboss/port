@@ -2,11 +2,11 @@ using Spectre.Console;
 
 namespace port;
 
-internal class CreateImageCliCommand : ICreateImageCliCommand
+internal class CreateImageCliChildCommand : ICreateImageCliChildCommand
 {
     private readonly ICreateImageCommand _createImageCommand;
 
-    public CreateImageCliCommand(ICreateImageCommand createImageCommand)
+    public CreateImageCliChildCommand(ICreateImageCommand createImageCommand)
     {
         _createImageCommand = createImageCommand;
     }

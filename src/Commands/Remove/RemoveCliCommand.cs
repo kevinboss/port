@@ -6,25 +6,22 @@ namespace port.Commands.Remove;
 internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
 {
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
-    private readonly IGetContainersQuery _getContainersQuery;
     private readonly IGetImageIdQuery _getImageIdQuery;
-    private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
-    private readonly IRemoveImageCommand _removeImageCommand;
     private readonly Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
+    private readonly IAllImagesQuery _allImagesQuery;
+    private readonly IRemoveImagesCliDependentCommand _removeImagesCliDependentCommand;
 
-    public RemoveCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, IGetContainersQuery getContainersQuery,
-        Config.Config config,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, IRemoveImageCommand removeImageCommand,
-        IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery)
+    public RemoveCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config,
+        IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery,
+        IAllImagesQuery allImagesQuery, IRemoveImagesCliDependentCommand removeImagesCliDependentCommand)
     {
         _imageIdentifierPrompt = imageIdentifierPrompt;
-        _getContainersQuery = getContainersQuery;
         _config = config;
-        _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
-        _removeImageCommand = removeImageCommand;
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _getImageIdQuery = getImageIdQuery;
+        _allImagesQuery = allImagesQuery;
+        _removeImagesCliDependentCommand = removeImagesCliDependentCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
@@ -33,7 +30,45 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         var result = await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Removing {ImageNameHelper.BuildImageName(identifier, tag)}",
-                ctx => RemoveImageAsync(identifier, tag, ctx));
+                async ctx =>
+                {
+                    var imageConfig = _config.GetImageConfigByIdentifier(identifier);
+                    var imageName = imageConfig.ImageName;
+                    var imageIds = new List<string>();
+                    if (settings.Reset)
+                    {
+                        var images = (await _allImagesQuery.QueryByImageConfigAsync(imageConfig))
+                            .Where(e => e.Id != null && e.ParentId != null)
+                            .Select(e => new
+                            {
+                                Id = e.Id!,
+                                ParentId = e.ParentId!
+                            })
+                            .ToList();
+                        var imageIdsToAnalyze = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToHashSet();
+                        while (imageIdsToAnalyze.Any())
+                        {
+                            imageIds.AddRange(imageIdsToAnalyze);
+                            var analyze = imageIdsToAnalyze;
+                            var childImageIds = images
+                                .Where(e => analyze.Contains(e.ParentId))
+                                .Select(e => e.Id)
+                                .ToHashSet();
+                            imageIdsToAnalyze = childImageIds;
+                        }
+
+                        imageIds.Reverse();
+                    }
+                    else
+                    {
+                        imageIds = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToList();
+                    }
+
+                    if (!imageIds.Any())
+                        throw new InvalidOperationException(
+                            "No images to remove found".EscapeMarkup());
+                    return _removeImagesCliDependentCommand.ExecuteAsync(imageIds, ctx);
+                }).Unwrap();
         foreach (var imageRemovalResult in result)
         {
             if (imageRemovalResult.Successful)
@@ -55,34 +90,5 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
 
         var identifierAndTag = await _imageIdentifierPrompt.GetDownloadedIdentifierAndTagFromUserAsync("remove");
         return (identifierAndTag.identifier, identifierAndTag.tag);
-    }
-
-    private async Task<IEnumerable<ImageRemovalResult>> RemoveImageAsync(string identifier, string? tag,
-        StatusContext ctx)
-    {
-        var imageConfig = _config.GetImageConfigByIdentifier(identifier);
-        var imageName = imageConfig.ImageName;
-        var containers = await _getContainersQuery.QueryByImageNameAndTagAsync(imageName, tag).ToListAsync();
-        ctx.Status = $"Removing containers using image '{ImageNameHelper.BuildImageName(imageName, tag)}'";
-        foreach (var container in containers)
-        {
-            await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-        }
-
-        ctx.Status = $"Containers using image '{ImageNameHelper.BuildImageName(imageName, tag)}' removed";
-
-        var imageIds = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToList();
-        if (!imageIds.Any())
-            throw new InvalidOperationException(
-                $"No images for '{ImageNameHelper.BuildImageName(imageName, tag)}' do exist".EscapeMarkup());
-
-        ctx.Status = $"Now removing {imageIds.Count} images";
-        var result = new List<ImageRemovalResult>();
-        foreach (var imageId in imageIds)
-        {
-            result.Add(await _removeImageCommand.ExecuteAsync(imageId));
-        }
-
-        return result;
     }
 }

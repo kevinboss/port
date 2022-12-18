@@ -33,12 +33,13 @@ registrations.AddSingleton<IRunContainerCommand, RunContainerCommand>();
 registrations.AddSingleton<IStopContainerCommand, StopContainerCommand>();
 registrations.AddSingleton<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
 registrations.AddSingleton<IRemoveImageCommand, RemoveImageCommand>();
-registrations.AddSingleton<ICreateImageCliCommand, CreateImageCliCommand>();
+registrations.AddSingleton<ICreateImageCliChildCommand, CreateImageCliChildCommand>();
 registrations.AddSingleton<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
 registrations.AddSingleton<IExportImageCommand, ExportImageCommand>();
 registrations.AddSingleton<IProgressSubscriber, ProgressSubscriber>();
 registrations.AddSingleton<IOrphanImageCommand, OrphanImageCommand>();
 registrations.AddSingleton<IImportImageCommand, ImportImageCommand>();
+registrations.AddSingleton<IRemoveImagesCliDependentCommand, RemoveImagesCliDependentCommand>();
 registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
 {
