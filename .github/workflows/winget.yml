@@ -7,14 +7,14 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Wait for Release
-        uses: lewagon/wait-on-check-action@v1.2.0
+        uses: fountainhead/action-wait-for-check@v1.1.0
+        id: wait-for-release
         with:
-          ref: ${{ github.ref }}
-          check-name: 'Release'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Release
       - name: Publish port to WinGet
         uses: vedantmgoyal2009/winget-releaser@v1
+        if: steps.wait-for-build.outputs.conclusion == 'success'
         with:
           identifier: kevinboss.port
           installers-regex: '\.exe$'
