@@ -14,7 +14,7 @@ jobs:
           checkName: Release (windows)
       - name: Publish port to WinGet
         uses: vedantmgoyal2009/winget-releaser@v1
-        if: steps.wait-for-build.outputs.conclusion == 'success'
+        if: steps.wait-for-release.outputs.conclusion == 'success'
         with:
           identifier: kevinboss.port
           installers-regex: '\.exe$'
