@@ -79,11 +79,13 @@ Terminates and removes the currently running container. Then recreates the conta
 
 identifier is optional, if not provided the user will be asked to select a container.
 
-### remove \[identifier\]
+### remove -r(ecursive) \[identifier\]
 
 Allows the user the delete a specified tag (base, snapshot or untagged) of an image.
 
 identifier is optional, if not provided the user will be asked to select an image.
+
+-r(ecursive) is optional, if provided child images will automatically removed, if not an error will be thrown if an image has child images.
 
 ### pull \[identifier\]
 
