@@ -15,7 +15,7 @@
       <PackageReference Include="Spectre.Console.Cli" Version="0.45.0" />
       <PackageReference Include="System.Linq.Async" Version="6.0.1" />
       <PackageReference Include="System.Reactive" Version="5.0.0" />
-      <PackageReference Include="yamldotnet" Version="12.2.1" />
+      <PackageReference Include="yamldotnet" Version="12.3.1" />
     </ItemGroup>
 
 </Project>
