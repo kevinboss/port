@@ -8,7 +8,7 @@
 ## What is it
 
 port is a tool that has been designed to manage multiple images and / or tags of these images.
-It allows the user to run one of these images / tags in a container, creating snapshots of that running container and manage the downloaded images.
+It allows the user to run any of these images. It is then possible to create snapshots of the running containers, reset them and switch between snapshots.
 
 ## How to get it
 
