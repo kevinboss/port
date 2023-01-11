@@ -24,7 +24,8 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
     {
         var imageGroups = _allImagesQuery.QueryAsync();
         await foreach (var imageGroup in imageGroups.Where(e =>
-                           imageIdentifier == null || e.Identifier == imageIdentifier))
+                           imageIdentifier == null || e.Identifier == imageIdentifier)
+                           .OrderBy(i => i.Identifier))
         {
             var treeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
             if (imageGroup.Images.Any(e => e.Tag == null))
