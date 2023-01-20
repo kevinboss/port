@@ -18,7 +18,9 @@ It allows the user to run any of these images. It is then possible to create sna
 
 `scoop install port`
 
-### Install using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/)
+### Install using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) 
+
+![Winget version](https://img.shields.io/badge/dynamic/xml?label=Winget&prefix=v&query=%2F%2Ftr%5B%40id%3D%27winget%27%5D%2Ftd%5B3%5D%2Fspan%2Fa&url=https%3A%2F%2Frepology.org%2Fproject%2Fport%2Fversions)
 
 `winget install kevinboss.port`
 
@@ -45,7 +47,7 @@ imageConfigs:
   - DEBUG=1
 ```
 
-A default .port file will be created in your user profile of you don't manually create one
+A default .port file will be created in your user profile if you don't manually create one
 
 ## How to use it
 
