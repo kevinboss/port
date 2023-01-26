@@ -49,6 +49,14 @@ imageConfigs:
 
 A default .port file will be created in your user profile if you don't manually create one
 
+## Powershell
+
+To get Unicode support in Powershell, add 
+
+`[console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()`
+ 
+to your $profile.
+
 ## How to use it
 
 ![Example](https://github.com/kevinboss/port/raw/master/example.gif)
