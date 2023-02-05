@@ -14,13 +14,18 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, ListSettings settings)
     {
-        await AnsiConsole.Status()
+        var imageTrees = await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync("Loading images", _ => LoadImages(settings.ImageIdentifier));
+            .StartAsync("Loading images", async _ => await CreateImageTree(settings.ImageIdentifier).ToListAsync());
+        foreach (var imageTree in imageTrees)
+        {
+            AnsiConsole.Write(imageTree);
+        }
+
         return 0;
     }
 
-    private async Task LoadImages(string? imageIdentifier)
+    private async IAsyncEnumerable<Tree> CreateImageTree(string? imageIdentifier)
     {
         var imageGroups = _allImagesQuery.QueryAsync();
         await foreach (var imageGroup in imageGroups.Where(e =>
@@ -38,7 +43,7 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
                 root.AddNode(TagTextBuilder.BuildTagText(image));
             }
 
-            AnsiConsole.Write(root);
+            yield return root;
         }
     }
 }
