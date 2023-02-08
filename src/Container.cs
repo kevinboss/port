@@ -8,11 +8,11 @@ public class Container
     {
         Id = containerListResponse.ID;
         var containerName = containerListResponse.Names.Single().Remove(0, 1);
-        
+
         ContainerName = containerName;
 
-        var imageNameAndTag = ImageNameHelper.GetImageNameAndTag(containerListResponse.Image);
-        if (imageNameAndTag.tag != null && containerName.EndsWith(imageNameAndTag.tag))
+        if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag) &&
+            containerName.EndsWith(imageNameAndTag.tag))
         {
             ImageIdentifier = imageNameAndTag.imageName;
             ImageTag = imageNameAndTag.tag;
@@ -31,7 +31,8 @@ public class Container
     public string Id { get; }
     public string ContainerName { get; }
 
-    public string ContainerIdentifier => ImageTag != null ? ContainerName.Replace($".{ImageTag}", string.Empty) : ContainerIdentifier;
+    public string ContainerIdentifier =>
+        ImageTag != null ? ContainerName.Replace($".{ImageTag}", string.Empty) : ContainerIdentifier;
 
     public string? ContainerTag => ImageTag;
     public string ImageIdentifier { get; }
