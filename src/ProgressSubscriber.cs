@@ -11,25 +11,22 @@ internal class ProgressSubscriber : IProgressSubscriber
         object lockObject = new();
         lock (lockObject)
         {
-            var progressSubjekt = new Subject<Progress>();
             var publishedProgress = new Dictionary<string, Progress>();
-            var subscription = Observable.FromEventPattern<JSONMessage>(
+            return Observable.FromEventPattern<JSONMessage>(
                     h => progress.ProgressChanged += h,
                     h => progress.ProgressChanged -= h)
                 .Subscribe(pattern =>
                 {
                     lock (lockObject)
                     {
-                        HandleProgressMessage(pattern.EventArgs, publishedProgress, progressSubjekt);
+                        HandleProgressMessage(pattern.EventArgs, publishedProgress, observer);
                     }
                 });
-            var subscription2 = progressSubjekt.Subscribe(observer);
-            return new AggregateDisposable(subscription, subscription2);
         }
     }
 
     private static void HandleProgressMessage(JSONMessage message, IDictionary<string, Progress> publishedProgress,
-        IObserver<Progress> progressSubjekt)
+        IObserver<Progress> observer)
     {
         if (string.IsNullOrEmpty(message.ID))
             message.ID = Progress.NullId;
@@ -37,11 +34,11 @@ internal class ProgressSubscriber : IProgressSubscriber
         if (!publishedProgress.TryGetValue(message.ID, out var currentProgress))
         {
             var data = CreateTaskSetUpData(message);
-            PublishInitialProgress(message, publishedProgress, data, progressSubjekt);
+            PublishInitialProgress(message, publishedProgress, data, observer);
         }
         else
         {
-            PublishUpdatedProgress(message, currentProgress, progressSubjekt);
+            PublishUpdatedProgress(message, currentProgress, observer);
         }
     }
 
