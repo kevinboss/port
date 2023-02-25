@@ -14,6 +14,8 @@ using port.Commands.Run;
 using port.Commands.Stop;
 using port.Config;
 using port.Infrastructure;
+using port.Spectre;
+using Spectre.Console;
 using Spectre.Console.Cli;
 
 var registrations = new ServiceCollection();
@@ -73,5 +75,7 @@ app.Configure(appConfig =>
     appConfig.AddCommand<StopCliCommand>("stop")
         .WithAlias("s");
 });
+
+AnsiConsole.Console = new CustomConsole();
 
 return app.Run(args);
