@@ -114,3 +114,7 @@ identifier is optional, if not provided the user will be asked to select an imag
 Stops the currently running container.
 
 identifier is optional, if not provided all identifiers will be pruned.
+
+## Issues with Docker Desktop 4.19.0
+
+There is currenctly an issue when using Docker Desktop 4.19.0, downgrade to 4.18.0: https://docs.docker.com/desktop/release-notes/
