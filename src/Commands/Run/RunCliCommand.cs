@@ -1,3 +1,4 @@
+using port.Commands.List;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -15,6 +16,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     private readonly Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
+    private readonly ListCliCommand _listCliCommand;
 
     private const char PortSeparator = ':';
 
@@ -24,7 +26,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         IStopContainerCommand stopContainerCommand, Config.Config config,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, ListCliCommand listCliCommand)
     {
         _imageIdentifierPrompt = imageIdentifierPrompt;
         _createImageCliChildCommand = createImageCliChildCommand;
@@ -36,6 +38,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         _config = config;
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
+        _listCliCommand = listCliCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
@@ -45,7 +48,9 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             throw new InvalidOperationException("Can not launch untagged image");
         await TerminateOtherContainersAsync(identifier, tag);
         await LaunchImageAsync(identifier, tag, settings.Reset);
-        AnsiConsole.WriteLine($"Launched {ImageNameHelper.BuildImageName(identifier, tag)}");
+
+        await _listCliCommand.ExecuteAsync();
+
         return 0;
     }
 
