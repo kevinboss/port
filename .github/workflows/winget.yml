@@ -19,4 +19,4 @@ jobs:
           identifier: kevinboss.port
           installers-regex: '\.exe$'
           token: ${{ secrets.WINGET_TOKEN }}
-          delete-previous-version: false
+          max-versions-to-keep: 5 # keep only latest 5 versions
