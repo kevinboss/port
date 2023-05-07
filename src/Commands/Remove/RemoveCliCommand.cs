@@ -1,3 +1,4 @@
+using port.Commands.List;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -11,10 +12,12 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IAllImagesQuery _allImagesQuery;
     private readonly IRemoveImagesCliDependentCommand _removeImagesCliDependentCommand;
+    private readonly ListCliCommand _listCliCommand;
 
     public RemoveCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery,
-        IAllImagesQuery allImagesQuery, IRemoveImagesCliDependentCommand removeImagesCliDependentCommand)
+        IAllImagesQuery allImagesQuery, IRemoveImagesCliDependentCommand removeImagesCliDependentCommand,
+        ListCliCommand listCliCommand)
     {
         _imageIdentifierPrompt = imageIdentifierPrompt;
         _config = config;
@@ -22,6 +25,7 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
         _getImageIdQuery = getImageIdQuery;
         _allImagesQuery = allImagesQuery;
         _removeImagesCliDependentCommand = removeImagesCliDependentCommand;
+        _listCliCommand = listCliCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
@@ -71,12 +75,12 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
                 }).Unwrap();
         foreach (var imageRemovalResult in result)
         {
-            if (imageRemovalResult.Successful)
-                AnsiConsole.WriteLine($"Removed image with id '{imageRemovalResult.ImageId}'");
-            else
+            if (!imageRemovalResult.Successful)
                 AnsiConsole.MarkupLine(
                     $"[orange3]Unable to removed image with id '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
         }
+
+        await _listCliCommand.ExecuteAsync();
 
         return 0;
     }

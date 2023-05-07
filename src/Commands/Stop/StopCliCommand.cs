@@ -1,3 +1,4 @@
+using port.Commands.List;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -8,14 +9,16 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
     private readonly IGetRunningContainersQuery _getRunningContainersQuery;
     private readonly IContainerNamePrompt _containerNamePrompt;
     private readonly IStopContainerCommand _stopContainerCommand;
+    private readonly ListCliCommand _listCliCommand;
 
     public StopCliCommand(IGetRunningContainersQuery getRunningContainersQuery,
-        IContainerNamePrompt containerNamePrompt,
-        IStopContainerCommand stopContainerCommand)
+        IContainerNamePrompt containerNamePrompt, IStopContainerCommand stopContainerCommand,
+        ListCliCommand listCliCommand)
     {
         _getRunningContainersQuery = getRunningContainersQuery;
         _containerNamePrompt = containerNamePrompt;
         _stopContainerCommand = stopContainerCommand;
+        _listCliCommand = listCliCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, StopSettings settings)
@@ -27,6 +30,8 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
         }
 
         await StopContainerAsync(container);
+
+        await _listCliCommand.ExecuteAsync();
 
         return 0;
     }
@@ -51,7 +56,5 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
             .StartAsync(
                 $"Stopping container '{container.ContainerName}'",
                 async _ => { await _stopContainerCommand.ExecuteAsync(container.Id); });
-        AnsiConsole.WriteLine(
-            $"Currently running container '{container.ContainerName}' stopped");
     }
 }
