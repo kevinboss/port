@@ -1,3 +1,4 @@
+using port.Commands.List;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -10,17 +11,18 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
     private readonly Config.Config _config;
     private readonly IAllImagesQuery _allImagesQuery;
     private readonly IRemoveImagesCliDependentCommand _removeImagesCliDependentCommand;
+    private readonly ListCliCommand _listCliCommand;
 
     public PruneCliCommand(IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IGetImageIdQuery getImageIdQuery, Config.Config config,
-        IAllImagesQuery allImagesQuery,
-        IRemoveImagesCliDependentCommand removeImagesCliDependentCommand)
+        IGetImageIdQuery getImageIdQuery, Config.Config config, IAllImagesQuery allImagesQuery,
+        IRemoveImagesCliDependentCommand removeImagesCliDependentCommand, ListCliCommand listCliCommand)
     {
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
         _getImageIdQuery = getImageIdQuery;
         _config = config;
         _allImagesQuery = allImagesQuery;
         _removeImagesCliDependentCommand = removeImagesCliDependentCommand;
+        _listCliCommand = listCliCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, PruneSettings settings)
@@ -32,16 +34,14 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
                 .Spinner(Spinner.Known.Dots)
                 .StartAsync($"Removing untagged images for identifier '{identifier}'",
                     ctx => RemoveUntaggedImagesAsync(identifier, ctx));
-            foreach (var imageRemovalResult in result)
+            foreach (var imageRemovalResult in result.Where(imageRemovalResult => !imageRemovalResult.Successful))
             {
-                if (imageRemovalResult.Successful)
-                    AnsiConsole.WriteLine($"Removed image with id '{imageRemovalResult.ImageId}'");
-                else
-                    AnsiConsole.MarkupLine(
-                        $"[orange3]Unable to removed image with id '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
+                AnsiConsole.MarkupLine(
+                    $"[orange3]Unable to removed image with id '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
             }
         }
 
+        await _listCliCommand.ExecuteAsync();
 
         return 0;
     }

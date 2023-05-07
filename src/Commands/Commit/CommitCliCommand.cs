@@ -1,3 +1,4 @@
+using port.Commands.List;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -15,13 +16,14 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
     private readonly IGetDigestsByIdQuery _getDigestsByIdQuery;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
+    private readonly ListCliCommand _listCliCommand;
 
     public CommitCliCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
         IGetRunningContainersQuery getRunningContainersQuery, IGetImageQuery getImageQuery,
         IContainerNamePrompt containerNamePrompt, IStopContainerCommand stopContainerCommand,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         IGetDigestsByIdQuery getDigestsByIdQuery, IGetContainersQuery getContainersQuery,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, ListCliCommand listCliCommand)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainersQuery = getRunningContainersQuery;
@@ -33,6 +35,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         _getDigestsByIdQuery = getDigestsByIdQuery;
         _getContainersQuery = getContainersQuery;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
+        _listCliCommand = listCliCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
@@ -47,16 +50,19 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
 
         var newTag = await CommitContainerAsync(container, tag);
 
-        if (!settings.Switch) return 0;
+        if (settings.Switch)
+        {
+            if (newTag == null)
+                throw new InvalidOperationException("newTag is null");
 
-        if (newTag == null)
-            throw new InvalidOperationException("newTag is null");
+            if (container.ImageTag == null)
+                throw new InvalidOperationException(
+                    "Switch argument not supported when creating image from untagged container");
 
-        if (container.ImageTag == null)
-            throw new InvalidOperationException(
-                "Switch argument not supported when creating image from untagged container");
+            await SwitchToNewImageAsync(container, newTag);
+        }
 
-        await SwitchToNewImageAsync(container, newTag);
+        await _listCliCommand.ExecuteAsync();
 
         return 0;
     }
@@ -78,7 +84,6 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
                     container.ImageIdentifier, newTag, container.PortBindings, container.Environment);
                 await _runContainerCommand.ExecuteAsync(containerName);
             });
-        AnsiConsole.WriteLine($"Launched {imageName}");
     }
 
     private async Task<string?> CommitContainerAsync(Container container, string tag)
@@ -121,7 +126,6 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
                         baseTag,
                         tag);
             });
-        AnsiConsole.WriteLine($"Created image with tag {tag}");
         return newTag;
     }
 
