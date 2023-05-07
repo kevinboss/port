@@ -38,41 +38,6 @@ internal class GetImageQuery : IGetImageQuery
         return await ConvertToImage(imageName, tag, imagesListResponse, runningContainers);
     }
 
-    private async Task<Image?> QueryAsync(string imageName, string id, IReadOnlyCollection<Container> runningContainers)
-    {
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
-        {
-            Filters = new Dictionary<string, IDictionary<string, bool>>
-            {
-                {
-                    "reference", new Dictionary<string, bool>
-                    {
-                        { imageName, true }
-                    }
-                }
-            }
-        });
-
-        var imagesListResponse = imagesListResponses.SingleOrDefault(e => e.ID == id);
-
-        if (imagesListResponse == null)
-        {
-            return null;
-        }
-
-        if (imagesListResponse.RepoTags != null)
-        {
-            var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
-            return await ConvertToImage(imageName1, tag, imagesListResponse, runningContainers);
-        }
-
-        var digest = imagesListResponse.RepoDigests?.SingleOrDefault();
-        if (digest != null && DigestHelper.TryGetImageNameAndId(digest, out var nameNameAndId))
-            return await ConvertToImage(nameNameAndId.imageName, null, imagesListResponse, runningContainers);
-
-        return null;
-    }
-
     private async Task<Image?> ConvertToImage(string imageName, string? tag, ImagesListResponse imagesListResponse,
         IReadOnlyCollection<Container> runningContainers)
     {
@@ -96,7 +61,31 @@ internal class GetImageQuery : IGetImageQuery
             ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID,
             Parent = string.IsNullOrEmpty(imagesListResponse.ParentID)
                 ? null
-                : await QueryAsync(imageName, imagesListResponse.ParentID, runningContainers)
+                : await QueryParent(imagesListResponse.ParentID, runningContainers)
         };
+    }
+
+    private async Task<Image?> QueryParent(string id, IReadOnlyCollection<Container> runningContainers)
+    {
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters());
+
+        var imagesListResponse = imagesListResponses.SingleOrDefault(e => e.ID == id);
+
+        if (imagesListResponse == null)
+        {
+            return null;
+        }
+
+        if (imagesListResponse.RepoTags != null)
+        {
+            var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
+            return await ConvertToImage(imageName1, tag, imagesListResponse, runningContainers);
+        }
+
+        var digest = imagesListResponse.RepoDigests?.SingleOrDefault();
+        if (digest != null && DigestHelper.TryGetImageNameAndId(digest, out var nameNameAndId))
+            return await ConvertToImage(nameNameAndId.imageName, null, imagesListResponse, runningContainers);
+
+        return null;
     }
 }
