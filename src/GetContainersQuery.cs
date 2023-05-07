@@ -31,7 +31,7 @@ internal class GetContainersQuery : IGetContainersQuery
         }
     }
 
-    public async IAsyncEnumerable<Container> QueryByImageNameAndTagAsync(string imageName, string? tag)
+    public async IAsyncEnumerable<Container> QueryByContainerIdentifierAndTagAsync(string containerIdentifier, string? tag)
     {
         var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
             new ContainersListParameters
@@ -43,7 +43,7 @@ internal class GetContainersQuery : IGetContainersQuery
             var inspectContainerResponse =
                 await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
             var container = new Container(containerListResponse, inspectContainerResponse);
-            if (imageName == container.ImageIdentifier && tag == container.ImageTag)
+            if (containerIdentifier == container.ContainerIdentifier && tag == container.ContainerTag)
             {
                 yield return container;
             }

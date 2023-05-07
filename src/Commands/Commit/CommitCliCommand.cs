@@ -13,12 +13,15 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
     private readonly IGetDigestsByIdQuery _getDigestsByIdQuery;
+    private readonly IGetContainersQuery _getContainersQuery;
+    private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
 
     public CommitCliCommand(ICreateImageFromContainerCommand createImageFromContainerCommand,
         IGetRunningContainersQuery getRunningContainersQuery, IGetImageQuery getImageQuery,
         IContainerNamePrompt containerNamePrompt, IStopContainerCommand stopContainerCommand,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
-        IGetDigestsByIdQuery getDigestsByIdQuery)
+        IGetDigestsByIdQuery getDigestsByIdQuery, IGetContainersQuery getContainersQuery,
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand)
     {
         _createImageFromContainerCommand = createImageFromContainerCommand;
         _getRunningContainersQuery = getRunningContainersQuery;
@@ -28,6 +31,8 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
         _getDigestsByIdQuery = getDigestsByIdQuery;
+        _getContainersQuery = getContainersQuery;
+        _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
@@ -61,16 +66,19 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Stopping running container '{container.ContainerName}'",
-                _ => _stopContainerCommand.ExecuteAsync(container.Id));
+                async _ => { await _stopContainerCommand.ExecuteAsync(container.Id); });
+        var imageName = ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag);
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching {ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag)}", async _ =>
+            .StartAsync($"Launching {imageName}", async _ =>
             {
+                await _getContainersQuery.QueryByContainerIdentifierAndTagAsync(container.ContainerIdentifier, newTag)
+                    .ForEachAsync(container1 => _stopAndRemoveContainerCommand.ExecuteAsync(container1.Id));
                 var containerName = await _createContainerCommand.ExecuteAsync(container.ContainerIdentifier,
                     container.ImageIdentifier, newTag, container.PortBindings, container.Environment);
                 await _runContainerCommand.ExecuteAsync(containerName);
             });
-        AnsiConsole.WriteLine($"Launched {ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag)}");
+        AnsiConsole.WriteLine($"Launched {imageName}");
     }
 
     private async Task<string?> CommitContainerAsync(Container container, string tag)
@@ -83,7 +91,8 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             var digests = await _getDigestsByIdQuery.QueryAsync(container.ImageIdentifier);
             var digest = digests?.SingleOrDefault();
             if (digest == null || !DigestHelper.TryGetImageNameAndId(digest, out var nameNameAndId))
-                throw new InvalidOperationException($"Unable to determine image name from running container '{container.ContainerName}'");
+                throw new InvalidOperationException(
+                    $"Unable to determine image name from running container '{container.ContainerName}'");
             imageName = nameNameAndId.imageName;
         }
         else
@@ -96,11 +105,11 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             imageName = image.Name;
             baseTag = image.Tag;
         }
-        
-        baseTag ??= (ContainerNameHelper.TryGetContainerNameAndTag(container.ContainerName, out var identifierAndTag) 
-            ? identifierAndTag.tag 
-            : container.ContainerName);
-        
+
+        baseTag ??= ContainerNameHelper.TryGetContainerNameAndTag(container.ContainerName, out var identifierAndTag)
+            ? identifierAndTag.tag
+            : container.ContainerName;
+
         string? newTag = null;
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
