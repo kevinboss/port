@@ -9,6 +9,7 @@ public class Container
         Id = containerListResponse.ID;
         var containerName = containerListResponse.Names.Single().Remove(0, 1);
         ContainerName = containerName;
+        Created = inspectContainerResponse.Created;
 
         if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag) &&
             containerName.EndsWith(imageNameAndTag.tag))
@@ -29,6 +30,8 @@ public class Container
         Environment = inspectContainerResponse.Config.Env;
         Running = inspectContainerResponse.State.Running;
     }
+
+    public DateTime Created { get; set; }
 
     public string Id { get; }
     public string ContainerName { get; }
