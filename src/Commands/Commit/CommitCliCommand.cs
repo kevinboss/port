@@ -48,7 +48,30 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             throw new InvalidOperationException("No running container found");
         }
 
-        var newTag = await CommitContainerAsync(container, tag);
+        var (imageName, newTag) = await GetNewTagAsync(container, tag);
+
+        var containerWithSameTag =
+            await _getContainersQuery.QueryByContainerIdentifierAndTagAsync(container.ContainerIdentifier, newTag)
+                .ToListAsync();
+
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync($"Creating image from running container '{container.ContainerName}'",
+                async _ =>
+                {
+                    return newTag =
+                        await _createImageFromContainerCommand.ExecuteAsync(container.Id, imageName, newTag);
+                });
+
+
+        await AnsiConsole.Status()
+            .Spinner(Spinner.Known.Dots)
+            .StartAsync($"Removing containers named '{container.ContainerName}'",
+                async _ =>
+                {
+                    await Task.WhenAll(containerWithSameTag.Select(async container1 =>
+                        await _stopAndRemoveContainerCommand.ExecuteAsync(container1.Id)));
+                });
 
         if (settings.Switch)
         {
@@ -72,21 +95,28 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Stopping running container '{container.ContainerName}'",
-                async _ => { await _stopContainerCommand.ExecuteAsync(container.Id); });
+                async _ =>
+                {
+                    try
+                    {
+                        await _stopContainerCommand.ExecuteAsync(container.Id);
+                    }
+                    catch (Exception)
+                    {
+                        // ignored
+                    }
+                });
         var imageName = ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag);
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Launching {imageName}", async _ =>
             {
-                await _getContainersQuery.QueryByContainerIdentifierAndTagAsync(container.ContainerIdentifier, newTag)
-                    .ForEachAsync(container1 => _stopAndRemoveContainerCommand.ExecuteAsync(container1.Id));
-                var containerName = await _createContainerCommand.ExecuteAsync(container.ContainerIdentifier,
-                    container.ImageIdentifier, newTag, container.PortBindings, container.Environment);
+                var containerName = await _createContainerCommand.ExecuteAsync(container, newTag);
                 await _runContainerCommand.ExecuteAsync(containerName);
             });
     }
 
-    private async Task<string?> CommitContainerAsync(Container container, string tag)
+    private async Task<(string imageName, string newTag)> GetNewTagAsync(Container container, string tag)
     {
         var image = await _getImageQuery.QueryAsync(container.ImageIdentifier, container.ImageTag);
         string imageName;
@@ -102,31 +132,15 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         }
         else
         {
-            while (image.Parent != null)
-            {
-                image = image.Parent;
-            }
-
             imageName = image.Name;
-            baseTag = image.Tag;
+            baseTag = image.BaseImage?.Tag;
         }
 
-        baseTag ??= ContainerNameHelper.TryGetContainerNameAndTag(container.ContainerName, out var identifierAndTag)
-            ? identifierAndTag.tag
-            : container.ContainerName;
+        baseTag = container.BaseTag ?? baseTag ?? image?.Tag;
 
-        string? newTag = null;
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Creating image from running container '{container.ContainerName}'", async _ =>
-            {
-                return newTag =
-                    await _createImageFromContainerCommand.ExecuteAsync(container.Id,
-                        imageName,
-                        baseTag,
-                        tag);
-            });
-        return newTag;
+        if (tag.Contains('.')) throw new ArgumentException("only [a-zA-Z0-9][a-zA-Z0-9_-] are allowed");
+        var newTag = baseTag == null ? tag : $"{baseTag}-{tag}";
+        return (imageName, newTag);
     }
 
     private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)

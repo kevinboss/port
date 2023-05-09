@@ -23,6 +23,9 @@ public class Container
         }
 
         PortBindings = inspectContainerResponse.HostConfig.PortBindings;
+        BaseTag = containerListResponse.Labels.Where(l => l.Key == Constants.BaseTagLabel)
+            .Select(l => l.Value)
+            .SingleOrDefault();
         Environment = inspectContainerResponse.Config.Env;
         Running = inspectContainerResponse.State.Running;
     }
@@ -39,4 +42,5 @@ public class Container
     public IDictionary<string, IList<PortBinding>> PortBindings { get; }
     public bool Running { get; }
     public IList<string> Environment { get; }
+    public string? BaseTag { get; }
 }

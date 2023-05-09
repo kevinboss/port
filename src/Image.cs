@@ -13,4 +13,18 @@ public class Image
     public string? ParentId { get; set; }
     public Image? Parent { get; set; }
     public ImageGroup Group { get; set; } = null!;
+
+    public Image? BaseImage
+    {
+        get
+        {
+            var image = Parent;
+            while (image?.Parent != null)
+            {
+                image = image.Parent;
+            }
+
+            return image;
+        }
+    }
 }
