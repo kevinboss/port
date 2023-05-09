@@ -8,17 +8,7 @@ public class Container
     {
         Id = containerListResponse.ID;
         var containerName = containerListResponse.Names.Single().Remove(0, 1);
-
-        if (ContainerNameHelper.TryGetContainerNameAndTag(containerName, out var containerNameAndTag))
-        {
-            ContainerIdentifier = containerNameAndTag.containerName;
-            ContainerTag = containerNameAndTag.tag;
-        }
-        else
-        {
-            ContainerIdentifier = containerNameAndTag.containerName;
-            ContainerTag = null;
-        }
+        ContainerName = containerName;
 
         if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag) &&
             containerName.EndsWith(imageNameAndTag.tag))
@@ -38,9 +28,12 @@ public class Container
     }
 
     public string Id { get; }
-    public string ContainerName => ContainerNameHelper.BuildContainerName(ContainerIdentifier, ContainerTag);
-    public string ContainerIdentifier { get; }
-    public string? ContainerTag { get; }
+    public string ContainerName { get; }
+
+    public string ContainerIdentifier =>
+        ContainerTag != null ? ContainerName.Replace($".{ContainerTag}", string.Empty) : ContainerName;
+
+    public string? ContainerTag => ImageTag;
     public string ImageIdentifier { get; }
     public string? ImageTag { get; }
     public IDictionary<string, IList<PortBinding>> PortBindings { get; }
