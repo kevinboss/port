@@ -12,19 +12,8 @@ internal class CreateImageFromContainerCommand : ICreateImageFromContainerComman
         _dockerClient = dockerClient;
     }
 
-    public async Task<string> ExecuteAsync(string containerId, string imageName, string? baseTag, string tag)
+    public async Task<string> ExecuteAsync(string containerId, string imageName, string newTag)
     {
-        if (tag.Contains('.')) throw new ArgumentException("only [a-zA-Z0-9][a-zA-Z0-9_-] are allowed");
-        string newTag;
-        if (tag.StartsWith(":"))
-        {
-            newTag = tag.Substring(1, tag.Length - 1);
-        }
-        else
-        {
-            newTag = baseTag == null ? tag : $"{baseTag}-{tag}";
-        }
-
         await _dockerClient.Images.CommitContainerChangesAsync(new CommitContainerChangesParameters
         {
             ContainerID = containerId,
