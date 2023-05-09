@@ -7,14 +7,13 @@ internal class AllImagesQuery : IAllImagesQuery
 {
     private readonly IDockerClient _dockerClient;
     private readonly Config.Config _config;
-    private readonly IGetRunningContainersQuery _getRunningContainersQuery;
+    private readonly IGetContainersQuery _getContainersQuery;
 
-    public AllImagesQuery(IDockerClient dockerClient, Config.Config config,
-        IGetRunningContainersQuery getRunningContainersQuery)
+    public AllImagesQuery(IDockerClient dockerClient, Config.Config config, IGetContainersQuery getContainersQuery)
     {
         _dockerClient = dockerClient;
         _config = config;
-        _getRunningContainersQuery = getRunningContainersQuery;
+        _getContainersQuery = getContainersQuery;
     }
 
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
@@ -65,22 +64,19 @@ internal class AllImagesQuery : IAllImagesQuery
         IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
         Config.Config.ImageConfig imageConfig)
     {
-        var runningContainers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
-        return imagesListResponses
+        return await Task.WhenAll(imagesListResponses
             .Where(HasRepoTags)
             .Where(e => IsNotBase(imageConfigs, e))
             .Where(e => IsSnapshotOfBase(imageConfig, e))
-            .Select(e =>
+            .Select(async e =>
             {
                 var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
-                var runningContainer = runningContainers
+                var containers = await _getContainersQuery.QueryByImageIdAsync(e.ID).ToListAsync();
+                var container = containers
                     .SingleOrDefault(c =>
                         tag != null &&
                         c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
-                var running = runningContainer != null;
-                var runningUntaggedImage
-                    = runningContainer != null && runningContainer.ImageTag != tag;
                 return new Image
                 {
                     Name = imageName,
@@ -88,17 +84,15 @@ internal class AllImagesQuery : IAllImagesQuery
                     IsSnapshot = true,
                     Existing = true,
                     Created = e.Created,
-                    Running = running,
-                    RelatedContainerIsRunningUntaggedImage = runningUntaggedImage,
+                    Container = container,
                     Id = e.ID,
                     ParentId = string.IsNullOrEmpty(e.ParentID) ? null : e.ParentID
                 };
-            });
+            }));
     }
 
     private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
     {
-        var runningContainers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         foreach (var tag in imageConfig.ImageTags)
         {
             var parameters = new ImagesListParameters
@@ -114,12 +108,12 @@ internal class AllImagesQuery : IAllImagesQuery
                 .SingleOrDefault(e =>
                     e.RepoTags != null &&
                     e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag)));
-            var runningContainer = runningContainers
+            var containers = imagesListResponse != null
+                ? await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync()
+                : new List<Container>();
+            var container = containers
                 .SingleOrDefault(c =>
                     c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
-            var running = runningContainer != null;
-            var runningUntaggedImage
-                = runningContainer != null && runningContainer.ImageTag != tag;
             yield return new Image
             {
                 Name = imageConfig.ImageName,
@@ -127,8 +121,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 IsSnapshot = false,
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created,
-                Running = running,
-                RelatedContainerIsRunningUntaggedImage = runningUntaggedImage,
+                Container = container,
                 Id = imagesListResponse?.ID,
                 ParentId = string.IsNullOrEmpty(imagesListResponse?.ParentID) ? null : imagesListResponse.ParentID
             };
@@ -137,15 +130,14 @@ internal class AllImagesQuery : IAllImagesQuery
 
     private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(Config.Config.ImageConfig imageConfig)
     {
-        var runningContainers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         foreach (var imagesListResponse in imagesListResponses.Where(e => e.RepoTags == null))
         {
-            var runningContainer = runningContainers
+            var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
+            var container = containers
                 .SingleOrDefault(c =>
                     c.ImageIdentifier == imageConfig.ImageName
                     && c.ImageTag == null);
-            var running = runningContainer != null;
             yield return new Image
             {
                 Name = imageConfig.ImageName,
@@ -153,8 +145,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 IsSnapshot = false,
                 Existing = true,
                 Created = imagesListResponse.Created,
-                Running = running,
-                RelatedContainerIsRunningUntaggedImage = false,
+                Container = container,
                 Id = imagesListResponse.ID,
                 ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID
             };

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Spectre.Console;
 
@@ -10,12 +11,24 @@ public static class TagTextBuilder
         var sb = new StringBuilder();
         sb.Append(BuildFirstLine(image));
         var secondLine = BuildSecondLine(image);
-        if (string.IsNullOrEmpty(secondLine)) return sb.ToString();
-        sb.AppendLine();
-        if (padLines) sb.Append("    ");
-        sb.Append("[dim]");
-        sb.Append($"{secondLine}");
-        sb.Append("[/]");
+        if (!string.IsNullOrEmpty(secondLine))
+        {
+            sb.AppendLine();
+            if (padLines) sb.Append("    ");
+            sb.Append("[dim]");
+            sb.Append($"{secondLine}");
+            sb.Append("[/]");
+        }
+
+        var thirdLine = BuildThirdLine(image);
+        if (!string.IsNullOrEmpty(thirdLine))
+        {
+            sb.AppendLine();
+            if (padLines) sb.Append("    ");
+            sb.Append("[dim]");
+            sb.Append($"{thirdLine}");
+            sb.Append("[/]");
+        }
 
         return sb.ToString();
     }
@@ -31,7 +44,7 @@ public static class TagTextBuilder
                 break;
         }
 
-        if (image is { Running: true, RelatedContainerIsRunningUntaggedImage: false })
+        if (image is { Running: true, RunningUntaggedImage: false })
             sb.Append(" | [green]running[/]");
 
         return sb.ToString();
@@ -57,9 +70,19 @@ public static class TagTextBuilder
                 break;
         }
 
-        if (image is { Running: true, RelatedContainerIsRunningUntaggedImage: true })
+        return sb.ToString();
+    }
+
+    private static string BuildThirdLine(Image image)
+    {
+        var sb = new StringBuilder();
+        if (image.Container != null)
+            sb.Append(
+                $"Container from {image.Container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}");
+
+        if (image is { Running: true, RunningUntaggedImage: true })
             sb.Append(" | running [orange3]untagged image[/]");
-        
+
         return sb.ToString();
     }
 }
