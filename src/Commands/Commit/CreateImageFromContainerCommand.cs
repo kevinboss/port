@@ -18,7 +18,8 @@ internal class CreateImageFromContainerCommand : ICreateImageFromContainerComman
         {
             ContainerID = containerId,
             RepositoryName = imageName,
-            Tag = newTag
+            Tag = newTag,
+            Config = new Docker.DotNet.Models.Config()
         });
         return newTag;
     }
