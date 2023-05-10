@@ -7,8 +7,7 @@
 
 ## What is it
 
-port is a tool that has been designed to manage multiple images and / or tags of these images.
-It allows the user to run any of these images. It is then possible to create snapshots of the running containers, reset them and switch between snapshots.
+run and manage docker images with ease. Create snapshots from running containers, reset container to their inital image and save the state of running containers without the need to remember docker cli commands, even when using a remote docker engine.
 
 ## How to get it
 
