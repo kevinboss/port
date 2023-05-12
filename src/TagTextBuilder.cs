@@ -57,10 +57,10 @@ public static class TagTextBuilder
         switch (image.IsSnapshot)
         {
             case false when image.Existing:
-                sb.Append($"[white]{imageCreated.ToString()}[/]");
+                sb.Append($"[white]Image: {imageCreated.ToString()}[/]");
                 break;
             case true:
-                sb.Append($"[white]{imageCreated.ToString()}");
+                sb.Append($"[white]Image: {imageCreated.ToString()}");
                 sb.Append(" | Snapshot");
                 if (image.Parent != null)
                     sb.Append($" based on {image.Parent.Tag ?? "[orange3]untagged image[/]"}");
@@ -78,7 +78,7 @@ public static class TagTextBuilder
         var sb = new StringBuilder();
         if (image.Container != null)
             sb.Append(
-                $"Container from {image.Container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}");
+                $"Container: {image.Container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}");
 
         if (image is { Running: true, RunningUntaggedImage: true })
             sb.Append(" | running [orange3]untagged image[/]");
