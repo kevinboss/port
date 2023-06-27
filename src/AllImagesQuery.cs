@@ -131,7 +131,7 @@ internal class AllImagesQuery : IAllImagesQuery
     private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(Config.Config.ImageConfig imageConfig)
     {
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
-        foreach (var imagesListResponse in imagesListResponses.Where(e => e.RepoTags == null))
+        foreach (var imagesListResponse in imagesListResponses.Where(e => !e.RepoTags.Any()))
         {
             var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
             var container = containers

@@ -27,7 +27,7 @@ internal class GetImageQuery : IGetImageQuery
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
         var imagesListResponse = imagesListResponses
             .SingleOrDefault(e =>
-                tag == null && e.RepoTags == null
+                tag == null && !e.RepoTags.Any()
                 || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageName, tag)));
         if (imagesListResponse == null)
         {
