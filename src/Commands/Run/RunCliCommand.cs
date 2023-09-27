@@ -94,6 +94,8 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         return _getContainersQuery.QueryRunningAsync()
             .Where(container =>
             {
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+                if (container.PortBindings is null) return false;
                 var usedHostPorts = container.PortBindings
                     .SelectMany(pb => pb.Value
                         .Select(hp => hp.HostPort));
