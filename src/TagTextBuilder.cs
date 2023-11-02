@@ -46,6 +46,8 @@ public static class TagTextBuilder
 
         if (image is { Running: true, RunningUntaggedImage: false })
             sb.Append(" | [green]running[/]");
+        if (image is { Running: true, RunningUntaggedImage: true })
+            sb.Append(" | [green]running[/] [orange3]untagged image[/]");
 
         return sb.ToString();
     }
@@ -79,9 +81,6 @@ public static class TagTextBuilder
         if (image.Container != null)
             sb.Append(
                 $"Container: {image.Container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}");
-
-        if (image is { Running: true, RunningUntaggedImage: true })
-            sb.Append(" | running [orange3]untagged image[/]");
 
         return sb.ToString();
     }
