@@ -108,9 +108,22 @@ internal class AllImagesQuery : IAllImagesQuery
                 .SingleOrDefault(e =>
                     e.RepoTags != null &&
                     e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag)));
-            var containers = imagesListResponse != null
-                ? await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync()
-                : new List<Container>();
+            List<Container> containers;
+            if (imagesListResponse != null)
+            {
+                containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
+                if (!containers.Any())
+                {
+                    containers = await _getContainersQuery
+                        .QueryByContainerNameAsync(ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
+                        .ToListAsync();
+                }
+            }
+            else
+            {
+                containers = new List<Container>();
+            }
+
             var container = containers
                 .SingleOrDefault(c =>
                     c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
