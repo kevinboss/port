@@ -7,8 +7,11 @@ public class Image
     public string Name { get; set; } = null!;
     public bool Existing { get; set; }
     public DateTime? Created { get; set; }
-    public bool Running => Container is { Running: true };
-    public bool RunningUntaggedImage => Container != null && Running && Container.ImageTag != Tag;
+    public bool Running => Containers.Any(container => container is { Running: true });
+
+    public bool RunningUntaggedImage =>
+        Containers.Any(container => container is { Running: true } && container.ImageTag != Tag);
+
     public string? Id { get; set; }
     public string? ParentId { get; set; }
     public Image? Parent { get; set; }
@@ -28,5 +31,5 @@ public class Image
         }
     }
 
-    public Container? Container { get; set; }
+    public IReadOnlyList<Container> Containers { get; set; } = new List<Container>();
 }
