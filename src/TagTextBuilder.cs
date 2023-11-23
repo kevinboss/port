@@ -78,9 +78,11 @@ public static class TagTextBuilder
     private static string BuildThirdLine(Image image)
     {
         var sb = new StringBuilder();
-        if (image.Container != null)
+        foreach (var container in image.Containers)
+        {
             sb.Append(
-                $"Container: {image.Container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}");
+                $"Container: {container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}");
+        }
 
         return sb.ToString();
     }

@@ -60,7 +60,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
                 async _ =>
                 {
                     return newTag =
-                        await _createImageFromContainerCommand.ExecuteAsync(container.Id, imageName, newTag);
+                        await _createImageFromContainerCommand.ExecuteAsync(container, imageName, newTag);
                 });
 
 
@@ -136,7 +136,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             baseTag = image.BaseImage?.Tag;
         }
 
-        baseTag = container.BaseTag ?? baseTag ?? image?.Tag;
+        baseTag = container.GetLabel(Constants.BaseTagLabel) ?? baseTag ?? image?.Tag;
 
         if (tag.Contains('.')) throw new ArgumentException("only [a-zA-Z0-9][a-zA-Z0-9_-] are allowed");
         var newTag = baseTag == null ? tag : $"{baseTag}-{tag}";
