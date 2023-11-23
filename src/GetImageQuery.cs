@@ -41,7 +41,6 @@ internal class GetImageQuery : IGetImageQuery
     private async Task<Image?> ConvertToImage(string imageName, string? tag, ImagesListResponse imagesListResponse,
         IReadOnlyCollection<Container> containers)
     {
-        var container = containers.SingleOrDefault(c => imageName == c.ImageIdentifier && tag == c.ImageTag);
         return new Image
         {
             Name = imageName,
@@ -49,7 +48,7 @@ internal class GetImageQuery : IGetImageQuery
             IsSnapshot = false,
             Existing = true,
             Created = imagesListResponse.Created,
-            Container = container,
+            Containers = containers.Where(c => imageName == c.ImageIdentifier && tag == c.ImageTag).ToList(),
             Id = imagesListResponse.ID,
             ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID,
             Parent = string.IsNullOrEmpty(imagesListResponse.ParentID)

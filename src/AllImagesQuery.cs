@@ -73,10 +73,6 @@ internal class AllImagesQuery : IAllImagesQuery
             {
                 var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
                 var containers = await _getContainersQuery.QueryByImageIdAsync(e.ID).ToListAsync();
-                var container = containers
-                    .SingleOrDefault(c =>
-                        tag != null &&
-                        c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
                 return new Image
                 {
                     Name = imageName,
@@ -84,7 +80,11 @@ internal class AllImagesQuery : IAllImagesQuery
                     IsSnapshot = true,
                     Existing = true,
                     Created = e.Created,
-                    Container = container,
+                    Containers = containers
+                        .Where(c =>
+                            tag != null &&
+                            c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
+                        .ToList(),
                     Id = e.ID,
                     ParentId = string.IsNullOrEmpty(e.ParentID) ? null : e.ParentID
                 };
@@ -124,9 +124,6 @@ internal class AllImagesQuery : IAllImagesQuery
                 containers = new List<Container>();
             }
 
-            var container = containers
-                .SingleOrDefault(c =>
-                    c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag));
             yield return new Image
             {
                 Name = imageConfig.ImageName,
@@ -134,7 +131,10 @@ internal class AllImagesQuery : IAllImagesQuery
                 IsSnapshot = false,
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created,
-                Container = container,
+                Containers = containers
+                    .Where(c =>
+                        c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
+                    .ToList(),
                 Id = imagesListResponse?.ID,
                 ParentId = string.IsNullOrEmpty(imagesListResponse?.ParentID) ? null : imagesListResponse.ParentID
             };
@@ -147,10 +147,6 @@ internal class AllImagesQuery : IAllImagesQuery
         foreach (var imagesListResponse in imagesListResponses.Where(e => !e.RepoTags.Any()))
         {
             var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
-            var container = containers
-                .SingleOrDefault(c =>
-                    c.ImageIdentifier == imageConfig.ImageName
-                    && c.ImageTag == null);
             yield return new Image
             {
                 Name = imageConfig.ImageName,
@@ -158,7 +154,10 @@ internal class AllImagesQuery : IAllImagesQuery
                 IsSnapshot = false,
                 Existing = true,
                 Created = imagesListResponse.Created,
-                Container = container,
+                Containers = containers
+                    .Where(c =>
+                        c.ImageIdentifier == imageConfig.ImageName
+                        && c.ImageTag == null).ToList(),
                 Id = imagesListResponse.ID,
                 ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID
             };
@@ -209,6 +208,10 @@ internal class AllImagesQuery : IAllImagesQuery
             imageConfig.ImageName,
             tag
         }).Select(imageConfig1 => ImageNameHelper.BuildImageName(imageConfig1.ImageName, imageConfig1.tag));
+        var identifier = e.Labels.Where(l => l.Key == Constants.IdentifierLabel)
+            .Select(l => l.Value)
+            .SingleOrDefault();
+        if (identifier is not null) return imageConfig.Identifier == identifier;
         return e.RepoTags.Any(repoTag => imageNameAndTags.Any(repoTag.StartsWith));
     }
 }
