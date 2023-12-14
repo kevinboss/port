@@ -19,6 +19,7 @@ internal class AllImagesQuery : IAllImagesQuery
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
     {
         var imageConfigs = _config.ImageConfigs;
+        
         foreach (var imageConfig in imageConfigs)
         {
             var images = await QueryByImageConfigAsync(imageConfig, imageConfigs);
