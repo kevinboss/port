@@ -1,24 +1,28 @@
 using Docker.DotNet;
 using Docker.DotNet.Models;
+using DotNext.Threading;
 
 namespace port;
 
 internal class GetContainersQuery : IGetContainersQuery
 {
     private readonly IDockerClient _dockerClient;
+    private readonly AsyncLazy<IList<ContainerListResponse>> _containerListResponses;
 
     public GetContainersQuery(IDockerClient dockerClient)
     {
         _dockerClient = dockerClient;
+        _containerListResponses = new AsyncLazy<IList<ContainerListResponse>>(token =>
+            _dockerClient.Containers.ListContainersAsync(
+                new ContainersListParameters
+                {
+                    Limit = long.MaxValue
+                }, token));
     }
 
     public async IAsyncEnumerable<Container> QueryRunningAsync()
     {
-        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
-            new ContainersListParameters
-            {
-                Limit = long.MaxValue
-            });
+        var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
         foreach (var containerListResponse in containerListResponses)
         {
             var inspectContainerResponse =
@@ -31,13 +35,10 @@ internal class GetContainersQuery : IGetContainersQuery
         }
     }
 
-    public async IAsyncEnumerable<Container> QueryByContainerIdentifierAndTagAsync(string containerIdentifier, string? tag)
+    public async IAsyncEnumerable<Container> QueryByContainerIdentifierAndTagAsync(string containerIdentifier,
+        string? tag)
     {
-        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
-            new ContainersListParameters
-            {
-                Limit = long.MaxValue
-            });
+        var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
         foreach (var containerListResponse in containerListResponses)
         {
             var inspectContainerResponse =
@@ -52,11 +53,7 @@ internal class GetContainersQuery : IGetContainersQuery
 
     public async IAsyncEnumerable<Container> QueryByImageIdAsync(string imageId)
     {
-        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
-            new ContainersListParameters
-            {
-                Limit = long.MaxValue
-            });
+        var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
         foreach (var containerListResponse in containerListResponses)
         {
             if (containerListResponse.ImageID != imageId) continue;
@@ -69,11 +66,7 @@ internal class GetContainersQuery : IGetContainersQuery
 
     public async IAsyncEnumerable<Container> QueryByContainerNameAsync(string containerName)
     {
-        var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
-            new ContainersListParameters
-            {
-                Limit = long.MaxValue
-            });
+        var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
         foreach (var containerListResponse in containerListResponses)
         {
             var inspectContainerResponse =
