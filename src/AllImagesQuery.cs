@@ -94,17 +94,17 @@ internal class AllImagesQuery : IAllImagesQuery
 
     private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
     {
+        var parameters = new ImagesListParameters
+        {
+            Filters = new Dictionary<string, IDictionary<string, bool>>()
+        };
+        parameters.Filters.Add("reference", new Dictionary<string, bool>
+        {
+            { imageConfig.ImageName, true }
+        });
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
         foreach (var tag in imageConfig.ImageTags)
         {
-            var parameters = new ImagesListParameters
-            {
-                Filters = new Dictionary<string, IDictionary<string, bool>>()
-            };
-            parameters.Filters.Add("reference", new Dictionary<string, bool>
-            {
-                { imageConfig.ImageName, true }
-            });
-            var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
             var imagesListResponse = imagesListResponses
                 .SingleOrDefault(e =>
                     e.RepoTags != null &&
