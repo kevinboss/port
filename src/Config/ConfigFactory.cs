@@ -35,7 +35,7 @@ public static class ConfigFactory
         }
     }
 
-    private static string GetConfigFilePath()
+    public static string GetConfigFilePath()
     {
         var userProfilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var configFilePath = Path.Combine(userProfilePath, ConfigFileName);
