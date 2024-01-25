@@ -8,13 +8,13 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
 {
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IGetImageIdQuery _getImageIdQuery;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
     private readonly IAllImagesQuery _allImagesQuery;
     private readonly IRemoveImagesCliDependentCommand _removeImagesCliDependentCommand;
     private readonly ListCliCommand _listCliCommand;
 
     public PruneCliCommand(IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IGetImageIdQuery getImageIdQuery, Config.Config config, IAllImagesQuery allImagesQuery,
+        IGetImageIdQuery getImageIdQuery, port.Config.Config config, IAllImagesQuery allImagesQuery,
         IRemoveImagesCliDependentCommand removeImagesCliDependentCommand, ListCliCommand listCliCommand)
     {
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;

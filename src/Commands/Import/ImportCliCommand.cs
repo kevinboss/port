@@ -7,11 +7,11 @@ namespace port.Commands.Import;
 internal class ImportCliCommand : AsyncCommand<ImportSettings>
 {
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
     private readonly IImportImageCommand _importImageCommand;
     private readonly IGetImageIdQuery _getImageIdQuery;
 
-    public ImportCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config, IImportImageCommand importImageCommand,
+    public ImportCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, port.Config.Config config, IImportImageCommand importImageCommand,
         IGetImageIdQuery getImageIdQuery)
     {
         _imageIdentifierPrompt = imageIdentifierPrompt;

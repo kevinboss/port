@@ -6,10 +6,10 @@ namespace port;
 internal class AllImagesQuery : IAllImagesQuery
 {
     private readonly IDockerClient _dockerClient;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
     private readonly IGetContainersQuery _getContainersQuery;
 
-    public AllImagesQuery(IDockerClient dockerClient, Config.Config config, IGetContainersQuery getContainersQuery)
+    public AllImagesQuery(IDockerClient dockerClient, port.Config.Config config, IGetContainersQuery getContainersQuery)
     {
         _dockerClient = dockerClient;
         _config = config;
@@ -27,11 +27,11 @@ internal class AllImagesQuery : IAllImagesQuery
         }
     }
 
-    public async Task<List<Image>> QueryByImageConfigAsync(Config.Config.ImageConfig imageConfig) =>
+    public async Task<List<Image>> QueryByImageConfigAsync(port.Config.Config.ImageConfig imageConfig) =>
         await QueryByImageConfigAsync(imageConfig, _config.ImageConfigs);
 
-    private async Task<List<Image>> QueryByImageConfigAsync(Config.Config.ImageConfig imageConfig,
-        IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs)
+    private async Task<List<Image>> QueryByImageConfigAsync(port.Config.Config.ImageConfig imageConfig,
+        IReadOnlyCollection<port.Config.Config.ImageConfig> imageConfigs)
     {
         var images = await GetBaseImagesAsync(imageConfig).ToListAsync();
         images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
@@ -39,7 +39,7 @@ internal class AllImagesQuery : IAllImagesQuery
         return images;
     }
 
-    private static ImageGroup CreateImageGroup(List<Image> images, Config.Config.ImageConfig imageConfig)
+    private static ImageGroup CreateImageGroup(List<Image> images, port.Config.Config.ImageConfig imageConfig)
     {
         var imageGroup = new ImageGroup(imageConfig.Identifier);
         SetParents(images, imageGroup);
@@ -62,8 +62,8 @@ internal class AllImagesQuery : IAllImagesQuery
     }
 
     private async Task<IEnumerable<Image>> GetSnapshotImagesAsync(
-        IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
-        Config.Config.ImageConfig imageConfig)
+        IReadOnlyCollection<port.Config.Config.ImageConfig> imageConfigs,
+        port.Config.Config.ImageConfig imageConfig)
     {
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         return await Task.WhenAll(imagesListResponses
@@ -92,7 +92,7 @@ internal class AllImagesQuery : IAllImagesQuery
             }));
     }
 
-    private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig)
+    private async IAsyncEnumerable<Image> GetBaseImagesAsync(port.Config.Config.ImageConfig imageConfig)
     {
         var parameters = new ImagesListParameters
         {
@@ -142,7 +142,7 @@ internal class AllImagesQuery : IAllImagesQuery
         }
     }
 
-    private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(Config.Config.ImageConfig imageConfig)
+    private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(port.Config.Config.ImageConfig imageConfig)
     {
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         foreach (var imagesListResponse in imagesListResponses.Where(e => !e.RepoTags.Any()))
@@ -187,7 +187,7 @@ internal class AllImagesQuery : IAllImagesQuery
         return e.RepoTags != null;
     }
 
-    private static bool IsNotBase(IEnumerable<Config.Config.ImageConfig> imageConfigs, ImagesListResponse e)
+    private static bool IsNotBase(IEnumerable<port.Config.Config.ImageConfig> imageConfigs, ImagesListResponse e)
     {
         return !imageConfigs
             .SelectMany(imageConfig => imageConfig.ImageTags.Select(tag => new
@@ -202,7 +202,7 @@ internal class AllImagesQuery : IAllImagesQuery
             });
     }
 
-    private static bool IsSnapshotOfBase(Config.Config.ImageConfig imageConfig, ImagesListResponse e)
+    private static bool IsSnapshotOfBase(port.Config.Config.ImageConfig imageConfig, ImagesListResponse e)
     {
         var imageNameAndTags = imageConfig.ImageTags.Select(tag => new
         {
