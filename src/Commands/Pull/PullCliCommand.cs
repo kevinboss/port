@@ -5,11 +5,11 @@ namespace port.Commands.Pull;
 public class PullCliCommand : AsyncCommand<PullSettings>
 {
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly ICreateImageCliChildCommand _createImageCliChildCommand;
 
-    public PullCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config,
+    public PullCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, port.Config.Config config,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
         ICreateImageCliChildCommand createImageCliChildCommand)
     {

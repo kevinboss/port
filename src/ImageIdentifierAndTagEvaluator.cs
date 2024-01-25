@@ -2,9 +2,9 @@ namespace port;
 
 internal class ImageIdentifierAndTagEvaluator : IImageIdentifierAndTagEvaluator
 {
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
 
-    public ImageIdentifierAndTagEvaluator(Config.Config config)
+    public ImageIdentifierAndTagEvaluator(port.Config.Config config)
     {
         _config = config;
     }

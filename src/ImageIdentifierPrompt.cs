@@ -5,9 +5,9 @@ namespace port;
 internal class ImageIdentifierPrompt : IImageIdentifierPrompt
 {
     private readonly IAllImagesQuery _allImagesQuery;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
 
-    public ImageIdentifierPrompt(IAllImagesQuery allImagesQuery, Config.Config config)
+    public ImageIdentifierPrompt(IAllImagesQuery allImagesQuery, port.Config.Config config)
     {
         _allImagesQuery = allImagesQuery;
         _config = config;
@@ -21,7 +21,7 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
             selectionPrompt.AddChoice(imageConfig);
         }
 
-        var selectedImageConfig = (Config.Config.ImageConfig)AnsiConsole.Prompt(selectionPrompt);
+        var selectedImageConfig = (port.Config.Config.ImageConfig)AnsiConsole.Prompt(selectionPrompt);
         return selectedImageConfig.Identifier;
     }
 
@@ -97,7 +97,7 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
                 {
                     Image image => TagTextBuilder.BuildTagText(image, true),
                     ImageGroup imageGroup => $"[white]{imageGroup.Identifier}[/]",
-                    Config.Config.ImageConfig imageConfig => $"[white]{imageConfig.Identifier}[/]",
+                    port.Config.Config.ImageConfig imageConfig => $"[white]{imageConfig.Identifier}[/]",
                     _ => o as string ?? throw new InvalidOperationException()
                 };
             })

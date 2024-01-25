@@ -8,12 +8,12 @@ internal class ExportCliCommand : AsyncCommand<ExportSettings>
 {
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
     private readonly IExportImageCommand _exportImageCommand;
     private readonly IGetImageIdQuery _getImageIdQuery;
 
     public ExportCliCommand(IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config, IExportImageCommand exportImageCommand,
+        IImageIdentifierPrompt imageIdentifierPrompt, port.Config.Config config, IExportImageCommand exportImageCommand,
         IGetImageIdQuery getImageIdQuery)
     {
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
