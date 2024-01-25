@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using port;
 using port.Commands.Commit;
+using port.Commands.Config;
 using port.Commands.Export;
 using port.Commands.Import;
 using port.Commands.List;
@@ -74,6 +75,8 @@ app.Configure(appConfig =>
         .WithAlias("pr");
     appConfig.AddCommand<StopCliCommand>("stop")
         .WithAlias("s");
+    appConfig.AddCommand<ConfigCliCommand>("config")
+        .WithAlias("cfg");
 });
 
 AnsiConsole.Console = new CustomConsole();
