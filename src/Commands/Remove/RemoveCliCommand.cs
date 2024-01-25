@@ -8,13 +8,13 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
 {
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
     private readonly IGetImageIdQuery _getImageIdQuery;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IAllImagesQuery _allImagesQuery;
     private readonly IRemoveImagesCliDependentCommand _removeImagesCliDependentCommand;
     private readonly ListCliCommand _listCliCommand;
 
-    public RemoveCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config,
+    public RemoveCliCommand(IImageIdentifierPrompt imageIdentifierPrompt, port.Config.Config config,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator, IGetImageIdQuery getImageIdQuery,
         IAllImagesQuery allImagesQuery, IRemoveImagesCliDependentCommand removeImagesCliDependentCommand,
         ListCliCommand listCliCommand)

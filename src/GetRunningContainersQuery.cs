@@ -6,9 +6,9 @@ namespace port;
 internal class GetRunningContainersQuery : IGetRunningContainersQuery
 {
     private readonly IDockerClient _dockerClient;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
 
-    public GetRunningContainersQuery(IDockerClient dockerClient, Config.Config config)
+    public GetRunningContainersQuery(IDockerClient dockerClient, port.Config.Config config)
     {
         _dockerClient = dockerClient;
         _config = config;

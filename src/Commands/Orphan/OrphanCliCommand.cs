@@ -7,12 +7,12 @@ internal class OrphanCliCommand : AsyncCommand<OrphanSettings>
 {
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
     private readonly IOrphanImageCommand _orphanImageCommand;
     private readonly IGetImageIdQuery _getImageIdQuery;
 
     public OrphanCliCommand(IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IImageIdentifierPrompt imageIdentifierPrompt, Config.Config config, IOrphanImageCommand orphanImageCommand,
+        IImageIdentifierPrompt imageIdentifierPrompt, port.Config.Config config, IOrphanImageCommand orphanImageCommand,
         IGetImageIdQuery getImageIdQuery)
     {
         _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;

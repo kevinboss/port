@@ -13,7 +13,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
     private readonly IStopContainerCommand _stopContainerCommand;
-    private readonly Config.Config _config;
+    private readonly port.Config.Config _config;
     private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly ListCliCommand _listCliCommand;
@@ -24,7 +24,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         ICreateImageCliChildCommand createImageCliChildCommand, IDoesImageExistQuery doesImageExistQuery,
         IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
-        IStopContainerCommand stopContainerCommand, Config.Config config,
+        IStopContainerCommand stopContainerCommand, port.Config.Config config,
         IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, ListCliCommand listCliCommand)
     {
