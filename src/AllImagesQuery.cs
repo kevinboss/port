@@ -19,7 +19,7 @@ internal class AllImagesQuery : IAllImagesQuery
     public async IAsyncEnumerable<ImageGroup> QueryAsync()
     {
         var imageConfigs = _config.ImageConfigs;
-        
+
         foreach (var imageConfig in imageConfigs)
         {
             var images = await QueryByImageConfigAsync(imageConfig, imageConfigs);
@@ -33,9 +33,10 @@ internal class AllImagesQuery : IAllImagesQuery
     private async Task<List<Image>> QueryByImageConfigAsync(port.Config.Config.ImageConfig imageConfig,
         IReadOnlyCollection<port.Config.Config.ImageConfig> imageConfigs)
     {
-        var images = await GetBaseImagesAsync(imageConfig).ToListAsync();
-        images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig));
-        images.AddRange(await GetUntaggedImagesAsync(imageConfig).ToListAsync());
+        var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
+        var images = await GetBaseImagesAsync(imageConfig, imagesListResponses).ToListAsync();
+        images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig, imagesListResponses));
+        images.AddRange(await GetUntaggedImagesAsync(imageConfig, imagesListResponses).ToListAsync());
         return images;
     }
 
@@ -62,10 +63,9 @@ internal class AllImagesQuery : IAllImagesQuery
     }
 
     private async Task<IEnumerable<Image>> GetSnapshotImagesAsync(
-        IReadOnlyCollection<port.Config.Config.ImageConfig> imageConfigs,
-        port.Config.Config.ImageConfig imageConfig)
+        IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
+        Config.Config.ImageConfig imageConfig, IEnumerable<ImagesListResponse> imagesListResponses)
     {
-        var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         return await Task.WhenAll(imagesListResponses
             .Where(HasRepoTags)
             .Where(e => IsNotBase(imageConfigs, e))
@@ -92,17 +92,9 @@ internal class AllImagesQuery : IAllImagesQuery
             }));
     }
 
-    private async IAsyncEnumerable<Image> GetBaseImagesAsync(port.Config.Config.ImageConfig imageConfig)
+    private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig,
+        IList<ImagesListResponse> imagesListResponses)
     {
-        var parameters = new ImagesListParameters
-        {
-            Filters = new Dictionary<string, IDictionary<string, bool>>()
-        };
-        parameters.Filters.Add("reference", new Dictionary<string, bool>
-        {
-            { imageConfig.ImageName, true }
-        });
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
         foreach (var tag in imageConfig.ImageTags)
         {
             var imagesListResponse = imagesListResponses
@@ -142,9 +134,9 @@ internal class AllImagesQuery : IAllImagesQuery
         }
     }
 
-    private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(port.Config.Config.ImageConfig imageConfig)
+    private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(Config.Config.ImageConfig imageConfig,
+        IEnumerable<ImagesListResponse> imagesListResponses)
     {
-        var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
         foreach (var imagesListResponse in imagesListResponses.Where(e => !e.RepoTags.Any()))
         {
             var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
@@ -167,19 +159,9 @@ internal class AllImagesQuery : IAllImagesQuery
 
     private async Task<IList<ImagesListResponse>> GetImagesByNameAsync(string imageName)
     {
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters
-        {
-            Filters = new Dictionary<string, IDictionary<string, bool>>
-            {
-                {
-                    "reference", new Dictionary<string, bool>
-                    {
-                        { imageName, true }
-                    }
-                }
-            }
-        });
-        return imagesListResponses;
+        var parameters = new ImagesListParameters { Filters = new Dictionary<string, IDictionary<string, bool>>() };
+        parameters.Filters.Add("reference", new Dictionary<string, bool> { { imageName, true } });
+        return await _dockerClient.Images.ListImagesAsync(parameters);
     }
 
     private static bool HasRepoTags(ImagesListResponse e)
