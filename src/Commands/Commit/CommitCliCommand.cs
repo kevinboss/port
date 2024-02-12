@@ -50,10 +50,6 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
 
         var (imageName, newTag) = await GetNewTagAsync(container, tag);
 
-        var containerWithSameTag =
-            await _getContainersQuery.QueryByContainerIdentifierAndTagAsync(container.ContainerIdentifier, newTag)
-                .ToListAsync();
-
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Dots)
             .StartAsync($"Creating image from running container '{container.ContainerName}'",
@@ -69,6 +65,10 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             .StartAsync($"Removing containers named '{container.ContainerName}'",
                 async _ =>
                 {
+                    var containerWithSameTag =
+                        await _getContainersQuery
+                            .QueryByContainerIdentifierAndTagAsync(container.ContainerIdentifier, newTag)
+                            .ToListAsync();
                     await Task.WhenAll(containerWithSameTag.Select(async container1 =>
                         await _stopAndRemoveContainerCommand.ExecuteAsync(container1.Id)));
                 });
