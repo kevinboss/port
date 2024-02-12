@@ -70,8 +70,18 @@ internal class GetImageQuery : IGetImageQuery
 
         if (imagesListResponse.RepoTags != null)
         {
-            var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
-            return await ConvertToImage(imageName1, tag, imagesListResponse, containers);
+            if (imagesListResponse.RepoTags.Count == 1)
+            {
+                var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
+                return await ConvertToImage(imageName1, tag, imagesListResponse, containers);
+            }
+
+            var baseTag = imagesListResponse.Labels.SingleOrDefault(l => l.Key == Constants.BaseTagLabel).Value;
+            foreach (var repoTag in imagesListResponse.RepoTags)
+            {
+                var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(repoTag);
+                if (tag == baseTag) return await ConvertToImage(imageName1, tag, imagesListResponse, containers);
+            }
         }
 
         var digest = imagesListResponse.RepoDigests?.SingleOrDefault();
