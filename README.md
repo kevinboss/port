@@ -108,5 +108,3 @@ to your $profile.
 - **Description**: Halts the operation of the currently active container.
 - **Parameters**:
   - `identifier` (optional): Specifies the container to stop. If omitted, operates on the current container.
-
-identifier is optional, if not provided all identifiers will be pruned.
