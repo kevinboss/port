@@ -7,6 +7,8 @@
 
 run and manage docker images with ease. Create snapshots from running containers, reset container to their inital image and save the state of running containers without the need to remember docker cli commands, even when using a remote docker engine.
 
+![Example](https://github.com/kevinboss/port/raw/master/example.gif)
+
 ## How to get it
 
 ### Install using [scoop](https://scoop.sh)
@@ -54,60 +56,57 @@ To get Unicode support in Powershell, add
  
 to your $profile.
 
-## How to use it
+## Commands Overview
 
-![Example](https://github.com/kevinboss/port/raw/master/example.gif)
+### Run an Image
+- **Syntax**: `run [identifier] -r`
+- **Description**: Executes a specified tag (base or snapshot) of an image.
+- **Parameters**:
+  - `identifier` (optional): If omitted, a prompt will request image selection.
+  - `-r` (reset) (optional): Resets the existing container for the specified image, if applicable.
 
-### run \[identifier\] -r(eset)
+### List Images
+- **Syntax**: `list [identifier]`
+- **Description**: Displays all images and their tags.
+- **Parameters**:
+  - `identifier` (optional): Limits the listing to images under the given identifier. Without it, all images are listed.
 
-Allows the user the run a specified tag (base or snapshot) of an image.
+### Commit a Container
+- **Syntax**: `commit -t [identifier]`
+- **Description**: Generates an image from the currently active container.
+- **Parameters**:
+  - `identifier` (optional): If omitted, a prompt will request container selection.
+  - `-t` (tag) (optional): Specifies the tag name. Defaults to the current date-time if not provided.
 
-identifier is optional, if not provided the user will be asked to select an image.
+### Reset a Container
+- **Syntax**: `reset [identifier]`
+- **Description**: Stops, removes, and recreates the container using its original image.
+- **Parameters**:
+  - `identifier` (optional): If omitted, a prompt will request container selection.
 
--r(eset) is optional, if provided will reset the already existing the container (if one exists for the image being run)
+### Remove an Image
+- **Syntax**: `remove -r [identifier]`
+- **Description**: Deletes a specified image tag (base, snapshot, or untagged).
+- **Parameters**:
+  - `identifier` (optional): If omitted, a prompt will request image selection.
+  - `-r` (recursive) (optional): Automatically deletes child images. Without this, an error is raised if the image has dependents.
 
-### list \[identifier\]
+### Pull an Image
+- **Syntax**: `pull [identifier]`
+- **Description**: Downloads a specified tag (base or snapshot) of an image.
+- **Parameters**:
+  - `identifier` (optional): If omitted, a prompt will request image selection.
 
-Lists all images with their respective tags.
+### Prune Images
+- **Syntax**: `prune [identifier]`
+- **Description**: Removes untagged versions of an image.
+- **Parameters**:
+  - `identifier` (optional): If omitted, a prompt will request image selection.
 
-identifier is optional, if not provided all images will be listed. If provided all images belonging to the same identifier will be listed.
-
-### commit -t(ag) \[identifier\]
-
-Creates an image from the currently running container.
-
-identifier is optional, if not provided the user will be asked to select a container.
-
--t(ag) is optional, if not provied current date-time will be used as the tag.
-
-### reset \[identifier\]
-
-Terminates and removes the currently running container. Then recreates the container using the image the running container was using.
-
-identifier is optional, if not provided the user will be asked to select a container.
-
-### remove -r(ecursive) \[identifier\]
-
-Allows the user the delete a specified tag (base, snapshot or untagged) of an image.
-
-identifier is optional, if not provided the user will be asked to select an image.
-
--r(ecursive) is optional, if provided child images will automatically removed, if not an error will be thrown if an image has child images.
-
-### pull \[identifier\]
-
-Allows the user the pull a specified tag (base or snapshot) of an image.
-
-identifier is optional, if not provided the user will be asked to select an image.
-
-### prune \[identifier\]
-
-Allows the user the remove untagged versions of an image.
-
-identifier is optional, if not provided the user will be asked to select an image.
-
-### stop \[identifier\]
-
-Stops the currently running container.
+### Stop a Container
+- **Syntax**: `stop [identifier]`
+- **Description**: Halts the operation of the currently active container.
+- **Parameters**:
+  - `identifier` (optional): Specifies the container to stop. If omitted, operates on the current container.
 
 identifier is optional, if not provided all identifiers will be pruned.
