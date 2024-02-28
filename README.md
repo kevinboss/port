@@ -10,7 +10,7 @@
 
 run and manage docker images with ease. Create snapshots from running containers, reset container to their inital image and save the state of running containers without the need to remember docker cli commands, even when using a remote docker engine.
 
-![Example](https://github.com/kevinboss/port/raw/master/example.gif)
+![Example](https://github.com/kevinboss/port/raw/master/example-2.gif)
 
 ## How to get it
 
