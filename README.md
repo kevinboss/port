@@ -1,4 +1,7 @@
-![port](https://socialify.git.ci/kevinboss/port/image?font=KoHo&language=0&logo=https%3A%2F%2Fi.imgur.com%2FKXUk91q.png&name=1&owner=1&pattern=Charlie%20Brown&stargazers=1&theme=Dark)
+<p align="center">
+  <img src="https://github.com/kevinboss/port/blob/master/logo.png" />
+</p>
+
 
 # port
 
