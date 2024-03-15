@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Wait for Release
-        uses: fountainhead/action-wait-for-check@v1.1.0
+        uses: fountainhead/action-wait-for-check@v1.2.0
         id: wait-for-release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
