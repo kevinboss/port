@@ -46,11 +46,11 @@ registrations.AddTransient<IRemoveImagesCliDependentCommand, RemoveImagesCliDepe
 registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
 {
-	var config = provider.GetService<Config>();
-	if (config?.DockerEndpoint == null)
-		throw new InvalidOperationException("Docker endpoint has not been configured");
-	var endpoint = new Uri(config.DockerEndpoint);
-	return new DockerClientConfiguration(endpoint).CreateClient();
+    var config = provider.GetService<Config>();
+    if (config?.DockerEndpoint == null)
+        throw new InvalidOperationException("Docker endpoint has not been configured");
+    var endpoint = new Uri(config.DockerEndpoint);
+    return new DockerClientConfiguration(endpoint).CreateClient();
 });
 
 var registrar = new TypeRegistrar(registrations);
@@ -59,42 +59,42 @@ var app = new CommandApp(registrar);
 
 app.Configure(appConfig =>
 {
-	appConfig.AddCommand<PullCliCommand>("pull")
-		.WithAlias("p");
-	appConfig.AddCommand<RunCliCommand>("run")
-		.WithAlias("r");
-	appConfig.AddCommand<ResetCliCommand>("reset")
-		.WithAlias("rs");
-	appConfig.AddCommand<CommitCliCommand>("commit")
-		.WithAlias("c");
-	appConfig.AddCommand<ListCliCommand>("list")
-		.WithAlias("ls");
-	appConfig.AddCommand<RemoveCliCommand>("remove")
-		.WithAlias("rm");
-	appConfig.AddCommand<PruneCliCommand>("prune")
-		.WithAlias("pr");
-	appConfig.AddCommand<StopCliCommand>("stop")
-		.WithAlias("s");
-	appConfig.AddCommand<ConfigCliCommand>("config")
-		.WithAlias("cfg");
+    appConfig.AddCommand<PullCliCommand>("pull")
+        .WithAlias("p");
+    appConfig.AddCommand<RunCliCommand>("run")
+        .WithAlias("r");
+    appConfig.AddCommand<ResetCliCommand>("reset")
+        .WithAlias("rs");
+    appConfig.AddCommand<CommitCliCommand>("commit")
+        .WithAlias("c");
+    appConfig.AddCommand<ListCliCommand>("list")
+        .WithAlias("ls");
+    appConfig.AddCommand<RemoveCliCommand>("remove")
+        .WithAlias("rm");
+    appConfig.AddCommand<PruneCliCommand>("prune")
+        .WithAlias("pr");
+    appConfig.AddCommand<StopCliCommand>("stop")
+        .WithAlias("s");
+    appConfig.AddCommand<ConfigCliCommand>("config")
+        .WithAlias("cfg");
 });
 
 AnsiConsole.Console = new CustomConsole();
 
 app.Configure(config =>
 {
-	config.SetExceptionHandler(exception =>
-	{
-		switch (exception)
-		{
-			case TimeoutException:
-				AnsiConsole.MarkupLine("[red]Timeout exception occurred[/], is the Docker daemon running?");
-				return -1;
-			default:
-				AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything);
-				return -1;
-		}
-	});
+    config.SetExceptionHandler((exception, _) =>
+    {
+        switch (exception)
+        {
+            case TimeoutException:
+                AnsiConsole.MarkupLine("[red]Timeout exception occurred[/], is the Docker daemon running?");
+                return -1;
+            default:
+                AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything);
+                return -1;
+        }
+    });
 });
 
 return app.Run(args);
