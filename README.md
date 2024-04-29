@@ -38,15 +38,15 @@ Then add folder to path `$Env:PATH += ";C:\Path\To\Folder"`
 version: 1.1
 dockerEndpoint: unix:///var/run/docker.sock
 imageConfigs:
-- identifier: Getting.Started
-  imageName: docker/getting-started
-  imageTags:
-  - latest
-  - vscode
-  ports:
-  - 80:80
-  environment:
-  - DEBUG=1
+  - identifier: Getting.Started
+    imageName: docker/getting-started
+    imageTags:
+      - latest
+      - vscode
+    ports:
+      - 80:80
+    environment:
+      - DEBUG=1
 ```
 
 A default .port file will be created in your user profile if you don't manually create one
