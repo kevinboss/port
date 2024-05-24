@@ -74,7 +74,7 @@ internal class AllImagesQuery : IAllImagesQuery
             {
                 var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
                 var containers = await _getContainersQuery.QueryByImageIdAsync(e.ID).ToListAsync();
-                return new Image
+                return new Image(e.Labels)
                 {
                     Name = imageName,
                     Tag = tag,
@@ -117,7 +117,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 containers = new List<Container>();
             }
 
-            yield return new Image
+            yield return new Image(imagesListResponse?.Labels ?? new Dictionary<string, string>())
             {
                 Name = imageConfig.ImageName,
                 Tag = tag,
@@ -140,7 +140,7 @@ internal class AllImagesQuery : IAllImagesQuery
         foreach (var imagesListResponse in imagesListResponses.Where(e => !e.RepoTags.Any()))
         {
             var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
-            yield return new Image
+            yield return new Image(imagesListResponse.Labels)
             {
                 Name = imageConfig.ImageName,
                 Tag = null,

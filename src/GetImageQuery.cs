@@ -35,13 +35,14 @@ internal class GetImageQuery : IGetImageQuery
         }
 
         var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
-        return await ConvertToImage(imageName, tag, imagesListResponse, containers);
+        return await ConvertToImage(imagesListResponse.Labels, imageName, tag, imagesListResponse, containers);
     }
 
-    private async Task<Image?> ConvertToImage(string imageName, string? tag, ImagesListResponse imagesListResponse,
+    private async Task<Image?> ConvertToImage(IDictionary<string, string> labels, string imageName, string? tag,
+        ImagesListResponse imagesListResponse,
         IReadOnlyCollection<Container> containers)
     {
-        return new Image
+        return new Image(labels)
         {
             Name = imageName,
             Tag = tag,
@@ -73,20 +74,20 @@ internal class GetImageQuery : IGetImageQuery
             if (imagesListResponse.RepoTags.Count == 1)
             {
                 var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
-                return await ConvertToImage(imageName1, tag, imagesListResponse, containers);
+                return await ConvertToImage(imagesListResponse.Labels, imageName1, tag, imagesListResponse, containers);
             }
 
             var baseTag = imagesListResponse.Labels.SingleOrDefault(l => l.Key == Constants.BaseTagLabel).Value;
             foreach (var repoTag in imagesListResponse.RepoTags)
             {
                 var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(repoTag);
-                if (tag == baseTag) return await ConvertToImage(imageName1, tag, imagesListResponse, containers);
+                if (tag == baseTag) return await ConvertToImage(imagesListResponse.Labels, imageName1, tag, imagesListResponse, containers);
             }
         }
 
         var digest = imagesListResponse.RepoDigests?.SingleOrDefault();
         if (digest != null && DigestHelper.TryGetImageNameAndId(digest, out var nameNameAndId))
-            return await ConvertToImage(nameNameAndId.imageName, null, imagesListResponse, containers);
+            return await ConvertToImage(imagesListResponse.Labels, nameNameAndId.imageName, null, imagesListResponse, containers);
 
         return null;
     }
