@@ -46,7 +46,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
         if (tag == null)
             throw new InvalidOperationException("Can not launch untagged image");
-        await TerminateOtherContainersAsync(identifier, tag);
+        await TerminateOtherContainersAsync(identifier);
         await LaunchImageAsync(identifier, tag, settings.Reset);
 
         await _listCliCommand.ExecuteAsync();
@@ -65,7 +65,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
-    private Task TerminateOtherContainersAsync(string identifier, string tag)
+    private Task TerminateOtherContainersAsync(string identifier)
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
@@ -78,14 +78,12 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             .Select(e => e.Split(PortSeparator)[0])
             .ToList();
         var spinnerTex = $"Terminating containers using host ports '{string.Join(", ", hostPorts)}'";
-        return AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync(spinnerTex, async _ =>
-            {
-                var containers = GetRunningContainersUsingHostPortsAsync(hostPorts);
-                await foreach (var container in containers)
-                    await _stopContainerCommand.ExecuteAsync(container.Id);
-            });
+        return Spinner.StartAsync(spinnerTex, async _ =>
+        {
+            var containers = GetRunningContainersUsingHostPortsAsync(hostPorts);
+            await foreach (var container in containers)
+                await _stopContainerCommand.ExecuteAsync(container.Id);
+        });
     }
 
     private IAsyncEnumerable<Container> GetRunningContainersUsingHostPortsAsync(
@@ -106,42 +104,37 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
 
     private async Task LaunchImageAsync(string identifier, string? tag, bool resetContainer)
     {
+        var constructedImageName = ImageNameHelper.BuildImageName(identifier, tag);
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
-        if (imageConfig == null)
-        {
-            throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
-                nameof(identifier));
-        }
 
         var imageName = imageConfig.ImageName;
-        var ports = imageConfig.Ports;
-        var environment = imageConfig.Environment;
-        if (!await _doesImageExistQuery.QueryAsync(imageName, tag))
-            await _createImageCliChildCommand.ExecuteAsync(imageName, tag);
+        var doesImageExist = await Spinner.StartAsync($"Check if image {constructedImageName} exists",
+            async _ => await _doesImageExistQuery.QueryAsync(imageName, tag));
+        if (!doesImageExist) await _createImageCliChildCommand.ExecuteAsync(imageName, tag);
 
         var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
 
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching {ImageNameHelper.BuildImageName(identifier, tag)}", async _ =>
+        await Spinner.StartAsync($"Launching {constructedImageName}", async _ =>
+        {
+            var containers = await _getContainersQuery.QueryByContainerNameAsync(containerName).ToListAsync();
+            var ports = imageConfig.Ports;
+            var environment = imageConfig.Environment;
+            switch (containers.Count)
             {
-                var containers = await _getContainersQuery.QueryByContainerNameAsync(containerName).ToListAsync();
-                switch (containers.Count)
-                {
-                    case 1 when resetContainer:
-                        await _stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
-                        containerName =
-                            await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports, environment);
-                        break;
-                    case 1 when !resetContainer:
-                        break;
-                    case 0:
-                        containerName =
-                            await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports, environment);
-                        break;
-                }
+                case 1 when resetContainer:
+                    await _stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
+                    containerName =
+                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports, environment);
+                    break;
+                case 1 when !resetContainer:
+                    break;
+                case 0:
+                    containerName =
+                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports, environment);
+                    break;
+            }
 
-                await _runContainerCommand.ExecuteAsync(containerName);
-            });
+            await _runContainerCommand.ExecuteAsync(containerName);
+        });
     }
 }
