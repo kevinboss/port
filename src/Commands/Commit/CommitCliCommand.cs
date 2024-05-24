@@ -50,28 +50,24 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
 
         var (imageName, newTag) = await GetNewTagAsync(container, tag);
 
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Creating image from running container '{container.ContainerName}'",
-                async _ =>
-                {
-                    return newTag =
-                        await _createImageFromContainerCommand.ExecuteAsync(container, imageName, newTag);
-                });
+        await Spinner.StartAsync($"Creating image from running container '{container.ContainerName}'",
+            async _ =>
+            {
+                return newTag =
+                    await _createImageFromContainerCommand.ExecuteAsync(container, imageName, newTag);
+            });
 
 
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Removing containers named '{container.ContainerName}'",
-                async _ =>
-                {
-                    var containerWithSameTag =
-                        await _getContainersQuery
-                            .QueryByContainerIdentifierAndTagAsync(container.ContainerIdentifier, newTag)
-                            .ToListAsync();
-                    await Task.WhenAll(containerWithSameTag.Select(async container1 =>
-                        await _stopAndRemoveContainerCommand.ExecuteAsync(container1.Id)));
-                });
+        await Spinner.StartAsync($"Removing containers named '{container.ContainerName}'",
+            async _ =>
+            {
+                var containerWithSameTag =
+                    await _getContainersQuery
+                        .QueryByContainerIdentifierAndTagAsync(container.ContainerIdentifier, newTag)
+                        .ToListAsync();
+                await Task.WhenAll(containerWithSameTag.Select(async container1 =>
+                    await _stopAndRemoveContainerCommand.ExecuteAsync(container1.Id)));
+            });
 
         if (settings.Switch)
         {
@@ -92,28 +88,24 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
 
     private async Task SwitchToNewImageAsync(Container container, string newTag)
     {
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Stopping running container '{container.ContainerName}'",
-                async _ =>
-                {
-                    try
-                    {
-                        await _stopContainerCommand.ExecuteAsync(container.Id);
-                    }
-                    catch (Exception)
-                    {
-                        // ignored
-                    }
-                });
-        var imageName = ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag);
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Launching {imageName}", async _ =>
+        await Spinner.StartAsync($"Stopping running container '{container.ContainerName}'",
+            async _ =>
             {
-                var containerName = await _createContainerCommand.ExecuteAsync(container, newTag);
-                await _runContainerCommand.ExecuteAsync(containerName);
+                try
+                {
+                    await _stopContainerCommand.ExecuteAsync(container.Id);
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
             });
+        var imageName = ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag);
+        await Spinner.StartAsync($"Launching {imageName}", async _ =>
+        {
+            var containerName = await _createContainerCommand.ExecuteAsync(container, newTag);
+            await _runContainerCommand.ExecuteAsync(containerName);
+        });
     }
 
     private async Task<(string imageName, string newTag)> GetNewTagAsync(Container container, string tag)

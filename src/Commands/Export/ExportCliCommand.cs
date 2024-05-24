@@ -47,9 +47,7 @@ internal class ExportCliCommand : AsyncCommand<ExportSettings>
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Export {imageName} to {path}", async _ =>
+        await Spinner.StartAsync($"Export {imageName} to {path}", async _ =>
             {
                 var imageId = (await _getImageIdQuery.QueryAsync(imageName, tag)).SingleOrDefault();
                 if (imageId == null)

@@ -56,9 +56,7 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
 
     private async Task ResetContainerAsync(Container container)
     {
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync(
+        await Spinner.StartAsync(
                 $"Resetting container '{container.ContainerName}'",
                 async _ =>
                 {

@@ -6,15 +6,14 @@ namespace port;
 
 public static class TagTextBuilder
 {
-    public static string BuildTagText(Image image, bool padLines = false)
+    public static string BuildTagText(Image image)
     {
         var sb = new StringBuilder();
         sb.Append(BuildFirstLine(image));
         var secondLine = BuildSecondLine(image);
         if (!string.IsNullOrEmpty(secondLine))
         {
-            sb.AppendLine();
-            if (padLines) sb.Append("    ");
+            AddSeparator(sb);
             sb.Append("[dim]");
             sb.Append($"{secondLine}");
             sb.Append("[/]");
@@ -23,8 +22,7 @@ public static class TagTextBuilder
         var thirdLine = BuildThirdLine(image);
         if (!string.IsNullOrEmpty(thirdLine))
         {
-            sb.AppendLine();
-            if (padLines) sb.Append("    ");
+            AddSeparator(sb);
             sb.Append("[dim]");
             sb.Append($"{thirdLine}");
             sb.Append("[/]");
@@ -85,5 +83,10 @@ public static class TagTextBuilder
         }
 
         return sb.ToString();
+    }
+
+    private static void AddSeparator(StringBuilder sb)
+    {
+        sb.Append(" | ");
     }
 }
