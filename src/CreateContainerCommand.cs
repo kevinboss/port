@@ -23,7 +23,7 @@ internal class CreateContainerCommand : ICreateContainerCommand
             .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
         var containerName = ContainerNameHelper.BuildContainerName(containerIdentifier, tag);
         var image = await _getImageQuery.QueryAsync(imageIdentifier, tag);
-        var baseTag = image?.BaseImage?.Tag ?? tag;
+        var baseTag = image?.GetLabel(Constants.BaseTagLabel) ?? image?.BaseImage?.Tag ?? tag;
         var labels = new Dictionary<string, string>
         {
             { Constants.IdentifierLabel, containerIdentifier }

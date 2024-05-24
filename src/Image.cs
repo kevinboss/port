@@ -2,6 +2,13 @@ namespace port;
 
 public class Image
 {
+    private readonly IDictionary<string, string> _labels;
+
+    public Image(IDictionary<string, string> labels)
+    {
+        _labels = labels;
+    }
+    
     public bool IsSnapshot { get; set; }
     public string? Tag { get; set; }
     public string Name { get; set; } = null!;
@@ -32,4 +39,8 @@ public class Image
     }
 
     public IReadOnlyList<Container> Containers { get; set; } = new List<Container>();
+
+    public string? GetLabel(string label) => _labels.Where(l => l.Key == label)
+        .Select(l => l.Value)
+        .SingleOrDefault();
 }
