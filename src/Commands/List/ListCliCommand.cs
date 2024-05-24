@@ -14,12 +14,11 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
 
     public override async Task<int> ExecuteAsync(CommandContext _, ListSettings settings)
     {
-        var imageTrees = await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("Loading images", async _ => await CreateImageTree(settings.ImageIdentifier).ToListAsync());
-        foreach (var imageTree in imageTrees)
+        var textsGroups = await Spinner.StartAsync("Loading images",
+            async _ => await CreateImageTree(settings.ImageIdentifier).ToListAsync());
+        foreach (var text in textsGroups.SelectMany(texts => texts))
         {
-            AnsiConsole.Write(imageTree);
+            AnsiConsole.MarkupLine(text);
         }
 
         return 0;
@@ -27,34 +26,24 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
 
     public async Task ExecuteAsync()
     {
-        var imageTrees = await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("Loading images", async _ => await CreateImageTree().ToListAsync());
-        foreach (var imageTree in imageTrees)
+        var textsGroups = await Spinner.StartAsync("Loading images", async _ => await CreateImageTree().ToListAsync());
+        foreach (var text in textsGroups.SelectMany(texts => texts))
         {
-            AnsiConsole.Write(imageTree);
+            AnsiConsole.MarkupLine(text);
         }
     }
 
-    private async IAsyncEnumerable<Tree> CreateImageTree(string? imageIdentifier = default)
+    private async IAsyncEnumerable<List<string>> CreateImageTree(string? imageIdentifier = default)
     {
         var imageGroups = _allImagesQuery.QueryAsync();
         await foreach (var imageGroup in imageGroups.Where(e =>
                                imageIdentifier == null || e.Identifier == imageIdentifier)
                            .OrderBy(i => i.Identifier))
         {
-            var treeHeader = $"[yellow]{imageGroup.Identifier} Tags[/]";
-            if (imageGroup.Images.Any(e => e.Tag == null))
-                treeHeader = $"{treeHeader} [red]{"[has untagged images]".EscapeMarkup()}[/]";
-            var root = new Tree(treeHeader);
-            foreach (var image in imageGroup.Images
-                         .Where(e => e.Tag != null)
-                         .OrderBy(e => e.Tag))
-            {
-                root.AddNode(TagTextBuilder.BuildTagText(image));
-            }
-
-            yield return root;
+            yield return imageGroup.Images.Where(e => e.Tag != null)
+                .OrderBy(e => e.Tag)
+                .Select(image => $"{image.Group.Identifier}.{TagTextBuilder.BuildTagText(image)}")
+                .ToList();
         }
     }
 }

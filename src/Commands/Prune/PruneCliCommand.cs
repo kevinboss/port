@@ -30,10 +30,8 @@ internal class PruneCliCommand : AsyncCommand<PruneSettings>
         var identifiers = GetIdentifiersAsync(settings);
         await foreach (var identifier in identifiers)
         {
-            var result = await AnsiConsole.Status()
-                .Spinner(Spinner.Known.Dots)
-                .StartAsync($"Removing untagged images for identifier '{identifier}'",
-                    ctx => RemoveUntaggedImagesAsync(identifier, ctx));
+            var result = await Spinner.StartAsync($"Removing untagged images for identifier '{identifier}'",
+                ctx => RemoveUntaggedImagesAsync(identifier, ctx));
             foreach (var imageRemovalResult in result.Where(imageRemovalResult => !imageRemovalResult.Successful))
             {
                 AnsiConsole.MarkupLine(
