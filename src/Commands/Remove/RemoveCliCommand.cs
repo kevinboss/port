@@ -31,9 +31,7 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
     public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
     {
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
-        var result = await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Removing {ImageNameHelper.BuildImageName(identifier, tag)}",
+        var result = await Spinner.StartAsync($"Removing {ImageNameHelper.BuildImageName(identifier, tag)}",
                 async ctx =>
                 {
                     var imageConfig = _config.GetImageConfigByIdentifier(identifier);

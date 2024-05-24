@@ -51,9 +51,7 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
 
     private async Task StopContainerAsync(Container container)
     {
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync(
+        await Spinner.StartAsync(
                 $"Stopping container '{container.ContainerName}'",
                 async _ => { await _stopContainerCommand.ExecuteAsync(container.Id); });
     }

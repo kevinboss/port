@@ -31,9 +31,7 @@ internal class ImportCliCommand : AsyncCommand<ImportSettings>
     {
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
         var imageName = imageConfig.ImageName;
-        await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync($"Import {imageName} from {path}", async _ =>
+        await Spinner.StartAsync($"Import {imageName} from {path}", async _ =>
             {
                 var fileInfo = new FileInfo(path);
                 if (!fileInfo.Exists) 

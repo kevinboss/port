@@ -6,11 +6,6 @@ public class Config
     public string? DockerEndpoint { get; set; }
     public List<ImageConfig> ImageConfigs { get; set; } = new();
 
-    public IEnumerable<ImageConfig> GetImageConfigsByImageName(string imageName)
-    {
-        return ImageConfigs.Where(e => e.ImageName == imageName);
-    }
-
     public ImageConfig GetImageConfigByIdentifier(string identifier)
     {
         var imageConfig = ImageConfigs.SingleOrDefault(e => e.Identifier == identifier);
