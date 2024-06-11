@@ -42,7 +42,7 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
         {
             yield return imageGroup.Images.Where(e => e.Tag != null)
                 .OrderBy(e => e.Tag)
-                .Select(image => $"{image.Group.Identifier}.{TagTextBuilder.BuildTagText(image)}")
+                .Select(image => $"[dim][white]{image.Group.Identifier}[/][/].{TagTextBuilder.BuildTagText(image)}")
                 .ToList();
         }
     }
