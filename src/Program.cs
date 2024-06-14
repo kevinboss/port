@@ -1,4 +1,5 @@
-﻿using Docker.DotNet;
+﻿using System.Reflection;
+using Docker.DotNet;
 using Microsoft.Extensions.DependencyInjection;
 using port;
 using port.Commands.Commit;
@@ -59,6 +60,7 @@ var app = new CommandApp(registrar);
 
 app.Configure(appConfig =>
 {
+    appConfig.UseAssemblyInformationalVersion();
     appConfig.AddCommand<PullCliCommand>("pull")
         .WithAlias("p");
     appConfig.AddCommand<RunCliCommand>("run")
