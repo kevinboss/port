@@ -81,8 +81,7 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
             {
                 return o switch
                 {
-                    Image image =>
-                        $"[dim][white]{image.Group.Identifier}[/][/].{TagTextBuilder.BuildTagText(image)}",
+                    Image image => TagTextBuilder.BuildTagText(image),
                     port.Config.Config.ImageConfig imageConfig => $"[white]{imageConfig.Identifier}[/]",
                     _ => o as string ?? throw new InvalidOperationException()
                 };
