@@ -9,6 +9,19 @@ public static class TagTextBuilder
     public static string BuildTagText(Image image)
     {
         var sb = new StringBuilder();
+        switch (image)
+        {
+            case { Running: true, RunningUntaggedImage: false }:
+                sb.Append("[green]\u25a0[/] ");
+                break;
+            case { Running: true, RunningUntaggedImage: true }:
+                sb.Append("[orange]\u25a0[/] ");
+                break;
+            default:
+                sb.Append("[red]\u25a0[/] ");
+                break;
+        }
+        sb.Append($"[grey78]{image.Group.Identifier}[/].");
         sb.Append(BuildFirstLine(image));
         var secondLine = BuildSecondLine(image);
         if (!string.IsNullOrEmpty(secondLine))
@@ -42,10 +55,8 @@ public static class TagTextBuilder
                 break;
         }
 
-        if (image is { Running: true, RunningUntaggedImage: false })
-            sb.Append(" | [green]running[/]");
         if (image is { Running: true, RunningUntaggedImage: true })
-            sb.Append(" | [green]running[/] [orange3]untagged image[/]");
+            sb.Append(" | [orange3]untagged image[/]");
 
         return sb.ToString();
     }
@@ -87,6 +98,6 @@ public static class TagTextBuilder
 
     private static void AddSeparator(StringBuilder sb)
     {
-        sb.Append(" | ");
+        sb.Append("[dim] | [/]");
     }
 }
