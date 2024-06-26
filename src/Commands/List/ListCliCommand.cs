@@ -16,6 +16,7 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
     {
         var textsGroups = await Spinner.StartAsync("Loading images",
             async _ => await CreateImageTree(settings.ImageIdentifier).ToListAsync());
+        AnsiConsole.WriteLine();
         foreach (var text in textsGroups.SelectMany(texts => texts))
         {
             AnsiConsole.MarkupLine(text);
@@ -27,6 +28,7 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
     public async Task ExecuteAsync()
     {
         var textsGroups = await Spinner.StartAsync("Loading images", async _ => await CreateImageTree().ToListAsync());
+        AnsiConsole.WriteLine();
         foreach (var text in textsGroups.SelectMany(texts => texts))
         {
             AnsiConsole.MarkupLine(text);
