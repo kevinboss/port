@@ -6,6 +6,7 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
 {
     private readonly IAllImagesQuery _allImagesQuery;
     private readonly port.Config.Config _config;
+    private const string GreyMoveUpAndDownToRevealMoreImages = "[grey](Move up and down to reveal more images)[/]";
 
     public ImageIdentifierPrompt(IAllImagesQuery allImagesQuery, port.Config.Config config)
     {
@@ -15,22 +16,27 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
 
     public string GetBaseIdentifierFromUser(string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
+        var selectionPrompt = new SelectionPrompt<port.Config.Config.ImageConfig>()
+            .UseConverter(imageConfig => $"[white]{imageConfig.Identifier}[/]")
+            .PageSize(10)
+            .Title($"Select image you wish to [green]{command}[/]")
+            .MoreChoicesText(GreyMoveUpAndDownToRevealMoreImages);
         foreach (var imageConfig in _config.ImageConfigs)
         {
             selectionPrompt.AddChoice(imageConfig);
         }
 
-        var selectedImageConfig = (port.Config.Config.ImageConfig)AnsiConsole.Prompt(selectionPrompt);
+        var selectedImageConfig = AnsiConsole.Prompt(selectionPrompt);
         return selectedImageConfig.Identifier;
     }
 
     public async Task<(string identifier, string? tag)> GetBaseIdentifierAndTagFromUserAsync(string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
-        var allImages = await Spinner.StartAsync($"Loading images to [green]{command}[/]",
+        var groups = await Spinner.StartAsync($"Loading images to [green]{command}[/]",
             async _ => await _allImagesQuery.QueryAsync().ToListAsync());
-        foreach (var imageGroup in allImages.OrderBy(i => i.Identifier))
+        var lengths = TagTextBuilder.GetLengths(groups.SelectMany(group => group.Images));
+        var selectionPrompt = CreateSelectionPrompt(command, lengths);
+        foreach (var imageGroup in groups.OrderBy(i => i.Identifier))
         {
             selectionPrompt.AddChoices(imageGroup.Images
                 .Where(e => !e.IsSnapshot)
@@ -44,10 +50,11 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
 
     public async Task<(string identifier, string? tag)> GetDownloadedIdentifierAndTagFromUserAsync(string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
-        var allImages = await Spinner.StartAsync($"Loading images to [green]{command}[/]",
+        var groups = await Spinner.StartAsync($"Loading images to [green]{command}[/]",
             async _ => await _allImagesQuery.QueryAsync().ToListAsync());
-        foreach (var imageGroup in allImages.OrderBy(i => i.Identifier))
+        var lengths = TagTextBuilder.GetLengths(groups.SelectMany(group => group.Images));
+        var selectionPrompt = CreateSelectionPrompt(command, lengths);
+        foreach (var imageGroup in groups.OrderBy(i => i.Identifier))
         {
             selectionPrompt.AddChoices(imageGroup.Images
                 .Where(e => e.Existing)
@@ -60,10 +67,11 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
 
     public async Task<(string identifier, string? tag)> GetRunnableIdentifierAndTagFromUserAsync(string command)
     {
-        var selectionPrompt = CreateSelectionPrompt(command);
-        var allImages = await Spinner.StartAsync($"Loading images to [green]{command}[/]",
+        var groups = await Spinner.StartAsync($"Loading images to [green]{command}[/]",
             async _ => await _allImagesQuery.QueryAsync().ToListAsync());
-        foreach (var imageGroup in allImages.OrderBy(i => i.Identifier))
+        var lengths = TagTextBuilder.GetLengths(groups.SelectMany(group => group.Images));
+        var selectionPrompt = CreateSelectionPrompt(command, lengths);
+        foreach (var imageGroup in groups.OrderBy(i => i.Identifier))
         {
             selectionPrompt.AddChoices(imageGroup.Images
                 .Where(e => e.Tag != null)
@@ -74,20 +82,13 @@ internal class ImageIdentifierPrompt : IImageIdentifierPrompt
         return (selectedImage.Group.Identifier, selectedImage.Tag);
     }
 
-    private static SelectionPrompt<object> CreateSelectionPrompt(string command)
+    private static SelectionPrompt<Image> CreateSelectionPrompt(string command,
+        (int first, int second) lengths)
     {
-        return new SelectionPrompt<object>()
-            .UseConverter(o =>
-            {
-                return o switch
-                {
-                    Image image => TagTextBuilder.BuildTagText(image),
-                    port.Config.Config.ImageConfig imageConfig => $"[white]{imageConfig.Identifier}[/]",
-                    _ => o as string ?? throw new InvalidOperationException()
-                };
-            })
+        return new SelectionPrompt<Image>()
+            .UseConverter(image => TagTextBuilder.BuildTagText(image, lengths))
             .PageSize(10)
             .Title($"Select image you wish to [green]{command}[/]")
-            .MoreChoicesText("[grey](Move up and down to reveal more images)[/]");
+            .MoreChoicesText(GreyMoveUpAndDownToRevealMoreImages);
     }
 }
