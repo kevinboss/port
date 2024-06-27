@@ -37,14 +37,15 @@ internal class ListCliCommand : AsyncCommand<ListSettings>
 
     private async IAsyncEnumerable<List<string>> CreateImageTree(string? imageIdentifier = default)
     {
-        var imageGroups = _allImagesQuery.QueryAsync();
-        await foreach (var imageGroup in imageGroups.Where(e =>
-                               imageIdentifier == null || e.Identifier == imageIdentifier)
-                           .OrderBy(i => i.Identifier))
+        var imageGroups = (await _allImagesQuery.QueryAsync().ToListAsync()).Where(e =>
+                imageIdentifier == null || e.Identifier == imageIdentifier)
+            .OrderBy(i => i.Identifier).ToList();
+        var lengths = TagTextBuilder.GetLengths(imageGroups.SelectMany(imageGroup => imageGroup.Images));
+        foreach (var imageGroup in imageGroups)
         {
             yield return imageGroup.Images.Where(e => e.Tag != null)
                 .OrderBy(e => e.Tag)
-                .Select(TagTextBuilder.BuildTagText)
+                .Select(image => TagTextBuilder.BuildTagText(image, lengths))
                 .ToList();
         }
     }

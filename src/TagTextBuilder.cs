@@ -6,7 +6,22 @@ namespace port;
 
 public static class TagTextBuilder
 {
-    public static string BuildTagText(Image image)
+    public static (int first, int second) GetLengths(IEnumerable<Image> images)
+    {
+        var first = 0;
+        var second = 0;
+        foreach (var image in images)
+        {
+            var f = BuildFirstLine(image).RemoveMarkup().Length;
+            if (first < f) first = f;
+            var s = BuildSecondLine(image).RemoveMarkup().Length;
+            if (second < s) second = s;
+        }
+
+        return (first, second);
+    }
+
+    public static string BuildTagText(Image image, (int first, int second) lengths)
     {
         var sb = new StringBuilder();
         switch (image)
@@ -21,19 +36,20 @@ public static class TagTextBuilder
                 sb.Append("[red]\u25a0[/] ");
                 break;
         }
-        sb.Append($"[grey78]{image.Group.Identifier}[/].");
-        sb.Append(BuildFirstLine(image));
+        
+        var firstLine = BuildFirstLine(image);
+        sb.Append(firstLine.PadRight(lengths.first + firstLine.Length - firstLine.RemoveMarkup().Length));
         var secondLine = BuildSecondLine(image);
-        if (!string.IsNullOrEmpty(secondLine))
+        if (!string.IsNullOrWhiteSpace(secondLine))
         {
             AddSeparator(sb);
             sb.Append("[dim]");
-            sb.Append($"{secondLine}");
+            sb.Append($"{secondLine.PadRight(lengths.second + secondLine.Length - secondLine.RemoveMarkup().Length)}");
             sb.Append("[/]");
         }
 
         var thirdLine = BuildThirdLine(image);
-        if (!string.IsNullOrEmpty(thirdLine))
+        if (!string.IsNullOrWhiteSpace(thirdLine))
         {
             AddSeparator(sb);
             sb.Append("[dim]");
@@ -47,13 +63,8 @@ public static class TagTextBuilder
     private static string BuildFirstLine(Image image)
     {
         var sb = new StringBuilder();
+        sb.Append($"[grey78]{image.Group.Identifier}[/].");
         sb.Append($"[white]{image.Tag ?? "<none>".EscapeMarkup()}[/]");
-        switch (image.IsSnapshot)
-        {
-            case false when !image.Existing:
-                sb.Append(" | [red]missing[/]");
-                break;
-        }
 
         if (image is { Running: true, RunningUntaggedImage: true })
             sb.Append(" | [orange3]untagged image[/]");
@@ -72,7 +83,6 @@ public static class TagTextBuilder
                 break;
             case true:
                 sb.Append($"[white]Image: {imageCreated.ToString()}");
-                sb.Append(" | Snapshot");
                 if (image.Parent != null)
                     sb.Append($" based on {image.Parent.Tag ?? "[orange3]untagged image[/]"}");
                 else
