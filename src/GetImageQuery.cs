@@ -38,11 +38,11 @@ internal class GetImageQuery : IGetImageQuery
         return await ConvertToImage(imagesListResponse.Labels, imageName, tag, imagesListResponse, containers);
     }
 
-    private async Task<Image?> ConvertToImage(IDictionary<string, string> labels, string imageName, string? tag,
+    private async Task<Image?> ConvertToImage(IDictionary<string, string>? labels, string imageName, string? tag,
         ImagesListResponse imagesListResponse,
         IReadOnlyCollection<Container> containers)
     {
-        return new Image(labels)
+        return new Image(labels ?? new Dictionary<string, string>())
         {
             Name = imageName,
             Tag = tag,
