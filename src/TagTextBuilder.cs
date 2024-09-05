@@ -30,7 +30,7 @@ public static class TagTextBuilder
                 sb.Append("[green]\u25a0[/] ");
                 break;
             case { Running: true, RunningUntaggedImage: true }:
-                sb.Append("[orange]\u25a0[/] ");
+                sb.Append("[orange3]\u25a0[/] ");
                 break;
             default:
                 sb.Append("[red]\u25a0[/] ");
