@@ -19,8 +19,6 @@ run and manage docker images with ease. Create snapshots from running containers
 
 ### Install using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) 
 
-![Winget version](https://img.shields.io/badge/dynamic/xml?label=Winget&prefix=v&query=%2F%2Ftr%5B%40id%3D%27winget%27%5D%2Ftd%5B3%5D%2Fspan%2Fa&url=https%3A%2F%2Frepology.org%2Fproject%2Fport%2Fversions)
-
 `winget install kevinboss.port`
 
 ### Install manually
