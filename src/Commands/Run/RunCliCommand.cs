@@ -8,7 +8,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
 {
     private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
     private readonly ICreateImageCliChildCommand _createImageCliChildCommand;
-    private readonly IDoesImageExistQuery _doesImageExistQuery;
+    private readonly IGetImageQuery _getImageQuery;
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
@@ -21,7 +21,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     private const char PortSeparator = ':';
 
     public RunCliCommand(IImageIdentifierPrompt imageIdentifierPrompt,
-        ICreateImageCliChildCommand createImageCliChildCommand, IDoesImageExistQuery doesImageExistQuery,
+        ICreateImageCliChildCommand createImageCliChildCommand, IGetImageQuery getImageQuery,
         IGetContainersQuery getContainersQuery,
         ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
         IStopContainerCommand stopContainerCommand, port.Config.Config config,
@@ -30,7 +30,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     {
         _imageIdentifierPrompt = imageIdentifierPrompt;
         _createImageCliChildCommand = createImageCliChildCommand;
-        _doesImageExistQuery = doesImageExistQuery;
+        _getImageQuery = getImageQuery;
         _getContainersQuery = getContainersQuery;
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
@@ -102,15 +102,24 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
             });
     }
 
-    private async Task LaunchImageAsync(string identifier, string? tag, bool resetContainer)
+    private async Task LaunchImageAsync(string identifier, string tag, bool resetContainer)
     {
         var constructedImageName = ImageNameHelper.BuildImageName(identifier, tag);
         var imageConfig = _config.GetImageConfigByIdentifier(identifier);
 
+        if (!imageConfig.ImageTags.Contains(tag)) tag = $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}";
+
         var imageName = imageConfig.ImageName;
-        var doesImageExist = await Spinner.StartAsync($"Check if image {constructedImageName} exists",
-            async _ => await _doesImageExistQuery.QueryAsync(imageName, tag));
-        if (!doesImageExist) await _createImageCliChildCommand.ExecuteAsync(imageName, tag);
+        var existingImage = await Spinner.StartAsync($"Query existing image: {constructedImageName}",
+            async _ => await _getImageQuery.QueryAsync(imageName, tag));
+        if (existingImage is null)
+        {
+            await _createImageCliChildCommand.ExecuteAsync(imageName, tag);
+            existingImage = await Spinner.StartAsync($"Re-query existing image: {constructedImageName}",
+                async _ => await _getImageQuery.QueryAsync(imageName, tag));
+        }
+
+        var tagPrefix = existingImage?.GetLabel(Constants.TagPrefix);
 
         var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
 
@@ -124,13 +133,15 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
                 case 1 when resetContainer:
                     await _stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
                     containerName =
-                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports, environment);
+                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
+                            environment);
                     break;
                 case 1 when !resetContainer:
                     break;
                 case 0:
                     containerName =
-                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tag, ports, environment);
+                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
+                            environment);
                     break;
             }
 

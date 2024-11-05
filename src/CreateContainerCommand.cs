@@ -15,7 +15,8 @@ internal class CreateContainerCommand : ICreateContainerCommand
         _getImageQuery = getImageQuery;
     }
 
-    public async Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tag,
+    public async Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tagPrefix,
+        string? tag,
         IEnumerable<string> ports, IList<string> environment)
     {
         var portBindings = ports
@@ -29,6 +30,7 @@ internal class CreateContainerCommand : ICreateContainerCommand
             { Constants.IdentifierLabel, containerIdentifier }
         };
         if (baseTag is not null) labels.Add(Constants.BaseTagLabel, baseTag);
+        if (tagPrefix is not null) labels.Add(Constants.TagPrefix, tagPrefix);
         await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Name = containerName,
