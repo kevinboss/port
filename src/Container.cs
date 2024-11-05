@@ -1,23 +1,36 @@
+using System.Text.RegularExpressions;
 using Docker.DotNet.Models;
 
 namespace port;
 
-public class Container
+public partial class Container
 {
     private readonly IDictionary<string, string> _labels;
+    private readonly string _containerName;
 
     public Container(ContainerListResponse containerListResponse, ContainerInspectResponse inspectContainerResponse)
     {
         Id = containerListResponse.ID;
         var containerName = containerListResponse.Names.Single().Remove(0, 1);
-        ContainerName = containerName;
+        _containerName = containerName;
         Created = inspectContainerResponse.Created;
 
-        if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag) &&
-            containerName.EndsWith(imageNameAndTag.tag))
+        if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag))
         {
-            ImageIdentifier = imageNameAndTag.imageName;
-            ImageTag = imageNameAndTag.tag;
+            var tag = imageNameAndTag.tag;
+            var tagPrefix = containerListResponse.Labels.Where(l => l.Key == Constants.TagPrefix)
+                .Select(l => l.Value)
+                .SingleOrDefault();
+            if (tagPrefix is not null && tag.StartsWith(tagPrefix)) tag = tag[tagPrefix.Length..];
+            if (containerName.EndsWith(tag))
+            {
+                ImageIdentifier = imageNameAndTag.imageName;
+                ImageTag = imageNameAndTag.tag;
+            } else
+            {
+                ImageIdentifier = containerListResponse.Image;
+                ImageTag = null;
+            }
         }
         else
         {
@@ -34,7 +47,20 @@ public class Container
     public DateTime Created { get; set; }
 
     public string Id { get; }
-    public string ContainerName { get; }
+
+    public string ContainerName
+    {
+        get
+        {
+            if (!ContainerNameHelper.TryGetContainerNameAndTag(_containerName, out var containerNameAndTag))
+                return _containerName;
+            var tagPrefix = TagPrefix;
+            var tag = containerNameAndTag.tag.StartsWith(tagPrefix)
+                ? containerNameAndTag.tag[tagPrefix.Length..]
+                : containerNameAndTag.tag;
+            return ContainerNameHelper.BuildContainerName(containerNameAndTag.containerName, tag);
+        }
+    }
 
     public string ContainerIdentifier =>
         _labels.Where(l => l.Key == Constants.IdentifierLabel)
@@ -42,6 +68,8 @@ public class Container
             .SingleOrDefault() ?? (ContainerTag is not null
             ? ContainerName.Replace($".{ContainerTag}", string.Empty)
             : ContainerName);
+
+    public string TagPrefix => TagPrefixHelper.GetTagPrefix(ContainerIdentifier);
 
     public string? ContainerTag => ImageTag;
     public string ImageIdentifier { get; }

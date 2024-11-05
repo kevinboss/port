@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using port.Commands.List;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -48,7 +49,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             throw new InvalidOperationException("No running container found");
         }
 
-        var (imageName, newTag) = await GetNewTagAsync(container, tag);
+        var (imageName, tagPrefix, newTag) = await GetNewTagAsync(container, tag);
 
         var containerWithSameTag = await Spinner.StartAsync(
             $"Looking for existing container named '{container.ContainerName}'",
@@ -60,7 +61,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             async _ =>
             {
                 return newTag =
-                    await _createImageFromContainerCommand.ExecuteAsync(container, imageName, newTag);
+                    await _createImageFromContainerCommand.ExecuteAsync(container, imageName, tagPrefix, newTag);
             });
 
 
@@ -80,7 +81,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
                 throw new InvalidOperationException(
                     "Switch argument not supported when creating image from untagged container");
 
-            await SwitchToNewImageAsync(container, newTag);
+            await SwitchToNewImageAsync(container, tagPrefix, newTag);
         }
 
         await _listCliCommand.ExecuteAsync();
@@ -88,7 +89,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         return 0;
     }
 
-    private async Task SwitchToNewImageAsync(Container container, string newTag)
+    private async Task SwitchToNewImageAsync(Container container, string tagPrefix, string newTag)
     {
         await Spinner.StartAsync($"Stopping running container '{container.ContainerName}'",
             async _ =>
@@ -102,15 +103,14 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
                     // ignored
                 }
             });
-        var imageName = ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag);
-        await Spinner.StartAsync($"Launching {imageName}", async _ =>
+        await Spinner.StartAsync("Launching image", async _ =>
         {
-            var containerName = await _createContainerCommand.ExecuteAsync(container, newTag);
+            var containerName = await _createContainerCommand.ExecuteAsync(container, tagPrefix, newTag);
             await _runContainerCommand.ExecuteAsync(containerName);
         });
     }
 
-    private async Task<(string imageName, string newTag)> GetNewTagAsync(Container container, string tag)
+    private async Task<(string imageName, string tagPrefix, string newTag)> GetNewTagAsync(Container container, string tag)
     {
         var image = await _getImageQuery.QueryAsync(container.ImageIdentifier, container.ImageTag);
         string imageName;
@@ -132,9 +132,10 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
 
         baseTag = container.GetLabel(Constants.BaseTagLabel) ?? baseTag ?? image?.Tag;
 
-        if (tag.Contains('.')) throw new ArgumentException("only [a-zA-Z0-9][a-zA-Z0-9_-] are allowed");
-        var newTag = baseTag == null ? tag : $"{baseTag}-{tag}";
-        return (imageName, newTag);
+        var tagPrefix = container.TagPrefix;
+        var newTag = baseTag == null ? tag : $"{tagPrefix}{baseTag}-{tag}";
+        if (newTag.Contains('.')) throw new ArgumentException("only [a-zA-Z0-9][a-zA-Z0-9_-] are allowed");
+        return (imageName, tagPrefix, newTag);
     }
 
     private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)

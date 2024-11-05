@@ -8,5 +8,5 @@ public class RemoveSettings : CommandSettings, IImageIdentifierSettings
     public string? ImageIdentifier { get; set; }
     
     [CommandOption("-r|--recursive")]
-    public bool Reset { get; set; }
+    public bool Recursive { get; set; }
 }
