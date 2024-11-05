@@ -12,13 +12,14 @@ internal class CreateImageFromContainerCommand : ICreateImageFromContainerComman
         _dockerClient = dockerClient;
     }
 
-    public async Task<string> ExecuteAsync(Container container, string imageName, string newTag)
+    public async Task<string> ExecuteAsync(Container container, string imageName, string tagPrefix, string newTag)
     {
         var labels = new Dictionary<string, string>();
         var identifier = container.GetLabel(Constants.IdentifierLabel);
         if (identifier is not null) labels.Add(Constants.IdentifierLabel, identifier);
         var baseTag = container.GetLabel(Constants.BaseTagLabel);
         if (baseTag is not null) labels.Add(Constants.BaseTagLabel, baseTag);
+        labels.Add(Constants.TagPrefix, tagPrefix);
         await _dockerClient.Images.CommitContainerChangesAsync(new CommitContainerChangesParameters
         {
             ContainerID = container.Id,
