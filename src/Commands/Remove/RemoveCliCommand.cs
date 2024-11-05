@@ -32,50 +32,50 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
     {
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
         var result = await Spinner.StartAsync($"Removing {ImageNameHelper.BuildImageName(identifier, tag)}",
-                async ctx =>
+            async ctx =>
+            {
+                var imageConfig = _config.GetImageConfigByIdentifier(identifier);
+                if (tag is not null && !imageConfig.ImageTags.Contains(tag))
+                    tag = $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}";
+
+                var imageName = imageConfig.ImageName;
+                var imageIds = new List<string>();
+                if (settings.Recursive)
                 {
-                    var imageConfig = _config.GetImageConfigByIdentifier(identifier);
-                    var imageName = imageConfig.ImageName;
-                    var imageIds = new List<string>();
-                    if (settings.Reset)
+                    var images = (await _allImagesQuery.QueryAllImagesWithParentAsync())
+                        .Where(e => e is { Id: not null, ParentId: not null })
+                        .ToList();
+                    var imageIdsToAnalyze = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToHashSet();
+                    while (imageIdsToAnalyze.Any())
                     {
-                        var images = (await _allImagesQuery.QueryByImageConfigAsync(imageConfig))
-                            .Where(e => e.Id != null && e.ParentId != null)
-                            .Select(e => new
-                            {
-                                Id = e.Id!,
-                                ParentId = e.ParentId!
-                            })
-                            .ToList();
-                        var imageIdsToAnalyze = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToHashSet();
-                        while (imageIdsToAnalyze.Any())
-                        {
-                            imageIds.AddRange(imageIdsToAnalyze);
-                            var analyze = imageIdsToAnalyze;
-                            var childImageIds = images
-                                .Where(e => analyze.Contains(e.ParentId))
-                                .Select(e => e.Id)
-                                .ToHashSet();
-                            imageIdsToAnalyze = childImageIds;
-                        }
-
-                        imageIds.Reverse();
-                    }
-                    else
-                    {
-                        imageIds = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToList();
+                        imageIds.AddRange(imageIdsToAnalyze);
+                        var analyze = imageIdsToAnalyze;
+                        var childImageIds = images
+                            .Where(e => analyze.Contains(e.ParentId))
+                            .Select(e => e.Id)
+                            .ToHashSet();
+                        imageIdsToAnalyze = childImageIds;
                     }
 
-                    if (!imageIds.Any())
-                        throw new InvalidOperationException(
-                            "No images to remove found".EscapeMarkup());
-                    return _removeImagesCliDependentCommand.ExecuteAsync(imageIds, ctx);
-                }).Unwrap();
-        foreach (var imageRemovalResult in result)
+                    imageIds.Reverse();
+                }
+                else
+                {
+                    imageIds = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToList();
+                }
+
+                if (!imageIds.Any())
+                    throw new InvalidOperationException(
+                        "No images to remove found".EscapeMarkup());
+                return _removeImagesCliDependentCommand.ExecuteAsync(imageIds, ctx);
+            }).Unwrap();
+        foreach (var imageRemovalResult in result.Where(imageRemovalResult => !imageRemovalResult.Successful))
         {
-            if (!imageRemovalResult.Successful)
+            AnsiConsole.MarkupLine(
+                $"[orange3]Unable to removed image with id '{imageRemovalResult.ImageId}'[/] because it has dependent children");
+            if (settings.Recursive)
                 AnsiConsole.MarkupLine(
-                    $"[orange3]Unable to removed image with id '{imageRemovalResult.ImageId}'[/] because it has dependent child images");
+                    "That may be because an child image is based on an [red]unknown image[/] which can not be removed automatically, manually remove it and try again");
         }
 
         await _listCliCommand.ExecuteAsync();

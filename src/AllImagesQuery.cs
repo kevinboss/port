@@ -27,6 +27,11 @@ internal class AllImagesQuery : IAllImagesQuery
         }
     }
 
+    public async Task<IEnumerable<(string Id, string ParentId)>> QueryAllImagesWithParentAsync() =>
+        (await _dockerClient.Images.ListImagesAsync(new ImagesListParameters()))
+        .Where(i => i.ParentID is not null)
+        .Select(i => (i.ID, i.ParentID));
+
     public async Task<List<Image>> QueryByImageConfigAsync(port.Config.Config.ImageConfig imageConfig) =>
         await QueryByImageConfigAsync(imageConfig, _config.ImageConfigs);
 
@@ -73,6 +78,10 @@ internal class AllImagesQuery : IAllImagesQuery
             .Select(async e =>
             {
                 var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
+                var tagPrefix = e.Labels.Where(l => l.Key == Constants.TagPrefix)
+                    .Select(l => l.Value)
+                    .SingleOrDefault();
+                if (tagPrefix is not null && tag?.StartsWith(tagPrefix) == true) tag = tag[tagPrefix.Length..];
                 var containers = await _getContainersQuery.QueryByImageIdAsync(e.ID).ToListAsync();
                 return new Image(e.Labels)
                 {
@@ -117,10 +126,16 @@ internal class AllImagesQuery : IAllImagesQuery
                 containers = new List<Container>();
             }
 
-            yield return new Image(imagesListResponse?.Labels ?? new Dictionary<string, string>())
+            var cleanedTag = tag;
+            var labels = imagesListResponse?.Labels ?? new Dictionary<string, string>();
+            var tagPrefix = labels.Where(l => l.Key == Constants.TagPrefix)
+                .Select(l => l.Value)
+                .SingleOrDefault();
+            if (tagPrefix is not null && cleanedTag.StartsWith(tagPrefix)) cleanedTag = cleanedTag[tagPrefix.Length..];
+            yield return new Image(labels)
             {
                 Name = imageConfig.ImageName,
-                Tag = tag,
+                Tag = cleanedTag,
                 IsSnapshot = false,
                 Existing = imagesListResponse != null,
                 Created = imagesListResponse?.Created,
