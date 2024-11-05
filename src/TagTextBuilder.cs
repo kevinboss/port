@@ -36,7 +36,7 @@ public static class TagTextBuilder
                 sb.Append("[red]\u25a0[/] ");
                 break;
         }
-        
+
         var firstLine = BuildFirstLine(image);
         sb.Append(firstLine.PadRight(lengths.first + firstLine.Length - firstLine.RemoveMarkup().Length));
         var secondLine = BuildSecondLine(image);
@@ -63,8 +63,12 @@ public static class TagTextBuilder
     private static string BuildFirstLine(Image image)
     {
         var sb = new StringBuilder();
-        sb.Append($"[grey78]{image.Group.Identifier}[/].");
-        sb.Append($"[white]{image.Tag ?? "<none>".EscapeMarkup()}[/]");
+        sb.Append($"[grey78]{image.Group.Identifier}[/]:");
+        var imageTag = image.Tag;
+        var tagPrefix = image.GetLabel(Constants.TagPrefix);
+        if (tagPrefix is not null && imageTag?.StartsWith(tagPrefix) == true)
+            imageTag = imageTag[tagPrefix.Length..];
+        sb.Append($"[white]{imageTag ?? "<none>".EscapeMarkup()}[/]");
 
         if (image is { Running: true, RunningUntaggedImage: true })
             sb.Append(" | [orange3]untagged image[/]");
@@ -84,9 +88,16 @@ public static class TagTextBuilder
             case true:
                 sb.Append($"[white]Image: {imageCreated.ToString()}");
                 if (image.Parent != null)
-                    sb.Append($" based on {image.Parent.Tag ?? "[orange3]untagged image[/]"}");
+                {
+                    var imageTag = image.Parent.Tag;
+                    var tagPrefix = image.Parent.GetLabel(Constants.TagPrefix);
+                    if (tagPrefix is not null && imageTag?.StartsWith(tagPrefix) == true)
+                        imageTag = imageTag[tagPrefix.Length..];
+                    sb.Append($" based on {imageTag ?? "[orange3]untagged image[/]"}");
+                }
                 else
                     sb.Append(" based on [red]unknown image[/]");
+
                 sb.Append("[/]");
                 break;
         }
