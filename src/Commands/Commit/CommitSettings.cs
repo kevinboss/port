@@ -12,4 +12,7 @@ public class CommitSettings : CommandSettings, IContainerIdentifierSettings
 
     [CommandOption("-s|--switch")] 
     public bool Switch { get; set; }
+
+    [CommandOption("-o|--overwrite")] 
+    public bool Overwrite { get; set; }
 }

@@ -41,15 +41,29 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
 
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
     {
-        var tag = settings.Tag ?? $"{DateTime.Now:yyyyMMddhhmmss}";
-
+        if (settings.Overwrite) settings.Switch = true;
+        
         var container = await GetContainerAsync(settings);
         if (container == null)
         {
             throw new InvalidOperationException("No running container found");
         }
 
-        var (imageName, tagPrefix, newTag) = await GetNewTagAsync(container, tag);
+        string imageName;
+        string tagPrefix;
+        string newTag;
+        if (settings.Overwrite)
+        {
+            newTag = container.ImageTag ?? throw new InvalidOperationException("When using --overwrite, container must have an image tag");
+            imageName = container.ImageIdentifier;
+            tagPrefix = container.TagPrefix;
+        }
+        else
+        {
+            var tag = settings.Tag ?? $"{DateTime.Now:yyyyMMddhhmmss}";
+            (imageName, tagPrefix, newTag) = await GetNewTagAsync(container, tag);
+        }
+
 
         var containerWithSameTag = await Spinner.StartAsync(
             $"Looking for existing container named '{container.ContainerName}'",
@@ -110,7 +124,8 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
         });
     }
 
-    private async Task<(string imageName, string tagPrefix, string newTag)> GetNewTagAsync(Container container, string tag)
+    private async Task<(string imageName, string tagPrefix, string newTag)> GetNewTagAsync(Container container,
+        string tag)
     {
         var image = await _getImageQuery.QueryAsync(container.ImageIdentifier, container.ImageTag);
         string imageName;
