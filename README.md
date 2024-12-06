@@ -77,6 +77,7 @@ to your $profile.
 - **Parameters**:
   - `identifier` (optional): If omitted, a prompt will request container selection.
   - `-t` (tag) (optional): Specifies the tag name. Defaults to the current date-time if not provided.
+  - `-o` (overwrite) (optional): Re-uses the running image already has and therefore replaces said image
 
 ### Reset a Container
 - **Syntax**: `reset [identifier]`
