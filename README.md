@@ -1,11 +1,13 @@
 <p align="center">
-  <img src="https://github.com/kevinboss/port/blob/master/logo.png" />
+  <img src="https://github.com/kevinboss/port/blob/master/logo_1.png" align="left" style="margin-right: 10px;" />
 </p>
 
 [![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml)
 [![CI](https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg)](https://github.com/kevinboss/heartbeat)
 
 run and manage docker images with ease. Create snapshots from running containers, reset container to their inital image and save the state of running containers without the need to remember docker cli commands, even when using a remote docker engine.
+
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
 ![Example](https://github.com/kevinboss/port/raw/master/example-2.gif)
 
