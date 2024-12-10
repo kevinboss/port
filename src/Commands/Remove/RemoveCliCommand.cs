@@ -35,18 +35,23 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
             async ctx =>
             {
                 var imageConfig = _config.GetImageConfigByIdentifier(identifier);
-                if (tag is not null && !imageConfig.ImageTags.Contains(tag))
-                    tag = $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}";
-
                 var imageName = imageConfig.ImageName;
+                var initialImageIds = new List<string>();
+                if (tag is not null && !imageConfig.ImageTags.Contains(tag))
+                {
+                    initialImageIds.AddRange(await _getImageIdQuery.QueryAsync(imageName, $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}"));
+                }
+                
+                initialImageIds.AddRange(await _getImageIdQuery.QueryAsync(imageName, tag));
+
                 var imageIds = new List<string>();
                 if (settings.Recursive)
                 {
                     var images = (await _allImagesQuery.QueryAllImagesWithParentAsync())
                         .Where(e => e is { Id: not null, ParentId: not null })
                         .ToList();
-                    var imageIdsToAnalyze = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToHashSet();
-                    while (imageIdsToAnalyze.Any())
+                    var imageIdsToAnalyze = initialImageIds.ToHashSet();
+                    while (imageIdsToAnalyze.Count != 0)
                     {
                         imageIds.AddRange(imageIdsToAnalyze);
                         var analyze = imageIdsToAnalyze;
@@ -61,10 +66,10 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
                 }
                 else
                 {
-                    imageIds = (await _getImageIdQuery.QueryAsync(imageName, tag)).ToList();
+                    imageIds = initialImageIds.ToList();
                 }
 
-                if (!imageIds.Any())
+                if (imageIds.Count == 0)
                     throw new InvalidOperationException(
                         "No images to remove found".EscapeMarkup());
                 return _removeImagesCliDependentCommand.ExecuteAsync(imageIds, ctx);
