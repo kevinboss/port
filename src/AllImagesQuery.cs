@@ -75,30 +75,39 @@ internal class AllImagesQuery : IAllImagesQuery
             .Where(HasRepoTags)
             .Where(e => IsNotBase(imageConfigs, e))
             .Where(e => IsSnapshotOfBase(imageConfig, e))
-            .Select(async e =>
-            {
-                var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(e.RepoTags.Single());
-                var tagPrefix = e.Labels.Where(l => l.Key == Constants.TagPrefix)
-                    .Select(l => l.Value)
-                    .SingleOrDefault();
-                if (tagPrefix is not null && tag?.StartsWith(tagPrefix) == true) tag = tag[tagPrefix.Length..];
-                var containers = await _getContainersQuery.QueryByImageIdAsync(e.ID).ToListAsync();
-                return new Image(e.Labels)
-                {
-                    Name = imageName,
-                    Tag = tag,
-                    IsSnapshot = true,
-                    Existing = true,
-                    Created = e.Created,
-                    Containers = containers
-                        .Where(c =>
-                            tag != null &&
-                            c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
-                        .ToList(),
-                    Id = e.ID,
-                    ParentId = string.IsNullOrEmpty(e.ParentID) ? null : e.ParentID
-                };
-            }));
+            .Select(async e => await CreateImageFromResponse(e, imageConfig)));
+    }
+
+    private async Task<Image> CreateImageFromResponse(ImagesListResponse response, Config.Config.ImageConfig imageConfig)
+    {
+        var (imageName, tag) = response.RepoTags != null && response.RepoTags.Any() 
+            ? ImageNameHelper.GetImageNameAndTag(response.RepoTags.Single())
+            : (imageConfig.ImageName, null);
+            
+        var tagPrefix = response.Labels.Where(l => l.Key == Constants.TagPrefix)
+            .Select(l => l.Value)
+            .SingleOrDefault();
+            
+        if (tagPrefix is not null && tag?.StartsWith(tagPrefix) == true) 
+            tag = tag[tagPrefix.Length..];
+            
+        var containers = await _getContainersQuery.QueryByImageIdAsync(response.ID).ToListAsync();
+        
+        return new Image(response.Labels)
+        {
+            Name = imageName,
+            Tag = tag,
+            IsSnapshot = true,
+            Existing = true,
+            Created = response.Created,
+            Containers = containers
+                .Where(c =>
+                    tag != null &&
+                    c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
+                .ToList(),
+            Id = response.ID,
+            ParentId = string.IsNullOrEmpty(response.ParentID) ? null : response.ParentID
+        };
     }
 
     private async IAsyncEnumerable<Image> GetBaseImagesAsync(Config.Config.ImageConfig imageConfig,
@@ -110,42 +119,27 @@ internal class AllImagesQuery : IAllImagesQuery
                 .SingleOrDefault(e =>
                     e.RepoTags != null &&
                     e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag)));
-            List<Container> containers;
+
             if (imagesListResponse != null)
             {
-                containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
-                if (!containers.Any())
-                {
-                    containers = await _getContainersQuery
-                        .QueryByContainerNameAsync(ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
-                        .ToListAsync();
-                }
+                var image = await CreateImageFromResponse(imagesListResponse, imageConfig);
+                image.IsSnapshot = false;
+                yield return image;
             }
             else
             {
-                containers = new List<Container>();
+                yield return new Image(new Dictionary<string, string>())
+                {
+                    Name = imageConfig.ImageName,
+                    Tag = tag,
+                    IsSnapshot = false,
+                    Existing = false,
+                    Created = null,
+                    Containers = new List<Container>(),
+                    Id = null,
+                    ParentId = null
+                };
             }
-
-            var cleanedTag = tag;
-            var labels = imagesListResponse?.Labels ?? new Dictionary<string, string>();
-            var tagPrefix = labels.Where(l => l.Key == Constants.TagPrefix)
-                .Select(l => l.Value)
-                .SingleOrDefault();
-            if (tagPrefix is not null && cleanedTag.StartsWith(tagPrefix)) cleanedTag = cleanedTag[tagPrefix.Length..];
-            yield return new Image(labels)
-            {
-                Name = imageConfig.ImageName,
-                Tag = cleanedTag,
-                IsSnapshot = false,
-                Existing = imagesListResponse != null,
-                Created = imagesListResponse?.Created,
-                Containers = containers
-                    .Where(c =>
-                        c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
-                    .ToList(),
-                Id = imagesListResponse?.ID,
-                ParentId = string.IsNullOrEmpty(imagesListResponse?.ParentID) ? null : imagesListResponse.ParentID
-            };
         }
     }
 
@@ -154,21 +148,9 @@ internal class AllImagesQuery : IAllImagesQuery
     {
         foreach (var imagesListResponse in imagesListResponses.Where(e => !e.RepoTags.Any()))
         {
-            var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
-            yield return new Image(imagesListResponse.Labels)
-            {
-                Name = imageConfig.ImageName,
-                Tag = null,
-                IsSnapshot = false,
-                Existing = true,
-                Created = imagesListResponse.Created,
-                Containers = containers
-                    .Where(c =>
-                        c.ImageIdentifier == imageConfig.ImageName
-                        && c.ImageTag == null).ToList(),
-                Id = imagesListResponse.ID,
-                ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID
-            };
+            var image = await CreateImageFromResponse(imagesListResponse, imageConfig);
+            image.IsSnapshot = false;
+            yield return image;
         }
     }
 
