@@ -17,7 +17,7 @@ Port streamlines the management of Docker images and containers, empowering you 
 
 All this without the hassle of memorizing complex Docker CLI commands, even when working with remote Docker engines.
 
-![Port in Action](example.gif)
+![Port in Action](example-2.gif)
 
 ## 📥 Installation
 
