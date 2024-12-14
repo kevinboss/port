@@ -21,82 +21,71 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 
 var registrations = new ServiceCollection();
-registrations.AddTransient<IAllImagesQuery, AllImagesQuery>();
-registrations.AddTransient<IGetDigestsByIdQuery, GetDigestsByIdQuery>();
-registrations.AddTransient<IImageIdentifierPrompt, ImageIdentifierPrompt>();
-registrations.AddTransient<IContainerNamePrompt, ContainerNamePrompt>();
-registrations.AddTransient<ICreateImageCommand, CreateImageCommand>();
-registrations.AddTransient<ICreateImageFromContainerCommand, CreateImageFromContainerCommand>();
-registrations.AddTransient<IGetImageQuery, GetImageQuery>();
-registrations.AddTransient<IGetImageIdQuery, GetImageIdQuery>();
-registrations.AddTransient<IDoesImageExistQuery, DoesImageExistQuery>();
-registrations.AddTransient<IGetContainersQuery, GetContainersQuery>();
-registrations.AddTransient<IGetRunningContainersQuery, GetRunningContainersQuery>();
-registrations.AddTransient<ICreateContainerCommand, CreateContainerCommand>();
-registrations.AddTransient<IRunContainerCommand, RunContainerCommand>();
-registrations.AddTransient<IStopContainerCommand, StopContainerCommand>();
-registrations.AddTransient<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
-registrations.AddTransient<IRemoveImageCommand, RemoveImageCommand>();
-registrations.AddTransient<ICreateImageCliChildCommand, CreateImageCliChildCommand>();
-registrations.AddTransient<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
-registrations.AddTransient<IExportImageCommand, ExportImageCommand>();
-registrations.AddTransient<IProgressSubscriber, ProgressSubscriber>();
-registrations.AddTransient<IOrphanImageCommand, OrphanImageCommand>();
-registrations.AddTransient<IImportImageCommand, ImportImageCommand>();
-registrations.AddTransient<IRemoveImagesCliDependentCommand, RemoveImagesCliDependentCommand>();
-registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
-registrations.AddSingleton(typeof(IDockerClient), provider =>
-{
-    var config = provider.GetService<Config>();
-    if (config?.DockerEndpoint == null)
-        throw new InvalidOperationException("Docker endpoint has not been configured");
-    var endpoint = new Uri(config.DockerEndpoint);
-    return new DockerClientConfiguration(endpoint).CreateClient();
-});
 
-var registrar = new TypeRegistrar(registrations);
+// Register queries
+registrations.AddTransient<IAllImagesQuery, AllImagesQuery>()
+    .AddTransient<IGetDigestsByIdQuery, GetDigestsByIdQuery>()
+    .AddTransient<IGetImageQuery, GetImageQuery>()
+    .AddTransient<IGetImageIdQuery, GetImageIdQuery>()
+    .AddTransient<IDoesImageExistQuery, DoesImageExistQuery>()
+    .AddTransient<IGetContainersQuery, GetContainersQuery>()
+    .AddTransient<IGetRunningContainersQuery, GetRunningContainersQuery>();
 
-var app = new CommandApp(registrar);
+// Register commands
+registrations.AddTransient<ICreateImageCommand, CreateImageCommand>()
+    .AddTransient<ICreateImageFromContainerCommand, CreateImageFromContainerCommand>()
+    .AddTransient<ICreateContainerCommand, CreateContainerCommand>()
+    .AddTransient<IRunContainerCommand, RunContainerCommand>()
+    .AddTransient<IStopContainerCommand, StopContainerCommand>()
+    .AddTransient<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>()
+    .AddTransient<IRemoveImageCommand, RemoveImageCommand>()
+    .AddTransient<ICreateImageCliChildCommand, CreateImageCliChildCommand>()
+    .AddTransient<IExportImageCommand, ExportImageCommand>()
+    .AddTransient<IOrphanImageCommand, OrphanImageCommand>()
+    .AddTransient<IImportImageCommand, ImportImageCommand>()
+    .AddTransient<IRemoveImagesCliDependentCommand, RemoveImagesCliDependentCommand>();
 
-app.Configure(appConfig =>
-{
-    appConfig.UseAssemblyInformationalVersion();
-    appConfig.AddCommand<PullCliCommand>("pull")
-        .WithAlias("p");
-    appConfig.AddCommand<RunCliCommand>("run")
-        .WithAlias("r");
-    appConfig.AddCommand<ResetCliCommand>("reset")
-        .WithAlias("rs");
-    appConfig.AddCommand<CommitCliCommand>("commit")
-        .WithAlias("c");
-    appConfig.AddCommand<ListCliCommand>("list")
-        .WithAlias("ls");
-    appConfig.AddCommand<RemoveCliCommand>("remove")
-        .WithAlias("rm");
-    appConfig.AddCommand<PruneCliCommand>("prune")
-        .WithAlias("pr");
-    appConfig.AddCommand<StopCliCommand>("stop")
-        .WithAlias("s");
-    appConfig.AddCommand<ConfigCliCommand>("config")
-        .WithAlias("cfg");
-});
+// Register UI and helpers
+registrations.AddTransient<IImageIdentifierPrompt, ImageIdentifierPrompt>()
+    .AddTransient<IContainerNamePrompt, ContainerNamePrompt>()
+    .AddTransient<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>()
+    .AddTransient<IProgressSubscriber, ProgressSubscriber>();
 
-AnsiConsole.Console = new CustomConsole();
+// Register singletons
+registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig())
+    .AddSingleton(typeof(IDockerClient), provider =>
+    {
+        var config = provider.GetService<Config>();
+        if (config?.DockerEndpoint == null)
+            throw new InvalidOperationException("Docker endpoint has not been configured");
+        return new DockerClientConfiguration(new Uri(config.DockerEndpoint)).CreateClient();
+    });
+
+var app = new CommandApp(new TypeRegistrar(registrations));
 
 app.Configure(config =>
 {
-    config.SetExceptionHandler((exception, _) =>
+    config.UseAssemblyInformationalVersion();
+
+    // Register CLI commands with aliases
+    config.AddCommand<PullCliCommand>("pull").WithAlias("p")
+        .AddCommand<RunCliCommand>("run").WithAlias("r")
+        .AddCommand<ResetCliCommand>("reset").WithAlias("rs")
+        .AddCommand<CommitCliCommand>("commit").WithAlias("c")
+        .AddCommand<ListCliCommand>("list").WithAlias("ls")
+        .AddCommand<RemoveCliCommand>("remove").WithAlias("rm")
+        .AddCommand<PruneCliCommand>("prune").WithAlias("pr")
+        .AddCommand<StopCliCommand>("stop").WithAlias("s")
+        .AddCommand<ConfigCliCommand>("config").WithAlias("cfg");
+
+    // Configure exception handling
+    config.SetExceptionHandler((exception, _) => exception switch
     {
-        switch (exception)
-        {
-            case TimeoutException:
-                AnsiConsole.MarkupLine("[red]Timeout exception occurred[/], is the Docker daemon running?");
-                return -1;
-            default:
-                AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything);
-                return -1;
-        }
+        TimeoutException => AnsiConsole.MarkupLine("[red]Timeout exception occurred[/], is the Docker daemon running?") - 2,
+        _ => AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything) - 2
     });
 });
+
+AnsiConsole.Console = new CustomConsole();
 
 return app.Run(args);

@@ -11,37 +11,32 @@ public partial class Container
     public Container(ContainerListResponse containerListResponse, ContainerInspectResponse inspectContainerResponse)
     {
         Id = containerListResponse.ID;
-        var containerName = containerListResponse.Names.Single().Remove(0, 1);
-        _containerName = containerName;
+        _containerName = containerListResponse.Names.Single().Remove(0, 1);
         Created = inspectContainerResponse.Created;
 
-        if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag))
-        {
-            var tag = imageNameAndTag.tag;
-            var tagPrefix = containerListResponse.Labels.Where(l => l.Key == Constants.TagPrefix)
-                .Select(l => l.Value)
-                .SingleOrDefault();
-            if (tagPrefix is not null && tag.StartsWith(tagPrefix)) tag = tag[tagPrefix.Length..];
-            if (containerName.EndsWith(tag))
-            {
-                ImageIdentifier = imageNameAndTag.imageName;
-                ImageTag = imageNameAndTag.tag;
-            } else
-            {
-                ImageIdentifier = containerListResponse.Image;
-                ImageTag = null;
-            }
-        }
-        else
-        {
-            ImageIdentifier = containerListResponse.Image;
-            ImageTag = null;
-        }
+        (ImageIdentifier, ImageTag) = GetImageInfo(containerListResponse);
 
         PortBindings = inspectContainerResponse.HostConfig.PortBindings;
         _labels = containerListResponse.Labels;
         Environment = inspectContainerResponse.Config.Env;
         Running = inspectContainerResponse.State.Running;
+    }
+
+    private static (string identifier, string? tag) GetImageInfo(ContainerListResponse containerListResponse)
+    {
+        if (!ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag))
+            return (containerListResponse.Image, null);
+
+        var tag = imageNameAndTag.tag;
+        var tagPrefix = containerListResponse.Labels.GetValueOrDefault(Constants.TagPrefix);
+        
+        if (tagPrefix is not null && tag.StartsWith(tagPrefix))
+            tag = tag[tagPrefix.Length..];
+
+        var containerName = containerListResponse.Names.Single().Remove(0, 1);
+        return containerName.EndsWith(tag) 
+            ? (imageNameAndTag.imageName, imageNameAndTag.tag)
+            : (containerListResponse.Image, null);
     }
 
     public DateTime Created { get; set; }
@@ -54,20 +49,19 @@ public partial class Container
         {
             if (!ContainerNameHelper.TryGetContainerNameAndTag(_containerName, out var containerNameAndTag))
                 return _containerName;
+
             var tagPrefix = TagPrefix;
-            var tag = containerNameAndTag.tag.StartsWith(tagPrefix)
-                ? containerNameAndTag.tag[tagPrefix.Length..]
-                : containerNameAndTag.tag;
+            var tag = containerNameAndTag.tag;
+            if (tag.StartsWith(tagPrefix))
+                tag = tag[tagPrefix.Length..];
+
             return ContainerNameHelper.BuildContainerName(containerNameAndTag.containerName, tag);
         }
     }
 
     public string ContainerIdentifier =>
-        _labels.Where(l => l.Key == Constants.IdentifierLabel)
-            .Select(l => l.Value)
-            .SingleOrDefault() ?? (ContainerTag is not null
-            ? ContainerName.Replace($".{ContainerTag}", string.Empty)
-            : ContainerName);
+        _labels.GetValueOrDefault(Constants.IdentifierLabel) ?? 
+        (ContainerTag is not null ? ContainerName.Replace($".{ContainerTag}", string.Empty) : ContainerName);
 
     public string TagPrefix => TagPrefixHelper.GetTagPrefix(ContainerIdentifier);
 
@@ -78,7 +72,5 @@ public partial class Container
     public bool Running { get; }
     public IList<string> Environment { get; }
 
-    public string? GetLabel(string label) => _labels.Where(l => l.Key == label)
-        .Select(l => l.Value)
-        .SingleOrDefault();
+    public string? GetLabel(string label) => _labels.GetValueOrDefault(label);
 }
