@@ -1,35 +1,51 @@
-<p align="center">
-  <img src="https://github.com/kevinboss/port/blob/master/logo_1.png" align="left" style="margin-right: 10px;" />
-</p>
+![Port Logo](logo_1.png)
 
-[![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml)
-[![CI](https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg)](https://github.com/kevinboss/heartbeat)
+# 🚀 Port: Simplified Docker Image Management
 
-run and manage docker images with ease. Create snapshots from running containers, reset container to their inital image and save the state of running containers without the need to remember docker cli commands, even when using a remote docker engine.
+[![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml) 
+[![CI](https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg)](https://github.com/kevinboss/heartbeat) 
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+Port streamlines the management of Docker images and containers, empowering you to:
 
-![Example](https://github.com/kevinboss/port/raw/master/example-2.gif)
+- ▶️ **Run containers** effortlessly with simple commands.
+- ⏹️ **Stop running containers** seamlessly.
+- 📋 **List all containers** to keep track of their status.
+- 🗑️ **Remove unwanted containers** to free up resources.
+- 🔄 **Reset containers** to their original state for reusability.
+- 💾 **Save container states** for future use or backups.
 
-## How to get it
+All this without the hassle of memorizing complex Docker CLI commands, even when working with remote Docker engines.
 
-### Install using [scoop](https://scoop.sh)
+![Port in Action](example.gif)
 
-`scoop bucket add maple 'https://github.com/kevinboss/maple.git'`
+## 📥 Installation
 
-`scoop install port`
+### Scoop
 
-### Install using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) 
+```powershell
+scoop bucket add maple 'https://github.com/kevinboss/maple.git'
+scoop install port
+```
 
-`winget install kevinboss.port`
+### Winget
 
-### Install manually
+```powershell
+winget install kevinboss.port
+```
 
-[Latest release 💾](https://github.com/kevinboss/port/releases/latest)
+### Manual Installation
 
-Then add folder to path `$Env:PATH += ";C:\Path\To\Folder"`
+1. 📂 Download the latest release from the [Releases Page](https://github.com/kevinboss/port/releases).
+2. 🛠️ Add the folder to your system PATH:
 
-## How to configure it
+   ```powershell
+   $Env:PATH += "C:\Path\To\Folder"
+   ```
+
+## ⚙️ Configuration
+
+Configure Port by creating a `config.yml` file:
 
 ```yaml
 version: 1.1
@@ -46,66 +62,107 @@ imageConfigs:
       - DEBUG=1
 ```
 
-A default .port file will be created in your user profile if you don't manually create one
+A default `.port` file will be created in your user profile if you don't manually create one.
 
-## Powershell
+## 🧑‍💻 Usage
 
-To get Unicode support in Powershell, add 
+### Commands
 
-`[console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()`
- 
-to your $profile.
+- **▶️ Run an Image**:
 
-## Commands Overview
+  Run a specific tag (base or snapshot) of an image:
+  ```powershell
+  port run [identifier] -r
+  ```
 
-### Run an Image
-- **Syntax**: `run [identifier] -r`
-- **Description**: Executes a specified tag (base or snapshot) of an image.
-- **Parameters**:
   - `identifier` (optional): If omitted, a prompt will request image selection.
   - `-r` (reset) (optional): Resets the existing container for the specified image, if applicable.
 
-### List Images
-- **Syntax**: `list [identifier]`
-- **Description**: Displays all images and their tags.
-- **Parameters**:
+- **⏹️ Stop a Container**:
+
+  Stop a running container:
+  ```powershell
+  port stop [identifier]
+  ```
+
+  - `identifier` (optional): Specifies the container to stop. If omitted, operates on the current container.
+
+- **📋 List Images**:
+
+  Display all images and their tags:
+  ```powershell
+  port list [identifier]
+  ```
+
   - `identifier` (optional): Limits the listing to images under the given identifier. Without it, all images are listed.
 
-### Commit a Container
-- **Syntax**: `commit -t [identifier]`
-- **Description**: Generates an image from the currently active container.
-- **Parameters**:
-  - `identifier` (optional): If omitted, a prompt will request container selection.
-  - `-t` (tag) (optional): Specifies the tag name. Defaults to the current date-time if not provided.
-  - `-o` (overwrite) (optional): Re-uses the running image already has and therefore replaces said image
+- **🗑️ Remove an Image**:
 
-### Reset a Container
-- **Syntax**: `reset [identifier]`
-- **Description**: Stops, removes, and recreates the container using its original image.
-- **Parameters**:
-  - `identifier` (optional): If omitted, a prompt will request container selection.
+  Delete a specific image tag (base, snapshot, or untagged):
+  ```powershell
+  port remove -r [identifier]
+  ```
 
-### Remove an Image
-- **Syntax**: `remove -r [identifier]`
-- **Description**: Deletes a specified image tag (base, snapshot, or untagged).
-- **Parameters**:
   - `identifier` (optional): If omitted, a prompt will request image selection.
   - `-r` (recursive) (optional): Automatically deletes child images. Without this, an error is raised if the image has dependents.
 
-### Pull an Image
-- **Syntax**: `pull [identifier]`
-- **Description**: Downloads a specified tag (base or snapshot) of an image.
-- **Parameters**:
+- **🔄 Reset a Container**:
+
+  Stop, remove, and recreate the container using its original image:
+  ```powershell
+  port reset [identifier]
+  ```
+
+  - `identifier` (optional): If omitted, a prompt will request container selection.
+
+- **💾 Commit a Container**:
+
+  Generate an image from the currently active container:
+  ```powershell
+  port commit -t [identifier]
+  ```
+
+  - `identifier` (optional): If omitted, a prompt will request container selection.
+  - `-t` (tag) (optional): Specifies the tag name. Defaults to the current date-time if not provided.
+  - `-o` (overwrite) (optional): Re-uses the running image and replaces the existing one.
+
+- **📥 Pull an Image**:
+
+  Download a specific tag (base or snapshot) of an image:
+  ```powershell
+  port pull [identifier]
+  ```
+
   - `identifier` (optional): If omitted, a prompt will request image selection.
 
-### Prune Images
-- **Syntax**: `prune [identifier]`
-- **Description**: Removes untagged versions of an image.
-- **Parameters**:
+- **🛠️ Prune Images**:
+
+  Remove untagged versions of an image:
+  ```powershell
+  port prune [identifier]
+  ```
+
   - `identifier` (optional): If omitted, a prompt will request image selection.
 
-### Stop a Container
-- **Syntax**: `stop [identifier]`
-- **Description**: Halts the operation of the currently active container.
-- **Parameters**:
-  - `identifier` (optional): Specifies the container to stop. If omitted, operates on the current container.
+## Powershell
+
+To get Unicode support in Powershell, add:
+
+```powershell
+[console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+```
+
+to your `$profile`.
+
+## 🤝 Contributing
+
+We welcome contributions to improve Port! Please follow the steps below:
+
+1. 🍴 Fork the repository.
+2. 🌱 Create a new branch for your feature or bug fix.
+3. 💾 Commit your changes.
+4. 🔄 Submit a pull request.
+
+## 📄 License
+
+This project is licensed under the [GPL-3.0 License](LICENSE).
