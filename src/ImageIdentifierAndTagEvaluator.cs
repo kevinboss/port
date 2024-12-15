@@ -1,13 +1,7 @@
 namespace port;
 
-internal class ImageIdentifierAndTagEvaluator : IImageIdentifierAndTagEvaluator
+internal class ImageIdentifierAndTagEvaluator(port.Config.Config config) : IImageIdentifierAndTagEvaluator
 {
-    private readonly port.Config.Config _config;
-
-    public ImageIdentifierAndTagEvaluator(port.Config.Config config)
-    {
-        _config = config;
-    }
 
     public (string identifier, string tag) Evaluate(string imageIdentifier)
     {
@@ -16,7 +10,7 @@ internal class ImageIdentifierAndTagEvaluator : IImageIdentifierAndTagEvaluator
             return (identifierAndTag.imageName, identifierAndTag.tag);
         }
 
-        var imageConfig = _config.GetImageConfigByIdentifier(identifierAndTag.imageName);
+        var imageConfig = config.GetImageConfigByIdentifier(identifierAndTag.imageName);
         if (imageConfig.ImageTags.Count > 1)
         {
             throw new InvalidOperationException("Given identifier has multiple tags, please manually provide the tag");

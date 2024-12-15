@@ -16,12 +16,11 @@ internal class GetImageIdQuery : IGetImageIdQuery
     {
         var parameters = new ImagesListParameters
         {
-            Filters = new Dictionary<string, IDictionary<string, bool>>()
+            Filters = new Dictionary<string, IDictionary<string, bool>>
+            {
+                ["reference"] = new Dictionary<string, bool> { [imageName] = true }
+            }
         };
-        parameters.Filters.Add("reference", new Dictionary<string, bool>
-        {
-            { imageName, true }
-        });
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
         return imagesListResponses
             .Where(e =>
