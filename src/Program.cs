@@ -21,37 +21,47 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 
 var registrations = new ServiceCollection();
+
+// Query services
 registrations.AddTransient<IAllImagesQuery, AllImagesQuery>();
 registrations.AddTransient<IGetDigestsByIdQuery, GetDigestsByIdQuery>();
-registrations.AddTransient<IImageIdentifierPrompt, ImageIdentifierPrompt>();
-registrations.AddTransient<IContainerNamePrompt, ContainerNamePrompt>();
-registrations.AddTransient<ICreateImageCommand, CreateImageCommand>();
-registrations.AddTransient<ICreateImageFromContainerCommand, CreateImageFromContainerCommand>();
 registrations.AddTransient<IGetImageQuery, GetImageQuery>();
 registrations.AddTransient<IGetImageIdQuery, GetImageIdQuery>();
 registrations.AddTransient<IDoesImageExistQuery, DoesImageExistQuery>();
 registrations.AddTransient<IGetContainersQuery, GetContainersQuery>();
 registrations.AddTransient<IGetRunningContainersQuery, GetRunningContainersQuery>();
+
+// Command services
+registrations.AddTransient<ICreateImageCommand, CreateImageCommand>();
+registrations.AddTransient<ICreateImageFromContainerCommand, CreateImageFromContainerCommand>();
 registrations.AddTransient<ICreateContainerCommand, CreateContainerCommand>();
 registrations.AddTransient<IRunContainerCommand, RunContainerCommand>();
 registrations.AddTransient<IStopContainerCommand, StopContainerCommand>();
 registrations.AddTransient<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
 registrations.AddTransient<IRemoveImageCommand, RemoveImageCommand>();
 registrations.AddTransient<ICreateImageCliChildCommand, CreateImageCliChildCommand>();
-registrations.AddTransient<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
 registrations.AddTransient<IExportImageCommand, ExportImageCommand>();
-registrations.AddTransient<IProgressSubscriber, ProgressSubscriber>();
 registrations.AddTransient<IOrphanImageCommand, OrphanImageCommand>();
 registrations.AddTransient<IImportImageCommand, ImportImageCommand>();
 registrations.AddTransient<IRemoveImagesCliDependentCommand, RemoveImagesCliDependentCommand>();
-registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
-registrations.AddSingleton(typeof(IDockerClient), provider =>
+
+// UI services
+registrations.AddTransient<IImageIdentifierPrompt, ImageIdentifierPrompt>();
+registrations.AddTransient<IContainerNamePrompt, ContainerNamePrompt>();
+registrations.AddTransient<IProgressSubscriber, ProgressSubscriber>();
+
+// Core services
+registrations.AddTransient<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
+registrations.AddSingleton<Config>(_ => ConfigFactory.GetOrCreateConfig());
+registrations.AddSingleton<IDockerClient>(provider =>
 {
-    var config = provider.GetService<Config>();
-    if (config?.DockerEndpoint == null)
+    var config = provider.GetService<Config>() 
+        ?? throw new InvalidOperationException("Failed to get Config service");
+        
+    if (config.DockerEndpoint is null)
         throw new InvalidOperationException("Docker endpoint has not been configured");
-    var endpoint = new Uri(config.DockerEndpoint);
-    return new DockerClientConfiguration(endpoint).CreateClient();
+        
+    return new DockerClientConfiguration(new Uri(config.DockerEndpoint)).CreateClient();
 });
 
 var registrar = new TypeRegistrar(registrations);
@@ -85,18 +95,23 @@ AnsiConsole.Console = new CustomConsole();
 
 app.Configure(config =>
 {
-    config.SetExceptionHandler((exception, _) =>
+    config.SetExceptionHandler((exception, _) => exception switch
     {
-        switch (exception)
-        {
-            case TimeoutException:
-                AnsiConsole.MarkupLine("[red]Timeout exception occurred[/], is the Docker daemon running?");
-                return -1;
-            default:
-                AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything);
-                return -1;
-        }
+        TimeoutException => HandleTimeoutException(),
+        _ => HandleGenericException(exception)
     });
+
+static int HandleTimeoutException()
+{
+    AnsiConsole.MarkupLine("[red]Timeout exception occurred[/], is the Docker daemon running?");
+    return -1;
+}
+
+static int HandleGenericException(Exception exception)
+{
+    AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything);
+    return -1;
+}
 });
 
 return app.Run(args);
