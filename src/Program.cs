@@ -21,29 +21,37 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 
 var registrations = new ServiceCollection();
-registrations.AddTransient<IAllImagesQuery, AllImagesQuery>();
-registrations.AddTransient<IGetDigestsByIdQuery, GetDigestsByIdQuery>();
-registrations.AddTransient<IImageIdentifierPrompt, ImageIdentifierPrompt>();
-registrations.AddTransient<IContainerNamePrompt, ContainerNamePrompt>();
-registrations.AddTransient<ICreateImageCommand, CreateImageCommand>();
-registrations.AddTransient<ICreateImageFromContainerCommand, CreateImageFromContainerCommand>();
-registrations.AddTransient<IGetImageQuery, GetImageQuery>();
-registrations.AddTransient<IGetImageIdQuery, GetImageIdQuery>();
-registrations.AddTransient<IDoesImageExistQuery, DoesImageExistQuery>();
-registrations.AddTransient<IGetContainersQuery, GetContainersQuery>();
-registrations.AddTransient<IGetRunningContainersQuery, GetRunningContainersQuery>();
-registrations.AddTransient<ICreateContainerCommand, CreateContainerCommand>();
-registrations.AddTransient<IRunContainerCommand, RunContainerCommand>();
-registrations.AddTransient<IStopContainerCommand, StopContainerCommand>();
-registrations.AddTransient<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
-registrations.AddTransient<IRemoveImageCommand, RemoveImageCommand>();
-registrations.AddTransient<ICreateImageCliChildCommand, CreateImageCliChildCommand>();
-registrations.AddTransient<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
-registrations.AddTransient<IExportImageCommand, ExportImageCommand>();
-registrations.AddTransient<IProgressSubscriber, ProgressSubscriber>();
-registrations.AddTransient<IOrphanImageCommand, OrphanImageCommand>();
-registrations.AddTransient<IImportImageCommand, ImportImageCommand>();
-registrations.AddTransient<IRemoveImagesCliDependentCommand, RemoveImagesCliDependentCommand>();
+List<(Type service, Type implementation)> transientServices = 
+[
+    (typeof(IAllImagesQuery), typeof(AllImagesQuery)),
+    (typeof(IGetDigestsByIdQuery), typeof(GetDigestsByIdQuery)),
+    (typeof(IImageIdentifierPrompt), typeof(ImageIdentifierPrompt)),
+    (typeof(IContainerNamePrompt), typeof(ContainerNamePrompt)),
+    (typeof(ICreateImageCommand), typeof(CreateImageCommand)),
+    (typeof(ICreateImageFromContainerCommand), typeof(CreateImageFromContainerCommand)),
+    (typeof(IGetImageQuery), typeof(GetImageQuery)),
+    (typeof(IGetImageIdQuery), typeof(GetImageIdQuery)),
+    (typeof(IDoesImageExistQuery), typeof(DoesImageExistQuery)),
+    (typeof(IGetContainersQuery), typeof(GetContainersQuery)),
+    (typeof(IGetRunningContainersQuery), typeof(GetRunningContainersQuery)),
+    (typeof(ICreateContainerCommand), typeof(CreateContainerCommand)),
+    (typeof(IRunContainerCommand), typeof(RunContainerCommand)),
+    (typeof(IStopContainerCommand), typeof(StopContainerCommand)),
+    (typeof(IStopAndRemoveContainerCommand), typeof(StopAndRemoveContainerCommand)),
+    (typeof(IRemoveImageCommand), typeof(RemoveImageCommand)),
+    (typeof(ICreateImageCliChildCommand), typeof(CreateImageCliChildCommand)),
+    (typeof(IImageIdentifierAndTagEvaluator), typeof(ImageIdentifierAndTagEvaluator)),
+    (typeof(IExportImageCommand), typeof(ExportImageCommand)),
+    (typeof(IProgressSubscriber), typeof(ProgressSubscriber)),
+    (typeof(IOrphanImageCommand), typeof(OrphanImageCommand)),
+    (typeof(IImportImageCommand), typeof(ImportImageCommand)),
+    (typeof(IRemoveImagesCliDependentCommand), typeof(RemoveImagesCliDependentCommand))
+];
+
+foreach (var (service, implementation) in transientServices)
+{
+    registrations.AddTransient(service, implementation);
+}
 registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
 {
@@ -58,27 +66,29 @@ var registrar = new TypeRegistrar(registrations);
 
 var app = new CommandApp(registrar);
 
+List<(Type commandType, string name, string alias)> commands = 
+[
+    (typeof(PullCliCommand), "pull", "p"),
+    (typeof(RunCliCommand), "run", "r"),
+    (typeof(ResetCliCommand), "reset", "rs"),
+    (typeof(CommitCliCommand), "commit", "c"),
+    (typeof(ListCliCommand), "list", "ls"),
+    (typeof(RemoveCliCommand), "remove", "rm"),
+    (typeof(PruneCliCommand), "prune", "pr"),
+    (typeof(StopCliCommand), "stop", "s"),
+    (typeof(ConfigCliCommand), "config", "cfg")
+];
+
 app.Configure(appConfig =>
 {
     appConfig.UseAssemblyInformationalVersion();
-    appConfig.AddCommand<PullCliCommand>("pull")
-        .WithAlias("p");
-    appConfig.AddCommand<RunCliCommand>("run")
-        .WithAlias("r");
-    appConfig.AddCommand<ResetCliCommand>("reset")
-        .WithAlias("rs");
-    appConfig.AddCommand<CommitCliCommand>("commit")
-        .WithAlias("c");
-    appConfig.AddCommand<ListCliCommand>("list")
-        .WithAlias("ls");
-    appConfig.AddCommand<RemoveCliCommand>("remove")
-        .WithAlias("rm");
-    appConfig.AddCommand<PruneCliCommand>("prune")
-        .WithAlias("pr");
-    appConfig.AddCommand<StopCliCommand>("stop")
-        .WithAlias("s");
-    appConfig.AddCommand<ConfigCliCommand>("config")
-        .WithAlias("cfg");
+    foreach (var (commandType, name, alias) in commands)
+    {
+        var method = typeof(IConfigurator).GetMethod("AddCommand", [typeof(string)]);
+        var genericMethod = method?.MakeGenericMethod(commandType);
+        var command = genericMethod?.Invoke(appConfig, [name]);
+        command?.GetType().GetMethod("WithAlias")?.Invoke(command, [alias]);
+    }
 });
 
 AnsiConsole.Console = new CustomConsole();
