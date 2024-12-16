@@ -11,11 +11,20 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
     private readonly ICreateContainerCommand _createContainerCommand;
     private readonly IRunContainerCommand _runContainerCommand;
     private readonly IContainerNamePrompt _containerNamePrompt;
+    private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
+    private readonly IGetImageQuery _getImageQuery;
+    private readonly ICreateImageCommand _createImageCommand;
     private readonly ListCliCommand _listCliCommand;
 
-    public ResetCliCommand(IGetRunningContainersQuery getRunningContainersQuery,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, ICreateContainerCommand createContainerCommand,
-        IRunContainerCommand runContainerCommand, IContainerNamePrompt containerNamePrompt,
+    public ResetCliCommand(
+        IGetRunningContainersQuery getRunningContainersQuery,
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
+        ICreateContainerCommand createContainerCommand,
+        IRunContainerCommand runContainerCommand,
+        IContainerNamePrompt containerNamePrompt,
+        IImageIdentifierPrompt imageIdentifierPrompt,
+        IGetImageQuery getImageQuery,
+        ICreateImageCommand createImageCommand,
         ListCliCommand listCliCommand)
     {
         _getRunningContainersQuery = getRunningContainersQuery;
@@ -23,18 +32,28 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
         _createContainerCommand = createContainerCommand;
         _runContainerCommand = runContainerCommand;
         _containerNamePrompt = containerNamePrompt;
+        _imageIdentifierPrompt = imageIdentifierPrompt;
+        _getImageQuery = getImageQuery;
+        _createImageCommand = createImageCommand;
         _listCliCommand = listCliCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, ResetSettings settings)
     {
-        var container = await GetContainerAsync(settings);
-        if (container == null)
+        if (settings.IsImage)
         {
-            throw new InvalidOperationException("No running container found");
+            await ResetImageBaseTagAsync(settings);
         }
+        else
+        {
+            var container = await GetContainerAsync(settings);
+            if (container == null)
+            {
+                throw new InvalidOperationException("No running container found");
+            }
 
-        await ResetContainerAsync(container);
+            await ResetContainerAsync(container);
+        }
 
         await _listCliCommand.ExecuteAsync();
 
@@ -53,7 +72,6 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
         return containers.SingleOrDefault(c => c.ContainerName == identifier);
     }
 
-
     private async Task ResetContainerAsync(Container container)
     {
         await Spinner.StartAsync(
@@ -64,5 +82,45 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
                     await _createContainerCommand.ExecuteAsync(container);
                     await _runContainerCommand.ExecuteAsync(container);
                 });
+    }
+
+    private async Task ResetImageBaseTagAsync(ResetSettings settings)
+    {
+        var image = await GetImageAsync(settings);
+        if (image == null)
+        {
+            throw new InvalidOperationException("Image not found");
+        }
+
+        var tag = settings.Tag ?? image.Tag;
+        if (tag == null)
+        {
+            throw new InvalidOperationException("No tag specified and image has no tag");
+        }
+
+        await Spinner.StartAsync(
+            $"Resetting base tag for image '{image.Name}' to '{tag}'",
+            async _ =>
+            {
+                // Create a new image with the same content but new base tag
+                var labels = new Dictionary<string, string>
+                {
+                    { Constants.BaseTag, tag }
+                };
+
+                await _createImageCommand.ExecuteAsync(image.Name, tag);
+            });
+    }
+
+    private async Task<Image?> GetImageAsync(IImageIdentifierSettings settings)
+    {
+        if (settings.ImageIdentifier != null)
+        {
+            return await _getImageQuery.QueryAsync(settings.ImageIdentifier);
+        }
+
+        var images = await _getImageQuery.QueryAllAsync().ToListAsync();
+        var identifier = _imageIdentifierPrompt.GetIdentifierOfImageFromUser(images, "reset base tag");
+        return await _getImageQuery.QueryAsync(identifier);
     }
 }
