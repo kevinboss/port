@@ -145,7 +145,7 @@ internal class CommitCliCommand : AsyncCommand<CommitSettings>
             baseTag = image.BaseImage?.Tag;
         }
 
-        baseTag = container.GetLabel(Constants.BaseTagLabel) ?? baseTag ?? image?.Tag;
+        baseTag = settings.BaseTag ?? container.GetLabel(Constants.BaseTagLabel) ?? baseTag ?? image?.Tag;
 
         var tagPrefix = container.TagPrefix;
         var newTag = baseTag == null ? tag : $"{tagPrefix}{baseTag}-{tag}";

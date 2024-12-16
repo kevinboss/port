@@ -15,4 +15,7 @@ public class CommitSettings : CommandSettings, IContainerIdentifierSettings
 
     [CommandOption("-o|--overwrite")] 
     public bool Overwrite { get; set; }
+
+    [CommandOption("-b|--base-tag")]
+    public string? BaseTag { get; set; }
 }
