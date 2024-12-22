@@ -4,52 +4,32 @@ using Spectre.Console.Cli;
 
 namespace port.Commands.Run;
 
-internal class RunCliCommand : AsyncCommand<RunSettings>
+internal class RunCliCommand(
+    IImageIdentifierPrompt imageIdentifierPrompt,
+    ICreateImageCliChildCommand createImageCliChildCommand,
+    IGetImageQuery getImageQuery,
+    IGetContainersQuery getContainersQuery,
+    ICreateContainerCommand createContainerCommand,
+    IRunContainerCommand runContainerCommand,
+    IStopContainerCommand stopContainerCommand,
+    port.Config.Config config,
+    IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
+    IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
+    ListCliCommand listCliCommand)
+    : AsyncCommand<RunSettings>
 {
-    private readonly IImageIdentifierPrompt _imageIdentifierPrompt;
-    private readonly ICreateImageCliChildCommand _createImageCliChildCommand;
-    private readonly IGetImageQuery _getImageQuery;
-    private readonly IGetContainersQuery _getContainersQuery;
-    private readonly ICreateContainerCommand _createContainerCommand;
-    private readonly IRunContainerCommand _runContainerCommand;
-    private readonly IStopContainerCommand _stopContainerCommand;
-    private readonly port.Config.Config _config;
-    private readonly IImageIdentifierAndTagEvaluator _imageIdentifierAndTagEvaluator;
-    private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
-    private readonly ListCliCommand _listCliCommand;
-
     private const char PortSeparator = ':';
-
-    public RunCliCommand(IImageIdentifierPrompt imageIdentifierPrompt,
-        ICreateImageCliChildCommand createImageCliChildCommand, IGetImageQuery getImageQuery,
-        IGetContainersQuery getContainersQuery,
-        ICreateContainerCommand createContainerCommand, IRunContainerCommand runContainerCommand,
-        IStopContainerCommand stopContainerCommand, port.Config.Config config,
-        IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, ListCliCommand listCliCommand)
-    {
-        _imageIdentifierPrompt = imageIdentifierPrompt;
-        _createImageCliChildCommand = createImageCliChildCommand;
-        _getImageQuery = getImageQuery;
-        _getContainersQuery = getContainersQuery;
-        _createContainerCommand = createContainerCommand;
-        _runContainerCommand = runContainerCommand;
-        _stopContainerCommand = stopContainerCommand;
-        _config = config;
-        _imageIdentifierAndTagEvaluator = imageIdentifierAndTagEvaluator;
-        _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
-        _listCliCommand = listCliCommand;
-    }
 
     public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
     {
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
         if (tag == null)
             throw new InvalidOperationException("Can not launch untagged image");
+        
         await TerminateOtherContainersAsync(identifier);
         await LaunchImageAsync(identifier, tag, settings.Reset);
 
-        await _listCliCommand.ExecuteAsync();
+        await listCliCommand.ExecuteAsync();
 
         return 0;
     }
@@ -58,16 +38,16 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     {
         if (settings.ImageIdentifier != null)
         {
-            return _imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
+            return imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await _imageIdentifierPrompt.GetRunnableIdentifierAndTagFromUserAsync("run");
+        var identifierAndTag = await imageIdentifierPrompt.GetRunnableIdentifierAndTagFromUserAsync("run");
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
     private Task TerminateOtherContainersAsync(string identifier)
     {
-        var imageConfig = _config.GetImageConfigByIdentifier(identifier);
+        var imageConfig = config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
         {
             throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
@@ -82,14 +62,14 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         {
             var containers = GetRunningContainersUsingHostPortsAsync(hostPorts);
             await foreach (var container in containers)
-                await _stopContainerCommand.ExecuteAsync(container.Id);
+                await stopContainerCommand.ExecuteAsync(container.Id);
         });
     }
 
     private IAsyncEnumerable<Container> GetRunningContainersUsingHostPortsAsync(
         IEnumerable<string> hostPorts)
     {
-        return _getContainersQuery.QueryRunningAsync()
+        return getContainersQuery.QueryRunningAsync()
             .Where(container =>
             {
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
@@ -105,7 +85,7 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
     private async Task LaunchImageAsync(string identifier, string tag, bool resetContainer)
     {
         var constructedImageName = ImageNameHelper.BuildImageName(identifier, tag);
-        var imageConfig = _config.GetImageConfigByIdentifier(identifier);
+        var imageConfig = config.GetImageConfigByIdentifier(identifier);
 
 
         var imageName = imageConfig.ImageName;
@@ -113,44 +93,44 @@ internal class RunCliCommand : AsyncCommand<RunSettings>
         var existingImage = await Spinner.StartAsync($"Query existing image: {constructedImageName}",
             async _ =>
             {
-                if (imageConfig.ImageTags.Contains(tag)) return await _getImageQuery.QueryAsync(imageName, tag);
-                var existingImage = await _getImageQuery.QueryAsync(imageName, tag);
+                if (imageConfig.ImageTags.Contains(tag)) return await getImageQuery.QueryAsync(imageName, tag);
+                var existingImage = await getImageQuery.QueryAsync(imageName, tag);
                 if (existingImage is not null) return existingImage;
                 tag = $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}";
-                return await _getImageQuery.QueryAsync(imageName, tag);
+                return await getImageQuery.QueryAsync(imageName, tag);
             });
         if (existingImage is null)
         {
-            await _createImageCliChildCommand.ExecuteAsync(imageName, tag);
+            await createImageCliChildCommand.ExecuteAsync(imageName, tag);
             existingImage = await Spinner.StartAsync($"Re-query existing image: {constructedImageName}",
-                async _ => await _getImageQuery.QueryAsync(imageName, tag));
+                async _ => await getImageQuery.QueryAsync(imageName, tag));
         }
 
         var tagPrefix = existingImage?.GetLabel(Constants.TagPrefix);
 
         await Spinner.StartAsync($"Launching {constructedImageName}", async _ =>
         {
-            var containers = await _getContainersQuery.QueryByContainerNameAsync(containerName).ToListAsync();
+            var containers = await getContainersQuery.QueryByContainerNameAsync(containerName).ToListAsync();
             var ports = imageConfig.Ports;
             var environment = imageConfig.Environment;
             switch (containers.Count)
             {
                 case 1 when resetContainer:
-                    await _stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
+                    await stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
                     containerName =
-                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
+                        await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
                             environment);
                     break;
                 case 1 when !resetContainer:
                     break;
                 case 0:
                     containerName =
-                        await _createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
+                        await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
                             environment);
                     break;
             }
 
-            await _runContainerCommand.ExecuteAsync(containerName);
+            await runContainerCommand.ExecuteAsync(containerName);
         });
     }
 }

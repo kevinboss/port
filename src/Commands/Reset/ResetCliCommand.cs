@@ -1,31 +1,17 @@
 using port.Commands.List;
-using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace port.Commands.Reset;
 
-internal class ResetCliCommand : AsyncCommand<ResetSettings>
+internal class ResetCliCommand(
+    IGetRunningContainersQuery getRunningContainersQuery,
+    IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
+    ICreateContainerCommand createContainerCommand,
+    IRunContainerCommand runContainerCommand,
+    IContainerNamePrompt containerNamePrompt,
+    ListCliCommand listCliCommand)
+    : AsyncCommand<ResetSettings>
 {
-    private readonly IGetRunningContainersQuery _getRunningContainersQuery;
-    private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
-    private readonly ICreateContainerCommand _createContainerCommand;
-    private readonly IRunContainerCommand _runContainerCommand;
-    private readonly IContainerNamePrompt _containerNamePrompt;
-    private readonly ListCliCommand _listCliCommand;
-
-    public ResetCliCommand(IGetRunningContainersQuery getRunningContainersQuery,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, ICreateContainerCommand createContainerCommand,
-        IRunContainerCommand runContainerCommand, IContainerNamePrompt containerNamePrompt,
-        ListCliCommand listCliCommand)
-    {
-        _getRunningContainersQuery = getRunningContainersQuery;
-        _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
-        _createContainerCommand = createContainerCommand;
-        _runContainerCommand = runContainerCommand;
-        _containerNamePrompt = containerNamePrompt;
-        _listCliCommand = listCliCommand;
-    }
-
     public override async Task<int> ExecuteAsync(CommandContext context, ResetSettings settings)
     {
         var container = await GetContainerAsync(settings);
@@ -36,20 +22,22 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
 
         await ResetContainerAsync(container);
 
-        await _listCliCommand.ExecuteAsync();
+        await listCliCommand.ExecuteAsync();
 
         return 0;
     }
 
     private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)
     {
-        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
+        var containers = await Spinner.StartAsync("Getting running containers",
+            async _ => await getRunningContainersQuery.QueryAsync().ToListAsync());
+
         if (settings.ContainerIdentifier != null)
         {
             return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);
         }
 
-        var identifier = _containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "reset");
+        var identifier = containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "reset");
         return containers.SingleOrDefault(c => c.ContainerName == identifier);
     }
 
@@ -57,12 +45,12 @@ internal class ResetCliCommand : AsyncCommand<ResetSettings>
     private async Task ResetContainerAsync(Container container)
     {
         await Spinner.StartAsync(
-                $"Resetting container '{container.ContainerName}'",
-                async _ =>
-                {
-                    await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                    await _createContainerCommand.ExecuteAsync(container);
-                    await _runContainerCommand.ExecuteAsync(container);
-                });
+            $"Resetting container '{container.ContainerName}'",
+            async _ =>
+            {
+                await stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+                await createContainerCommand.ExecuteAsync(container);
+                await runContainerCommand.ExecuteAsync(container);
+            });
     }
 }
