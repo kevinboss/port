@@ -35,13 +35,15 @@ internal class GetImageQuery : IGetImageQuery
         }
 
         var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
-        return await ConvertToImage(imagesListResponse.Labels, imageName, tag, imagesListResponse, containers);
+        var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(imagesListResponse.ID);
+        return await ConvertToImage(imageInspectResponse.Config.Labels, imageName, tag, imagesListResponse, containers);
     }
 
     private async Task<Image?> ConvertToImage(IDictionary<string, string>? labels, string imageName, string? tag,
         ImagesListResponse imagesListResponse,
         IReadOnlyCollection<Container> containers)
     {
+        var imageInspectResult = await _dockerClient.Images.InspectImageAsync(imagesListResponse.ID);
         return new Image(labels ?? new Dictionary<string, string>())
         {
             Name = imageName,
@@ -51,10 +53,10 @@ internal class GetImageQuery : IGetImageQuery
             Created = imagesListResponse.Created,
             Containers = containers.Where(c => imageName == c.ImageIdentifier && tag == c.ImageTag).ToList(),
             Id = imagesListResponse.ID,
-            ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID,
-            Parent = string.IsNullOrEmpty(imagesListResponse.ParentID)
+            ParentId = string.IsNullOrEmpty(imageInspectResult.Parent) ? null : imageInspectResult.Parent,
+            Parent = string.IsNullOrEmpty(imageInspectResult.Parent)
                 ? null
-                : await QueryParent(imagesListResponse.ParentID, containers)
+                : await QueryParent(imageInspectResult.Parent, containers)
         };
     }
 
@@ -69,25 +71,32 @@ internal class GetImageQuery : IGetImageQuery
             return null;
         }
 
+        var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(imagesListResponse.ID);
+        var labels = imageInspectResponse.Config.Labels;
+
         if (imagesListResponse.RepoTags != null)
         {
             if (imagesListResponse.RepoTags.Count == 1)
             {
                 var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(imagesListResponse.RepoTags.Single());
-                return await ConvertToImage(imagesListResponse.Labels, imageName1, tag, imagesListResponse, containers);
+                return await ConvertToImage(labels, imageName1, tag, imagesListResponse,
+                    containers);
             }
 
-            var baseTag = imagesListResponse.Labels.SingleOrDefault(l => l.Key == Constants.BaseTagLabel).Value;
+            var baseTag = labels.SingleOrDefault(l => l.Key == Constants.BaseTagLabel).Value;
             foreach (var repoTag in imagesListResponse.RepoTags)
             {
                 var (imageName1, tag) = ImageNameHelper.GetImageNameAndTag(repoTag);
-                if (tag == baseTag) return await ConvertToImage(imagesListResponse.Labels, imageName1, tag, imagesListResponse, containers);
+                if (tag == baseTag)
+                    return await ConvertToImage(labels, imageName1, tag, imagesListResponse,
+                        containers);
             }
         }
 
         var digest = imagesListResponse.RepoDigests?.SingleOrDefault();
         if (digest != null && DigestHelper.TryGetImageNameAndId(digest, out var nameNameAndId))
-            return await ConvertToImage(imagesListResponse.Labels, nameNameAndId.imageName, null, imagesListResponse, containers);
+            return await ConvertToImage(labels, nameNameAndId.imageName, null, imagesListResponse,
+                containers);
 
         return null;
     }

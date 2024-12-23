@@ -47,7 +47,7 @@ internal class RemoveCliCommand : AsyncCommand<RemoveSettings>
                 var imageIds = new List<string>();
                 if (settings.Recursive)
                 {
-                    var images = (await _allImagesQuery.QueryAllImagesWithParentAsync())
+                    var images = (await _allImagesQuery.QueryAllImagesWithParentAsync().ToListAsync())
                         .Where(e => e is { Id: not null, ParentId: not null })
                         .ToList();
                     var imageIdsToAnalyze = initialImageIds.ToHashSet();
