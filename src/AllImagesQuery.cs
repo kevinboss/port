@@ -119,7 +119,7 @@ internal class AllImagesQuery : IAllImagesQuery
             var imagesListResponse = imagesListResponses
                 .SingleOrDefault(e =>
                     e.RepoTags != null &&
-                    e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag)));
+                    e.RepoTags.Any(repoTag => repoTag.Contains(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag))));
             List<Container> containers;
             if (imagesListResponse != null)
             {
@@ -209,7 +209,7 @@ internal class AllImagesQuery : IAllImagesQuery
             .Any(imageConfig =>
             {
                 var imageNameAndTag = ImageNameHelper.BuildImageName(imageConfig.ImageName, imageConfig.tag);
-                return e.RepoTags.Contains(imageNameAndTag);
+                return e.RepoTags.Any(repoTag => repoTag.Contains(imageNameAndTag));
             });
     }
 
