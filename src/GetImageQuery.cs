@@ -28,7 +28,8 @@ internal class GetImageQuery : IGetImageQuery
         var imagesListResponse = imagesListResponses
             .SingleOrDefault(e =>
                 tag == null && !e.RepoTags.Any()
-                || e.RepoTags != null && e.RepoTags.Contains(ImageNameHelper.BuildImageName(imageName, tag)));
+                || e.RepoTags != null && e.RepoTags.Any(repoTag =>
+                    repoTag.Contains(ImageNameHelper.BuildImageName(imageName, tag))));
         if (imagesListResponse == null)
         {
             return null;
