@@ -1,13 +1,9 @@
-﻿using System.Reflection;
-using Docker.DotNet;
+﻿using Docker.DotNet;
 using Microsoft.Extensions.DependencyInjection;
 using port;
 using port.Commands.Commit;
 using port.Commands.Config;
-using port.Commands.Export;
-using port.Commands.Import;
 using port.Commands.List;
-using port.Commands.Orphan;
 using port.Commands.Prune;
 using port.Commands.Pull;
 using port.Commands.Remove;
@@ -39,10 +35,7 @@ registrations.AddTransient<IStopAndRemoveContainerCommand, StopAndRemoveContaine
 registrations.AddTransient<IRemoveImageCommand, RemoveImageCommand>();
 registrations.AddTransient<ICreateImageCliChildCommand, CreateImageCliChildCommand>();
 registrations.AddTransient<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
-registrations.AddTransient<IExportImageCommand, ExportImageCommand>();
 registrations.AddTransient<IProgressSubscriber, ProgressSubscriber>();
-registrations.AddTransient<IOrphanImageCommand, OrphanImageCommand>();
-registrations.AddTransient<IImportImageCommand, ImportImageCommand>();
 registrations.AddTransient<IRemoveImagesCliDependentCommand, RemoveImagesCliDependentCommand>();
 registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(typeof(IDockerClient), provider =>
