@@ -24,7 +24,7 @@ internal class CommitCliCommand(
         var container = await GetContainerAsync(settings) ??
                         throw new InvalidOperationException("No running container found");
 
-        await Spinner.StartAsync(string.Empty, async ctx =>
+        await Spinner.StartAsync("Committing container", async ctx =>
         {
             string newTag;
             string imageName;
