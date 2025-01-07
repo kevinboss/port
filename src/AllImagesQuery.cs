@@ -99,7 +99,7 @@ internal class AllImagesQuery : IAllImagesQuery
                     Tag = tag,
                     IsSnapshot = true,
                     Existing = true,
-                    Created = imagesListResponse.Created,
+                    Created = imageInspectResponse.Created,
                     Containers = containers
                         .Where(c =>
                             tag != null &&
@@ -151,7 +151,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 Tag = cleanedTag,
                 IsSnapshot = false,
                 Existing = imagesListResponse != null,
-                Created = imagesListResponse?.Created,
+                Created = imageInspectResponse?.Created,
                 Containers = containers
                     .Where(c =>
                         c.ContainerName == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
@@ -175,7 +175,7 @@ internal class AllImagesQuery : IAllImagesQuery
                 Tag = null,
                 IsSnapshot = false,
                 Existing = true,
-                Created = imagesListResponse.Created,
+                Created = imageInspectResponse.Created,
                 Containers = containers
                     .Where(c =>
                         c.ImageIdentifier == imageConfig.ImageName
