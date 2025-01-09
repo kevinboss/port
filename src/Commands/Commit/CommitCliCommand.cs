@@ -72,12 +72,6 @@ internal class CommitCliCommand(
                 var containerName = await createContainerCommand.ExecuteAsync(container, tagPrefix, newTag);
                 await runContainerCommand.ExecuteAsync(containerName);
             }
-            else
-            {
-                ctx.Status = "Launching new image";
-                var containerName = await createContainerCommand.ExecuteAsync(container, tagPrefix, newTag);
-                await runContainerCommand.ExecuteAsync(containerName);
-            }
         });
 
         await listCliCommand.ExecuteAsync();
