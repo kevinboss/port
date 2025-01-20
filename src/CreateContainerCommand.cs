@@ -56,7 +56,7 @@ internal class CreateContainerCommand : ICreateContainerCommand
         if (identifier is not null) labels.Add(Constants.IdentifierLabel, identifier);
         var baseTag = container.GetLabel(Constants.BaseTagLabel);
         if (baseTag is not null) labels.Add(Constants.BaseTagLabel, baseTag);
-        await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
+        var createContainerResponse = await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Name = containerName,
             Image = ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag),
@@ -68,10 +68,10 @@ internal class CreateContainerCommand : ICreateContainerCommand
             ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
             Labels = labels
         });
-        return containerName;
+        return createContainerResponse.ID;
     }
 
-    public Task ExecuteAsync(Container container)
+    public async Task<string> ExecuteAsync(Container container)
     {
         var portBindings = container.PortBindings;
         var environment = container.Environment;
@@ -80,7 +80,7 @@ internal class CreateContainerCommand : ICreateContainerCommand
         if (identifier is not null) labels.Add(Constants.IdentifierLabel, identifier);
         var baseTag = container.GetLabel(Constants.BaseTagLabel);
         if (baseTag is not null) labels.Add(Constants.BaseTagLabel, baseTag);
-        return _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
+        var createContainerResponse = await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
             Name = container.ContainerName,
             Image = ImageNameHelper.BuildImageName(container.ImageIdentifier, container.ImageTag),
@@ -92,6 +92,7 @@ internal class CreateContainerCommand : ICreateContainerCommand
             ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
             Labels = labels
         });
+        return createContainerResponse.ID;
     }
 
     private static IList<PortBinding> CreateHostPortList(string hostPort)
