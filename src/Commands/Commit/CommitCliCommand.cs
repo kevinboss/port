@@ -19,8 +19,6 @@ internal class CommitCliCommand(
 {
     public override async Task<int> ExecuteAsync(CommandContext context, CommitSettings settings)
     {
-        if (settings.Overwrite) settings.Switch = true;
-
         var container = await GetContainerAsync(settings) ??
                         throw new InvalidOperationException("No running container found");
 
@@ -56,7 +54,20 @@ internal class CommitCliCommand(
             await Task.WhenAll(containerWithSameTag.Select(async container1 =>
                 await stopAndRemoveContainerCommand.ExecuteAsync(container1.Id)));
 
-            if (settings.Switch)
+            if (settings.Overwrite)
+            {
+                if (newTag == null)
+                    throw new InvalidOperationException("newTag is null");
+
+                if (container.ImageTag == null)
+                    throw new InvalidOperationException(
+                        "Switch argument not supported when creating image from untagged container");
+                
+                ctx.Status = "Launching new image";
+                var id = await createContainerCommand.ExecuteAsync(container, tagPrefix, newTag);
+                await runContainerCommand.ExecuteAsync(id);
+            }
+            else if (settings.Switch)
             {
                 if (newTag == null)
                     throw new InvalidOperationException("newTag is null");
@@ -69,8 +80,8 @@ internal class CommitCliCommand(
                 await stopContainerCommand.ExecuteAsync(container.Id);
 
                 ctx.Status = "Launching new image";
-                var containerName = await createContainerCommand.ExecuteAsync(container, tagPrefix, newTag);
-                await runContainerCommand.ExecuteAsync(containerName);
+                var id = await createContainerCommand.ExecuteAsync(container, tagPrefix, newTag);
+                await runContainerCommand.ExecuteAsync(id);
             }
         });
 

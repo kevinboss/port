@@ -2,6 +2,6 @@ namespace port;
 
 public interface IRunContainerCommand
 {
-    Task ExecuteAsync(string containerName);
+    Task ExecuteAsync(string id);
     Task ExecuteAsync(Container container);
 }

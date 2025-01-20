@@ -3,7 +3,7 @@ using Docker.DotNet.Models;
 
 namespace port;
 
-public partial class Container
+public class Container
 {
     private readonly IDictionary<string, string> _labels;
     private readonly string _containerName;

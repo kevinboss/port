@@ -25,7 +25,7 @@ internal class RunCliCommand(
         var (identifier, tag) = await GetIdentifierAndTagAsync(settings);
         if (tag == null)
             throw new InvalidOperationException("Can not launch untagged image");
-        
+
         await TerminateOtherContainersAsync(identifier);
         await LaunchImageAsync(identifier, tag, settings.Reset);
 
@@ -87,7 +87,6 @@ internal class RunCliCommand(
         var constructedImageName = ImageNameHelper.BuildImageName(identifier, tag);
         var imageConfig = config.GetImageConfigByIdentifier(identifier);
 
-
         var imageName = imageConfig.ImageName;
         var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
         var existingImage = await Spinner.StartAsync($"Query existing image: {constructedImageName}",
@@ -113,24 +112,24 @@ internal class RunCliCommand(
             var containers = await getContainersQuery.QueryByContainerNameAsync(containerName).ToListAsync();
             var ports = imageConfig.Ports;
             var environment = imageConfig.Environment;
-            switch (containers.Count)
+            if (containers.Count == 1 && resetContainer)
             {
-                case 1 when resetContainer:
-                    await stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
-                    containerName =
-                        await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
-                            environment);
-                    break;
-                case 1 when !resetContainer:
-                    break;
-                case 0:
-                    containerName =
-                        await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
-                            environment);
-                    break;
+                await stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
+                var id =
+                    await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
+                        environment);
+                await runContainerCommand.ExecuteAsync(id);
             }
-
-            await runContainerCommand.ExecuteAsync(containerName);
+            else if (containers.Count == 1 && !resetContainer)
+            {
+                await runContainerCommand.ExecuteAsync(containers.Single().Id);
+            }
+            else if (containers.Count == 0)
+            {
+                var id = await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
+                    environment);
+                await runContainerCommand.ExecuteAsync(id);
+            }
         });
     }
 }
