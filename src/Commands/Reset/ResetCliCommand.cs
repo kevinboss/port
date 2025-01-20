@@ -49,8 +49,8 @@ internal class ResetCliCommand(
             async _ =>
             {
                 await stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                await createContainerCommand.ExecuteAsync(container);
-                await runContainerCommand.ExecuteAsync(container);
+                var id = await createContainerCommand.ExecuteAsync(container);
+                await runContainerCommand.ExecuteAsync(id);
             });
     }
 }
