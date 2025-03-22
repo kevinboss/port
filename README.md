@@ -1,4 +1,4 @@
-# 🚀 Port: Simplified Docker Image Management
+# 🐳 port: run and manage containerized services with ease
 
 ![Port Logo](logo_1.jpg)
 
