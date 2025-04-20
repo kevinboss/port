@@ -1,6 +1,6 @@
 # 🐳 port: run and manage containerized services with ease
 
-![Port Logo](logo_1.jpg)
+![Port Logo](logo_1.png)
 
 [![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml) 
 [![CI](https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg)](https://github.com/kevinboss/heartbeat) 
