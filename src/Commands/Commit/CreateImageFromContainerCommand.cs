@@ -3,15 +3,8 @@ using Docker.DotNet.Models;
 
 namespace port.Commands.Commit;
 
-internal class CreateImageFromContainerCommand : ICreateImageFromContainerCommand
+internal class CreateImageFromContainerCommand(IDockerClient dockerClient) : ICreateImageFromContainerCommand
 {
-    private readonly IDockerClient _dockerClient;
-
-    public CreateImageFromContainerCommand(IDockerClient dockerClient)
-    {
-        _dockerClient = dockerClient;
-    }
-
     public async Task<string> ExecuteAsync(Container container, string imageName, string tagPrefix, string newTag)
     {
         var labels = new Dictionary<string, string>();
@@ -20,7 +13,8 @@ internal class CreateImageFromContainerCommand : ICreateImageFromContainerComman
         var baseTag = container.GetLabel(Constants.BaseTagLabel);
         if (baseTag is not null) labels.Add(Constants.BaseTagLabel, baseTag);
         labels.Add(Constants.TagPrefix, tagPrefix);
-        await _dockerClient.Images.CommitContainerChangesAsync(new CommitContainerChangesParameters
+        if (baseTag == newTag) throw new InvalidOperationException("Can not overwrite base tags");
+        await dockerClient.Images.CommitContainerChangesAsync(new CommitContainerChangesParameters
         {
             ContainerID = container.Id,
             RepositoryName = imageName,
