@@ -44,7 +44,7 @@ registrations.AddSingleton(typeof(IDockerClient), provider =>
     if (config?.DockerEndpoint == null)
         throw new InvalidOperationException("Docker endpoint has not been configured");
     var endpoint = new Uri(config.DockerEndpoint);
-    return new DockerClientConfiguration(endpoint).CreateClient();
+    return new DockerClientConfiguration(endpoint, null, TimeSpan.FromSeconds(300)).CreateClient();
 });
 
 var registrar = new TypeRegistrar(registrations);
