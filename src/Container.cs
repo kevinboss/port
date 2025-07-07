@@ -66,8 +66,8 @@ public class Container
         _labels.Where(l => l.Key == Constants.IdentifierLabel)
             .Select(l => l.Value)
             .SingleOrDefault() ?? (ContainerTag is not null
-            ? ContainerName.Replace($".{ContainerTag}", string.Empty)
-            : ContainerName);
+            ? _containerName.Replace($".{ContainerTag}", string.Empty)
+            : _containerName);
 
     public string TagPrefix => TagPrefixHelper.GetTagPrefix(ContainerIdentifier);
 
