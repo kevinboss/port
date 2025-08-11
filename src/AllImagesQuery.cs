@@ -119,7 +119,7 @@ internal class AllImagesQuery : IAllImagesQuery
             var imagesListResponse = imagesListResponses
                 .SingleOrDefault(e =>
                     e.RepoTags != null &&
-                    e.RepoTags.Any(repoTag => repoTag.Contains(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag))));
+                    e.RepoTags.Any(repoTag => repoTag == ImageNameHelper.BuildImageName(imageConfig.ImageName, tag)));
             List<Container> containers;
             if (imagesListResponse != null)
             {
