@@ -13,9 +13,11 @@ public static class TagTextBuilder
         foreach (var image in images)
         {
             var f = BuildFirstLine(image).RemoveMarkup().Length;
-            if (first < f) first = f;
+            if (first < f)
+                first = f;
             var s = BuildSecondLine(image).RemoveMarkup().Length;
-            if (second < s) second = s;
+            if (second < s)
+                second = s;
         }
 
         return (first, second);
@@ -38,13 +40,17 @@ public static class TagTextBuilder
         }
 
         var firstLine = BuildFirstLine(image);
-        sb.Append(firstLine.PadRight(lengths.first + firstLine.Length - firstLine.RemoveMarkup().Length));
+        sb.Append(
+            firstLine.PadRight(lengths.first + firstLine.Length - firstLine.RemoveMarkup().Length)
+        );
         var secondLine = BuildSecondLine(image);
         if (!string.IsNullOrWhiteSpace(secondLine))
         {
             AddSeparator(sb);
             sb.Append("[dim]");
-            sb.Append($"{secondLine.PadRight(lengths.second + secondLine.Length - secondLine.RemoveMarkup().Length)}");
+            sb.Append(
+                $"{secondLine.PadRight(lengths.second + secondLine.Length - secondLine.RemoveMarkup().Length)}"
+            );
             sb.Append("[/]");
         }
 
@@ -111,7 +117,8 @@ public static class TagTextBuilder
         foreach (var container in image.Containers)
         {
             sb.Append(
-                $"Container: {container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}");
+                $"Container: {container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}"
+            );
         }
 
         return sb.ToString();

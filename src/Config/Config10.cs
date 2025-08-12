@@ -11,8 +11,10 @@ public class Config10
         var imageConfig = Images.SingleOrDefault(e => e.ImageName == imageName);
         if (imageConfig == null)
         {
-            throw new ArgumentException($"There is no config defined for imageName '{imageName}'",
-                nameof(imageName));
+            throw new ArgumentException(
+                $"There is no config defined for imageName '{imageName}'",
+                nameof(imageName)
+            );
         }
 
         return imageConfig;
@@ -23,13 +25,15 @@ public class Config10
         var imageConfig = Images.SingleOrDefault(e => e.Identifier == identifier);
         if (imageConfig == null)
         {
-            throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
-                nameof(identifier));
+            throw new ArgumentException(
+                $"There is no config defined for identifier '{identifier}'",
+                nameof(identifier)
+            );
         }
 
         return imageConfig;
     }
-    
+
     public class ImageConfig
     {
         public string Identifier { get; set; } = null!;

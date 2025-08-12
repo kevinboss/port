@@ -12,9 +12,11 @@ internal class ProgressSubscriber : IProgressSubscriber
         lock (lockObject)
         {
             var publishedProgress = new Dictionary<string, Progress>();
-            return Observable.FromEventPattern<JSONMessage>(
+            return Observable
+                .FromEventPattern<JSONMessage>(
                     h => progress.ProgressChanged += h,
-                    h => progress.ProgressChanged -= h)
+                    h => progress.ProgressChanged -= h
+                )
                 .Subscribe(pattern =>
                 {
                     lock (lockObject)
@@ -25,8 +27,11 @@ internal class ProgressSubscriber : IProgressSubscriber
         }
     }
 
-    private static void HandleProgressMessage(JSONMessage message, IDictionary<string, Progress> publishedProgress,
-        IObserver<Progress> observer)
+    private static void HandleProgressMessage(
+        JSONMessage message,
+        IDictionary<string, Progress> publishedProgress,
+        IObserver<Progress> observer
+    )
     {
         if (string.IsNullOrEmpty(message.ID))
             message.ID = Progress.NullId;
@@ -49,23 +54,28 @@ internal class ProgressSubscriber : IProgressSubscriber
             Description = message.Status,
             ProgressMessage = message.ProgressMessage,
             CurrentProgress = message.Progress?.Current,
-            TotalProgress = message.Progress?.Total
+            TotalProgress = message.Progress?.Total,
         };
         return data;
     }
 
-    private static void PublishInitialProgress(JSONMessage message,
+    private static void PublishInitialProgress(
+        JSONMessage message,
         IDictionary<string, Progress> launchedTasks,
-        TaskSetUpData data, IObserver<Progress> progressSubjekt)
+        TaskSetUpData data,
+        IObserver<Progress> progressSubjekt
+    )
     {
         var progress = new Progress(ProgressState.Initial, message.ID, data);
         launchedTasks.Add(message.ID, progress);
         progressSubjekt.OnNext(progress);
     }
 
-    private static void PublishUpdatedProgress(JSONMessage message,
+    private static void PublishUpdatedProgress(
+        JSONMessage message,
         Progress currentProgress,
-        IObserver<Progress> progressSubjekt)
+        IObserver<Progress> progressSubjekt
+    )
     {
         var progress = new Progress(currentProgress)
         {
@@ -73,7 +83,7 @@ internal class ProgressSubscriber : IProgressSubscriber
             Description = message.Status,
             ProgressMessage = message.ProgressMessage,
             CurrentProgress = message.Progress?.Current,
-            TotalProgress = message.Progress?.Total
+            TotalProgress = message.Progress?.Total,
         };
         progressSubjekt.OnNext(progress);
     }
