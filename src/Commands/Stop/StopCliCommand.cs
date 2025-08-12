@@ -9,16 +9,19 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
     private readonly IGetRunningContainersQuery _getRunningContainersQuery;
     private readonly IContainerNamePrompt _containerNamePrompt;
     private readonly IStopContainerCommand _stopContainerCommand;
-    private readonly ListCliCommand _listCliCommand;
+    private readonly ConditionalListCliCommand _conditionalListCliCommand;
 
-    public StopCliCommand(IGetRunningContainersQuery getRunningContainersQuery,
-        IContainerNamePrompt containerNamePrompt, IStopContainerCommand stopContainerCommand,
-        ListCliCommand listCliCommand)
+    public StopCliCommand(
+        IGetRunningContainersQuery getRunningContainersQuery,
+        IContainerNamePrompt containerNamePrompt,
+        IStopContainerCommand stopContainerCommand,
+        ConditionalListCliCommand conditionalListCliCommand
+    )
     {
         _getRunningContainersQuery = getRunningContainersQuery;
         _containerNamePrompt = containerNamePrompt;
         _stopContainerCommand = stopContainerCommand;
-        _listCliCommand = listCliCommand;
+        _conditionalListCliCommand = conditionalListCliCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, StopSettings settings)
@@ -31,7 +34,7 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
 
         await StopContainerAsync(container);
 
-        await _listCliCommand.ExecuteAsync();
+        await _conditionalListCliCommand.ExecuteAsync();
 
         return 0;
     }
@@ -48,11 +51,14 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
         return containers.SingleOrDefault(c => c.ContainerName == identifier);
     }
 
-
     private async Task StopContainerAsync(Container container)
     {
         await Spinner.StartAsync(
-                $"Stopping container '{container.ContainerName}'",
-                async _ => { await _stopContainerCommand.ExecuteAsync(container.Id); });
+            $"Stopping container '{container.ContainerName}'",
+            async _ =>
+            {
+                await _stopContainerCommand.ExecuteAsync(container.Id);
+            }
+        );
     }
 }

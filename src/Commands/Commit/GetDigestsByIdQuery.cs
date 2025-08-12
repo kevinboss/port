@@ -16,11 +16,10 @@ internal class GetDigestsByIdQuery : IGetDigestsByIdQuery
     {
         var parameters = new ImagesListParameters
         {
-            Filters = new Dictionary<string, IDictionary<string, bool>>()
+            Filters = new Dictionary<string, IDictionary<string, bool>>(),
         };
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
-        var imagesListResponse = imagesListResponses
-            .SingleOrDefault(e => e.ID == imageId);
+        var imagesListResponse = imagesListResponses.SingleOrDefault(e => e.ID == imageId);
         return imagesListResponse?.RepoDigests;
     }
 }
