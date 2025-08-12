@@ -20,16 +20,17 @@ internal class RemoveImageCommand : IRemoveImageCommand
             throw new ArgumentException("Can not remove untagged images");
         }
 
-        return _dockerClient.Images.DeleteImageAsync(ImageNameHelper.BuildImageName(imageName, tag),
-            new ImageDeleteParameters());
+        return _dockerClient.Images.DeleteImageAsync(
+            ImageNameHelper.BuildImageName(imageName, tag),
+            new ImageDeleteParameters()
+        );
     }
 
     public async Task<ImageRemovalResult> ExecuteAsync(string id)
     {
         try
         {
-            await _dockerClient.Images.DeleteImageAsync(id,
-                new ImageDeleteParameters());
+            await _dockerClient.Images.DeleteImageAsync(id, new ImageDeleteParameters());
             return new ImageRemovalResult(id, true);
         }
         catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.Conflict)

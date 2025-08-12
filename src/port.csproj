@@ -1,22 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Docker.DotNet" Version="3.125.15" />
-      <PackageReference Include="DotNext.Threading" Version="5.21.0" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
-      <PackageReference Include="Spectre.Console" Version="0.50.0" />
-      <PackageReference Include="Spectre.Console.Cli" Version="0.50.0" />
-      <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-      <PackageReference Include="System.Reactive" Version="6.0.1" />
-      <PackageReference Include="yamldotnet" Version="16.3.0" />
-    </ItemGroup>
-
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishSingleFile Condition="'$(Configuration)' == 'Release'">true</PublishSingleFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Docker.DotNet" Version="3.125.15" />
+    <PackageReference Include="DotNext.Threading" Version="5.21.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
+    <PackageReference Include="Spectre.Console" Version="0.50.0" />
+    <PackageReference Include="Spectre.Console.Cli" Version="0.50.0" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
+    <PackageReference Include="System.Reactive" Version="6.0.1" />
+    <PackageReference Include="yamldotnet" Version="16.3.0" />
+  </ItemGroup>
 </Project>

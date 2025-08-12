@@ -14,7 +14,7 @@ public static class ConfigFactory
         var configFilePath = GetConfigFilePath();
 
         RenameIfNecessary(configFilePath);
-        
+
         if (File.Exists(configFilePath))
         {
             MigrateIfNecessary(configFilePath);
@@ -59,7 +59,10 @@ public static class ConfigFactory
         {
             case Versions.V10:
                 var yaml = File.ReadAllText(path);
-                PersistConfig(ConfigMigrations.Migrate10To11(serializer.Deserialize<Config10>(yaml)), path);
+                PersistConfig(
+                    ConfigMigrations.Migrate10To11(serializer.Deserialize<Config10>(yaml)),
+                    path
+                );
                 break;
             case Versions.V11:
                 break;
@@ -75,32 +78,24 @@ public static class ConfigFactory
         return serializer.Deserialize<Config>(yaml);
     }
 
-    private static Config CreateDefault() => new Config
-    {
-        DockerEndpoint = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
-            ? "npipe://./pipe/docker_engine"
-            : "unix:///var/run/docker.sock",
-        ImageConfigs = new List<Config.ImageConfig>
+    private static Config CreateDefault() =>
+        new Config
         {
-            new()
+            DockerEndpoint = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? "npipe://./pipe/docker_engine"
+                : "unix:///var/run/docker.sock",
+            ImageConfigs = new List<Config.ImageConfig>
             {
-                Identifier = "Getting.Started",
-                ImageName = "docker/getting-started",
-                ImageTags = new List<string>
+                new()
                 {
-                    "latest"
+                    Identifier = "Getting.Started",
+                    ImageName = "docker/getting-started",
+                    ImageTags = new List<string> { "latest" },
+                    Ports = new List<string> { "80:80" },
+                    Environment = new List<string> { "80:80" },
                 },
-                Ports = new List<string>
-                {
-                    "80:80"
-                },
-                Environment = new List<string>
-                {
-                    "80:80"
-                }
-            }
-        }
-    };
+            },
+        };
 
     private static void PersistConfig(Config config, string path)
     {
@@ -110,7 +105,7 @@ public static class ConfigFactory
         var yaml = serializer.Serialize(config);
         File.WriteAllText(path, yaml);
     }
-    
+
     public class ConfigVersion
     {
         public string Version { get; set; } = null!;

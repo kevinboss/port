@@ -14,10 +14,7 @@ internal class RunContainerCommand : IRunContainerCommand
 
     public Task ExecuteAsync(string id)
     {
-        return _dockerClient.Containers.StartContainerAsync(
-            id,
-            new ContainerStartParameters()
-        );
+        return _dockerClient.Containers.StartContainerAsync(id, new ContainerStartParameters());
     }
 
     public Task ExecuteAsync(Container container)
