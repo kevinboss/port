@@ -52,7 +52,7 @@ public class Container
     {
         get
         {
-            if (!ContainerNameHelper.TryGetContainerNameAndTag(_containerName, out var containerNameAndTag))
+            if (!ContainerNameHelper.TryGetContainerNameAndTag(_containerName, TagPrefix, out var containerNameAndTag))
                 return _containerName;
             var tagPrefix = TagPrefix;
             var tag = containerNameAndTag.tag.StartsWith(tagPrefix)
