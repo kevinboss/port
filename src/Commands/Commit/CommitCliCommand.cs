@@ -114,7 +114,6 @@ internal class CommitCliCommand(
 
         var tagPrefix = container.TagPrefix;
         var newTag = baseTag == null ? tag : $"{tagPrefix}{baseTag}-{tag}";
-        if (newTag.Contains('.')) throw new ArgumentException("only [a-zA-Z0-9][a-zA-Z0-9_-] are allowed");
         return (imageName, tagPrefix, newTag);
     }
 
