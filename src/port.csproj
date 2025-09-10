@@ -13,7 +13,7 @@
       <PackageReference Include="DotNext.Threading" Version="5.24.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
       <PackageReference Include="Spectre.Console" Version="0.51.1" />
-      <PackageReference Include="Spectre.Console.Cli" Version="0.50.0" />
+      <PackageReference Include="Spectre.Console.Cli" Version="0.51.1" />
       <PackageReference Include="System.Linq.Async" Version="6.0.1" />
       <PackageReference Include="System.Reactive" Version="6.0.2" />
       <PackageReference Include="yamldotnet" Version="16.3.0" />
