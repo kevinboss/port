@@ -12,12 +12,15 @@ internal class GetContainersQuery : IGetContainersQuery
     public GetContainersQuery(IDockerClient dockerClient)
     {
         _dockerClient = dockerClient;
-        _containerListResponses = new AsyncLazy<IList<ContainerListResponse>>(token =>
-            _dockerClient.Containers.ListContainersAsync(
+        _containerListResponses = new AsyncLazy<IList<ContainerListResponse>>(async token =>
+        {
+            var containers = await _dockerClient.Containers.ListContainersAsync(
                 new ContainersListParameters
                 {
                     Limit = long.MaxValue
-                }, token));
+                }, token);
+            return containers.Where(clr => clr.State != "exited" && clr.State != "dead").ToList();
+        });
     }
 
     public async IAsyncEnumerable<Container> QueryRunningAsync()
