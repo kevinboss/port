@@ -39,6 +39,7 @@ _ReSharper.Caches/
 **/.idea/**/dataSources.local.xml
 **/.idea/**/sqlDataSources.xml
 **/.idea/**/dynamic.xml
+**/.idea/**/copilot*.xml
 
 # Rider
 **/.idea/**/*.iml
