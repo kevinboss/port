@@ -19,7 +19,7 @@ internal class GetContainersQuery : IGetContainersQuery
                 {
                     Limit = long.MaxValue
                 }, token);
-            return containers.Where(clr => clr.State != "exited" && clr.State != "dead").ToList();
+            return containers.Where(clr => clr.State != "dead").ToList();
         });
     }
 
