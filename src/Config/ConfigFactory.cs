@@ -14,16 +14,30 @@ public static class ConfigFactory
         var configFilePath = GetConfigFilePath();
 
         RenameIfNecessary(configFilePath);
-        
+
+        Config globalConfig;
         if (File.Exists(configFilePath))
         {
             MigrateIfNecessary(configFilePath);
-            return LoadConfig(configFilePath);
+            globalConfig = LoadConfig(configFilePath);
+        }
+        else
+        {
+            globalConfig = CreateDefault();
+            PersistConfig(globalConfig, configFilePath);
         }
 
-        var config = CreateDefault();
-        PersistConfig(config, configFilePath);
-        return config;
+        return MergeWithComposeFileIfExists(globalConfig);
+    }
+
+    private static Config MergeWithComposeFileIfExists(Config globalConfig)
+    {
+        var currentDirectory = Directory.GetCurrentDirectory();
+        var composeFile = ComposeFileParser.TryParseFromDirectory(currentDirectory);
+
+        if (composeFile == null) return globalConfig;
+
+        return ConfigMerger.MergeWithComposeFile(globalConfig, composeFile);
     }
 
     private static void RenameIfNecessary(string configFilePath)
