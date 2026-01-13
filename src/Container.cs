@@ -15,21 +15,46 @@ public class Container
         _containerName = containerName;
         Created = inspectContainerResponse.Created;
 
-        if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag))
+        // Check if base tag label contains a digest reference
+        var baseTagFromLabel = containerListResponse.Labels
+            .Where(l => l.Key == Constants.BaseTagLabel)
+            .Select(l => l.Value)
+            .SingleOrDefault();
+
+        if (baseTagFromLabel != null && ImageNameHelper.IsDigest(baseTagFromLabel))
+        {
+            // Container was created from a digest reference (by port)
+            ImageIdentifier = ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var parsed)
+                ? parsed.imageName
+                : containerListResponse.Image;
+            ImageTag = baseTagFromLabel;
+        }
+        else if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag))
         {
             var tag = imageNameAndTag.tag;
-            var tagPrefix = containerListResponse.Labels.Where(l => l.Key == Constants.TagPrefix)
-                .Select(l => l.Value)
-                .SingleOrDefault();
-            if (tagPrefix is not null && tag.StartsWith(tagPrefix)) tag = tag[tagPrefix.Length..];
-            if (containerName.EndsWith(tag))
+
+            // Check if this is a digest reference (e.g., from docker-compose)
+            if (ImageNameHelper.IsDigest(tag))
             {
                 ImageIdentifier = imageNameAndTag.imageName;
-                ImageTag = imageNameAndTag.tag;
-            } else
+                ImageTag = tag;
+            }
+            else
             {
-                ImageIdentifier = containerListResponse.Image;
-                ImageTag = null;
+                var tagPrefix = containerListResponse.Labels.Where(l => l.Key == Constants.TagPrefix)
+                    .Select(l => l.Value)
+                    .SingleOrDefault();
+                if (tagPrefix is not null && tag.StartsWith(tagPrefix)) tag = tag[tagPrefix.Length..];
+                if (containerName.EndsWith(tag))
+                {
+                    ImageIdentifier = imageNameAndTag.imageName;
+                    ImageTag = imageNameAndTag.tag;
+                }
+                else
+                {
+                    ImageIdentifier = containerListResponse.Image;
+                    ImageTag = null;
+                }
             }
         }
         else

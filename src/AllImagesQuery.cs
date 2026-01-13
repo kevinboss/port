@@ -122,10 +122,11 @@ internal class AllImagesQuery : IAllImagesQuery
         {
             yieldedTags.Add(ImageNameHelper.BuildImageName(imageConfig.ImageName, tag));
 
+            var expectedImageRef = ImageNameHelper.BuildImageName(imageConfig.ImageName, tag);
             var imagesListResponse = imagesListResponses
                 .SingleOrDefault(e =>
-                    e.RepoTags != null &&
-                    e.RepoTags.Any(repoTag => repoTag == ImageNameHelper.BuildImageName(imageConfig.ImageName, tag)));
+                    (e.RepoTags != null && e.RepoTags.Any(t => t == expectedImageRef)) ||
+                    (e.RepoDigests != null && e.RepoDigests.Any(d => d == expectedImageRef)));
 
             List<Container> containers;
             if (imagesListResponse != null)

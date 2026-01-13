@@ -68,7 +68,7 @@ public static class TagTextBuilder
         var tagPrefix = image.GetLabel(Constants.TagPrefix);
         if (tagPrefix is not null && imageTag?.StartsWith(tagPrefix) == true)
             imageTag = imageTag[tagPrefix.Length..];
-        sb.Append($"[white]{imageTag ?? "<none>".EscapeMarkup()}[/]");
+        sb.Append($"[white]{TruncateDigest(imageTag) ?? "<none>".EscapeMarkup()}[/]");
 
         if (image is { Running: true, RunningUntaggedImage: true })
             sb.Append(" | [orange3]untagged image[/]");
@@ -120,5 +120,18 @@ public static class TagTextBuilder
     private static void AddSeparator(StringBuilder sb)
     {
         sb.Append("[dim] | [/]");
+    }
+
+    private static string? TruncateDigest(string? tag)
+    {
+        if (tag == null) return null;
+        if (!ImageNameHelper.IsDigest(tag)) return tag;
+
+        var colonIndex = tag.IndexOf(':');
+        if (colonIndex < 0) return tag;
+
+        var algorithm = tag[..colonIndex];
+        var hash = tag[(colonIndex + 1)..];
+        return hash.Length > 12 ? $"{algorithm}:{hash[..12]}..." : tag;
     }
 }
