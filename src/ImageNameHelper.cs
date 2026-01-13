@@ -27,5 +27,16 @@ public static class ImageNameHelper
         return true;
     }
 
-    public static string BuildImageName(string imageName, string? tag = null) => tag == null ? imageName : $"{imageName}{Separator}{tag}";
+    public static string BuildImageName(string imageName, string? tag = null)
+    {
+        if (tag == null) return imageName;
+
+        // Digests use @ separator, tags use : separator
+        var separator = IsDigest(tag) ? "@" : Separator;
+        return $"{imageName}{separator}{tag}";
+    }
+
+    public static bool IsDigest(string tag) =>
+        tag.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) ||
+        tag.StartsWith("sha512:", StringComparison.OrdinalIgnoreCase);
 }

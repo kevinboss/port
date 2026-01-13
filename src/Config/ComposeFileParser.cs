@@ -37,6 +37,7 @@ public static class ComposeFileParser
         var yaml = File.ReadAllText(path);
         var deserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
+            .WithTypeConverter(new EnvironmentVariableConverter())
             .IgnoreUnmatchedProperties()
             .Build();
         return deserializer.Deserialize<ComposeFile>(yaml);
@@ -60,24 +61,28 @@ public static class ComposeFileParser
 
     private static (string imageName, List<string> tags) ParseImageReference(string imageRef)
     {
-        if (imageRef.Contains('@'))
-        {
-            var atIndex = imageRef.IndexOf('@');
-            var imageName = imageRef.Substring(0, atIndex);
-            var digest = imageRef.Substring(atIndex + 1);
-            return (imageName, new List<string> { digest });
-        }
+        var (nameAndTag, digest) = SplitOnDigest(imageRef);
+        var (name, tag) = SplitOnTag(nameAndTag);
 
-        var lastColonIndex = imageRef.LastIndexOf(':');
+        var resolvedTag = digest ?? tag ?? "latest";
+        return (name, [resolvedTag]);
+    }
 
-        if (lastColonIndex > 0 && !imageRef.Substring(lastColonIndex).Contains('/'))
-        {
-            var imageName = imageRef.Substring(0, lastColonIndex);
-            var tag = imageRef.Substring(lastColonIndex + 1);
-            return (imageName, new List<string> { tag });
-        }
+    private static (string nameAndTag, string? digest) SplitOnDigest(string imageRef)
+    {
+        var atIndex = imageRef.IndexOf('@');
+        return atIndex < 0
+            ? (imageRef, null)
+            : (imageRef[..atIndex], imageRef[(atIndex + 1)..]);
+    }
 
-        return (imageRef, new List<string> { "latest" });
+    private static (string name, string? tag) SplitOnTag(string nameAndTag)
+    {
+        var colonIndex = nameAndTag.LastIndexOf(':');
+        var hasTag = colonIndex > 0 && !nameAndTag[colonIndex..].Contains('/');
+        return hasTag
+            ? (nameAndTag[..colonIndex], nameAndTag[(colonIndex + 1)..])
+            : (nameAndTag, null);
     }
 
     private static List<string> NormalizePorts(List<string>? ports)

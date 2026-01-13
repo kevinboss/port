@@ -21,5 +21,19 @@ public static class ContainerNameHelper
         return true;
     }
 
-    public static string BuildContainerName(string identifier, string? tag) => $"{identifier}{Separator}{tag}";
+    public static string BuildContainerName(string identifier, string? tag) => $"{identifier}{Separator}{SanitizeTag(tag)}";
+
+    private static string? SanitizeTag(string? tag)
+    {
+        if (tag == null) return null;
+
+        var sanitized = tag.Replace(':', '-');
+
+        // Truncate very long tags (like digests) to keep container names reasonable
+        const int maxLength = 20;
+        if (sanitized.Length > maxLength)
+            sanitized = sanitized[..maxLength];
+
+        return sanitized;
+    }
 }
