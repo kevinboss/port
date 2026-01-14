@@ -1,3 +1,4 @@
+using System.Net;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -28,8 +29,18 @@ internal class GetRunningContainersQuery : IGetRunningContainersQuery
             });
         foreach (var containerListResponse in containerListResponses)
         {
-            var inspectContainerResponse =
-                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            ContainerInspectResponse inspectContainerResponse;
+            try
+            {
+                inspectContainerResponse =
+                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            }
+            catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            {
+                // Container was removed between listing and inspecting, skip it
+                continue;
+            }
+
             var container = new Container(containerListResponse, inspectContainerResponse);
             if (container.Running && containerNames.Any(cn => container.ContainerName.StartsWith(cn)))
             {
