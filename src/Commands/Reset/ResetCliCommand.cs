@@ -37,6 +37,12 @@ internal class ResetCliCommand(
             return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);
         }
 
+        // If only one container is running, use it directly
+        if (containers.Count == 1)
+        {
+            return containers.Single();
+        }
+
         var identifier = containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "reset");
         return containers.SingleOrDefault(c => c.ContainerName == identifier);
     }
