@@ -1,3 +1,4 @@
+using System.Net;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 using DotNext.Threading;
@@ -28,8 +29,17 @@ internal class GetContainersQuery : IGetContainersQuery
         var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
         foreach (var containerListResponse in containerListResponses)
         {
-            var inspectContainerResponse =
-                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            ContainerInspectResponse inspectContainerResponse;
+            try
+            {
+                inspectContainerResponse =
+                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            }
+            catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            {
+                continue;
+            }
+
             var container = new Container(containerListResponse, inspectContainerResponse);
             if (container.Running)
             {
@@ -44,8 +54,17 @@ internal class GetContainersQuery : IGetContainersQuery
         var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
         foreach (var containerListResponse in containerListResponses)
         {
-            var inspectContainerResponse =
-                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            ContainerInspectResponse inspectContainerResponse;
+            try
+            {
+                inspectContainerResponse =
+                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            }
+            catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            {
+                continue;
+            }
+
             var container = new Container(containerListResponse, inspectContainerResponse);
             if (containerIdentifier == container.ContainerIdentifier && tag == container.ContainerTag)
             {
@@ -60,8 +79,17 @@ internal class GetContainersQuery : IGetContainersQuery
         foreach (var containerListResponse in containerListResponses)
         {
             if (containerListResponse.ImageID != imageId) continue;
-            var inspectContainerResponse =
-                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            ContainerInspectResponse inspectContainerResponse;
+            try
+            {
+                inspectContainerResponse =
+                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            }
+            catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            {
+                continue;
+            }
+
             var container = new Container(containerListResponse, inspectContainerResponse);
             yield return container;
         }
@@ -72,8 +100,17 @@ internal class GetContainersQuery : IGetContainersQuery
         var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
         foreach (var containerListResponse in containerListResponses)
         {
-            var inspectContainerResponse =
-                await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            ContainerInspectResponse inspectContainerResponse;
+            try
+            {
+                inspectContainerResponse =
+                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+            }
+            catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
+            {
+                continue;
+            }
+
             var container = new Container(containerListResponse, inspectContainerResponse);
             if (containerName == container.ContainerName)
             {
