@@ -14,6 +14,19 @@ internal class GetImageIdQuery : IGetImageIdQuery
 
     public async Task<IEnumerable<string>> QueryAsync(string imageName, string? tag)
     {
+        if (tag != null && ImageNameHelper.IsDigest(tag))
+        {
+            try
+            {
+                var inspectResponse = await _dockerClient.Images.InspectImageAsync(tag);
+                return [inspectResponse.ID];
+            }
+            catch (DockerImageNotFoundException)
+            {
+                return [];
+            }
+        }
+
         var parameters = new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>()

@@ -47,9 +47,13 @@ internal class AllImagesQuery : IAllImagesQuery
         IReadOnlyCollection<port.Config.Config.ImageConfig> imageConfigs)
     {
         var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
-        var images = await GetAllTagsAsync(imageConfig, imageConfigs, imagesListResponses).ToListAsync();
-        images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig, imagesListResponses));
-        images.AddRange(await GetUntaggedImagesAsync(imageConfig, imagesListResponses).ToListAsync());
+        var danglingImages = await GetDanglingImagesByNameAsync(imageConfig.ImageName, imageConfig.Identifier);
+        var allImagesListResponses = imagesListResponses
+            .Concat(danglingImages.Where(d => imagesListResponses.All(i => i.ID != d.ID)))
+            .ToList();
+        var images = await GetAllTagsAsync(imageConfig, imageConfigs, allImagesListResponses).ToListAsync();
+        images.AddRange(await GetSnapshotImagesAsync(imageConfigs, imageConfig, allImagesListResponses));
+        images.AddRange(await GetUntaggedImagesAsync(imageConfig, allImagesListResponses).ToListAsync());
         return images;
     }
 
@@ -132,12 +136,6 @@ internal class AllImagesQuery : IAllImagesQuery
             if (imagesListResponse != null)
             {
                 containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
-                if (containers.Count == 0)
-                {
-                    containers = await _getContainersQuery
-                        .QueryByContainerNameAsync(ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag))
-                        .ToListAsync();
-                }
             }
             else
             {
@@ -220,21 +218,28 @@ internal class AllImagesQuery : IAllImagesQuery
     private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(Config.Config.ImageConfig imageConfig,
         IEnumerable<ImagesListResponse> imagesListResponses)
     {
-        foreach (var imagesListResponse in imagesListResponses.Where(e => !e.RepoTags.Any()))
+        foreach (var imagesListResponse in imagesListResponses.Where(IsUntagged))
         {
+            var digest = imagesListResponse.RepoDigests?
+                .Where(d => d.StartsWith($"{imageConfig.ImageName}@"))
+                .Select(d =>
+                {
+                    ImageNameHelper.TryGetImageNameAndTag(d, out var parsed);
+                    return parsed.tag;
+                })
+                .FirstOrDefault()
+                ?? imagesListResponse.ID;
+
             var containers = await _getContainersQuery.QueryByImageIdAsync(imagesListResponse.ID).ToListAsync();
             var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(imagesListResponse.ID);
             yield return new Image(imageInspectResponse.Config.Labels)
             {
                 Name = imageConfig.ImageName,
-                Tag = null,
+                Tag = digest,
                 IsSnapshot = false,
                 Existing = true,
                 Created = imageInspectResponse.Created,
-                Containers = containers
-                    .Where(c =>
-                        c.ImageIdentifier == imageConfig.ImageName
-                        && c.ImageTag == null).ToList(),
+                Containers = containers.ToList(),
                 Id = imagesListResponse.ID,
                 ParentId = string.IsNullOrEmpty(imagesListResponse.ParentID) ? null : imagesListResponse.ParentID
             };
@@ -248,9 +253,42 @@ internal class AllImagesQuery : IAllImagesQuery
         return await _dockerClient.Images.ListImagesAsync(parameters);
     }
 
+    private async Task<IList<ImagesListResponse>> GetDanglingImagesByNameAsync(string imageName, string identifier)
+    {
+        var parameters = new ImagesListParameters { Filters = new Dictionary<string, IDictionary<string, bool>>() };
+        parameters.Filters.Add("dangling", new Dictionary<string, bool> { { "true", true } });
+        var danglingImages = await _dockerClient.Images.ListImagesAsync(parameters);
+
+        var result = new List<ImagesListResponse>();
+        foreach (var danglingImage in danglingImages)
+        {
+            // Match by RepoDigests
+            if (danglingImage.RepoDigests != null &&
+                danglingImage.RepoDigests.Any(d => d.StartsWith($"{imageName}@")))
+            {
+                result.Add(danglingImage);
+                continue;
+            }
+
+            // Match by containers with matching identifier
+            var containers = await _getContainersQuery.QueryByImageIdAsync(danglingImage.ID).ToListAsync();
+            if (containers.Any(c => c.ContainerIdentifier == identifier))
+            {
+                result.Add(danglingImage);
+            }
+        }
+
+        return result;
+    }
+
     private static bool HasRepoTags(ImagesListResponse e)
     {
-        return e.RepoTags != null;
+        return e.RepoTags != null && !IsUntagged(e);
+    }
+
+    private static bool IsUntagged(ImagesListResponse e)
+    {
+        return e.RepoTags == null || !e.RepoTags.Any() || e.RepoTags.All(t => t == "<none>:<none>");
     }
 
     private static bool IsNotBase(IEnumerable<port.Config.Config.ImageConfig> imageConfigs, ImagesListResponse e)
