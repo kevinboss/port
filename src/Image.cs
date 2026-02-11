@@ -16,15 +16,6 @@ public class Image
     public DateTime? Created { get; set; }
     public bool Running => Containers.Any(container => container is { Running: true });
 
-    public bool RunningUntaggedImage =>
-        Containers.Any(container =>
-        {
-            var imageTag = container.ImageTag;
-            var tagPrefix = container.GetLabel(Constants.TagPrefix);
-            if (tagPrefix is not null && imageTag?.StartsWith(tagPrefix) == true) imageTag = imageTag[tagPrefix.Length..];
-            return container is { Running: true } && imageTag != Tag;
-        });
-
     public string? Id { get; set; }
     public string? ParentId { get; set; }
     public Image? Parent { get; set; }

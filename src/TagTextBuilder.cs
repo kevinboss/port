@@ -24,18 +24,7 @@ public static class TagTextBuilder
     public static string BuildTagText(Image image, (int first, int second) lengths)
     {
         var sb = new StringBuilder();
-        switch (image)
-        {
-            case { Running: true, RunningUntaggedImage: false }:
-                sb.Append("[green]\u25a0[/] ");
-                break;
-            case { Running: true, RunningUntaggedImage: true }:
-                sb.Append("[orange3]\u25a0[/] ");
-                break;
-            default:
-                sb.Append("[red]\u25a0[/] ");
-                break;
-        }
+        sb.Append(image.Running ? "[green]\u25a0[/] " : "[red]\u25a0[/] ");
 
         var firstLine = BuildFirstLine(image);
         sb.Append(firstLine.PadRight(lengths.first + firstLine.Length - firstLine.RemoveMarkup().Length));
@@ -69,9 +58,6 @@ public static class TagTextBuilder
         if (tagPrefix is not null && imageTag?.StartsWith(tagPrefix) == true)
             imageTag = imageTag[tagPrefix.Length..];
         sb.Append($"[white]{TruncateDigest(imageTag) ?? "<none>".EscapeMarkup()}[/]");
-
-        if (image is { Running: true, RunningUntaggedImage: true })
-            sb.Append(" | [orange3]untagged image[/]");
 
         return sb.ToString();
     }
