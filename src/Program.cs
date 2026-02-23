@@ -4,11 +4,11 @@ using port;
 using port.Commands.Commit;
 using port.Commands.Config;
 using port.Commands.List;
-using port.Commands.Prune;
 using port.Commands.Pull;
 using port.Commands.Remove;
 using port.Commands.Reset;
 using port.Commands.Run;
+using port.Commands.Prune;
 using port.Commands.Stop;
 using port.Config;
 using port.Infrastructure;
@@ -66,12 +66,12 @@ app.Configure(appConfig =>
         .WithAlias("ls");
     appConfig.AddCommand<RemoveCliCommand>("remove")
         .WithAlias("rm");
-    appConfig.AddCommand<PruneCliCommand>("prune")
-        .WithAlias("pr");
     appConfig.AddCommand<StopCliCommand>("stop")
         .WithAlias("s");
     appConfig.AddCommand<ConfigCliCommand>("config")
         .WithAlias("cfg");
+    appConfig.AddCommand<PruneCliCommand>("prune")
+        .WithAlias("pr");
 });
 
 AnsiConsole.Console = new CustomConsole();
