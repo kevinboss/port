@@ -11,6 +11,7 @@ public class Image
     
     public bool IsSnapshot { get; set; }
     public string? Tag { get; set; }
+    public string? OriginalTag { get; set; }
     public string Name { get; set; } = null!;
     public bool Existing { get; set; }
     public DateTime? Created { get; set; }

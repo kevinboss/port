@@ -15,6 +15,7 @@ internal class RunCliCommand(
     port.Config.Config config,
     IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
     IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
+    IRenameContainerCommand renameContainerCommand,
     ListCliCommand listCliCommand)
     : AsyncCommand<RunSettings>
 {
@@ -112,17 +113,32 @@ internal class RunCliCommand(
             var containers = await getContainersQuery.QueryByContainerNameAsync(containerName).ToListAsync();
             var ports = imageConfig.Ports;
             var environment = imageConfig.Environment;
-            if (containers.Count == 1 && resetContainer)
+            if (containers.Count == 1)
             {
-                await stopAndRemoveContainerCommand.ExecuteAsync(containers.Single().Id);
-                var id =
-                    await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
-                        environment);
-                await runContainerCommand.ExecuteAsync(id);
-            }
-            else if (containers.Count == 1 && !resetContainer)
-            {
-                await runContainerCommand.ExecuteAsync(containers.Single().Id);
+                var container = containers.Single();
+                var imageChanged = existingImage?.Id != null && container.ImageId != existingImage.Id;
+                if (resetContainer)
+                {
+                    await stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+                    var id =
+                        await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
+                            environment);
+                    await runContainerCommand.ExecuteAsync(id);
+                }
+                else if (imageChanged)
+                {
+                    await stopContainerCommand.ExecuteAsync(container.Id);
+                    var renamedContainerName = ContainerNameHelper.BuildContainerName(identifier, container.ImageId);
+                    await renameContainerCommand.ExecuteAsync(container.Id, renamedContainerName);
+                    var id =
+                        await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
+                            environment);
+                    await runContainerCommand.ExecuteAsync(id);
+                }
+                else
+                {
+                    await runContainerCommand.ExecuteAsync(container.Id);
+                }
             }
             else if (containers.Count == 0)
             {

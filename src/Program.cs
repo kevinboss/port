@@ -32,6 +32,7 @@ registrations.AddTransient<ICreateContainerCommand, CreateContainerCommand>();
 registrations.AddTransient<IRunContainerCommand, RunContainerCommand>();
 registrations.AddTransient<IStopContainerCommand, StopContainerCommand>();
 registrations.AddTransient<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
+registrations.AddTransient<IRenameContainerCommand, RenameContainerCommand>();
 registrations.AddTransient<IRemoveImageCommand, RemoveImageCommand>();
 registrations.AddTransient<ICreateImageCliChildCommand, CreateImageCliChildCommand>();
 registrations.AddTransient<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
