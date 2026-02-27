@@ -57,7 +57,10 @@ public static class TagTextBuilder
         var tagPrefix = image.GetLabel(Constants.TagPrefix);
         if (tagPrefix is not null && imageTag?.StartsWith(tagPrefix) == true)
             imageTag = imageTag[tagPrefix.Length..];
-        sb.Append($"[white]{TruncateDigest(imageTag) ?? "<none>".EscapeMarkup()}[/]");
+        if (image.OriginalTag != null && imageTag != null && ImageNameHelper.IsDigest(imageTag))
+            sb.Append($"[white]{image.OriginalTag}:{TruncateDigest(imageTag)}[/]");
+        else
+            sb.Append($"[white]{TruncateDigest(imageTag) ?? "<none>".EscapeMarkup()}[/]");
 
         return sb.ToString();
     }

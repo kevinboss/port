@@ -11,6 +11,7 @@ public class Container
     public Container(ContainerListResponse containerListResponse, ContainerInspectResponse inspectContainerResponse)
     {
         Id = containerListResponse.ID;
+        ImageId = containerListResponse.ImageID;
         var containerName = containerListResponse.Names.Single().Remove(0, 1);
         _containerName = containerName;
         Created = inspectContainerResponse.Created;
@@ -72,6 +73,7 @@ public class Container
     public DateTime Created { get; set; }
 
     public string Id { get; }
+    public string ImageId { get; }
 
     public string ContainerName
     {
