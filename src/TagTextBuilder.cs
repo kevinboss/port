@@ -13,9 +13,11 @@ public static class TagTextBuilder
         foreach (var image in images)
         {
             var f = BuildFirstLine(image).RemoveMarkup().Length;
-            if (first < f) first = f;
+            if (first < f)
+                first = f;
             var s = BuildSecondLine(image).RemoveMarkup().Length;
-            if (second < s) second = s;
+            if (second < s)
+                second = s;
         }
 
         return (first, second);
@@ -27,13 +29,17 @@ public static class TagTextBuilder
         sb.Append(image.Running ? "[green]\u25a0[/] " : "[red]\u25a0[/] ");
 
         var firstLine = BuildFirstLine(image);
-        sb.Append(firstLine.PadRight(lengths.first + firstLine.Length - firstLine.RemoveMarkup().Length));
+        sb.Append(
+            firstLine.PadRight(lengths.first + firstLine.Length - firstLine.RemoveMarkup().Length)
+        );
         var secondLine = BuildSecondLine(image);
         if (!string.IsNullOrWhiteSpace(secondLine))
         {
             AddSeparator(sb);
             sb.Append("[dim]");
-            sb.Append($"{secondLine.PadRight(lengths.second + secondLine.Length - secondLine.RemoveMarkup().Length)}");
+            sb.Append(
+                $"{secondLine.PadRight(lengths.second + secondLine.Length - secondLine.RemoveMarkup().Length)}"
+            );
             sb.Append("[/]");
         }
 
@@ -100,7 +106,8 @@ public static class TagTextBuilder
         foreach (var container in image.Containers)
         {
             sb.Append(
-                $"Container: {container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}");
+                $"Container: {container.Created.ToLocalTime().ToString(CultureInfo.CurrentCulture)}"
+            );
         }
 
         return sb.ToString();
@@ -113,11 +120,14 @@ public static class TagTextBuilder
 
     private static string? TruncateDigest(string? tag)
     {
-        if (tag == null) return null;
-        if (!ImageNameHelper.IsDigest(tag)) return tag;
+        if (tag == null)
+            return null;
+        if (!ImageNameHelper.IsDigest(tag))
+            return tag;
 
         var colonIndex = tag.IndexOf(':');
-        if (colonIndex < 0) return tag;
+        if (colonIndex < 0)
+            return tag;
 
         var algorithm = tag[..colonIndex];
         var hash = tag[(colonIndex + 1)..];

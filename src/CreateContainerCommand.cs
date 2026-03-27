@@ -15,9 +15,14 @@ internal class CreateContainerCommand : ICreateContainerCommand
         _getImageQuery = getImageQuery;
     }
 
-    public async Task<string> ExecuteAsync(string containerIdentifier, string imageIdentifier, string? tagPrefix,
+    public async Task<string> ExecuteAsync(
+        string containerIdentifier,
+        string imageIdentifier,
+        string? tagPrefix,
         string? tag,
-        IEnumerable<string> ports, IList<string> environment)
+        IEnumerable<string> ports,
+        IList<string> environment
+    )
     {
         var portBindings = ports
             .Select(e => e.Split(PortSeparator))
@@ -27,22 +32,23 @@ internal class CreateContainerCommand : ICreateContainerCommand
         var baseTag = image?.GetLabel(Constants.BaseTagLabel) ?? image?.BaseImage?.Tag ?? tag;
         var labels = new Dictionary<string, string>
         {
-            { Constants.IdentifierLabel, containerIdentifier }
+            { Constants.IdentifierLabel, containerIdentifier },
         };
-        if (baseTag is not null) labels.Add(Constants.BaseTagLabel, baseTag);
-        if (tagPrefix is not null) labels.Add(Constants.TagPrefix, tagPrefix);
-        await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
-        {
-            Name = containerName,
-            Image = ImageNameHelper.BuildImageName(imageIdentifier, tag),
-            Env = environment,
-            HostConfig = new HostConfig
+        if (baseTag is not null)
+            labels.Add(Constants.BaseTagLabel, baseTag);
+        if (tagPrefix is not null)
+            labels.Add(Constants.TagPrefix, tagPrefix);
+        await _dockerClient.Containers.CreateContainerAsync(
+            new CreateContainerParameters
             {
-                PortBindings = portBindings
-            },
-            ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
-            Labels = labels
-        });
+                Name = containerName,
+                Image = ImageNameHelper.BuildImageName(imageIdentifier, tag),
+                Env = environment,
+                HostConfig = new HostConfig { PortBindings = portBindings },
+                ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
+                Labels = labels,
+            }
+        );
         return containerName;
     }
 
@@ -50,24 +56,28 @@ internal class CreateContainerCommand : ICreateContainerCommand
     {
         var portBindings = container.PortBindings;
         var environment = container.Environment;
-        var containerName = ContainerNameHelper.BuildContainerName(container.ContainerIdentifier, newTag.StartsWith(tagPrefix) ? newTag[tagPrefix.Length..] : newTag);
+        var containerName = ContainerNameHelper.BuildContainerName(
+            container.ContainerIdentifier,
+            newTag.StartsWith(tagPrefix) ? newTag[tagPrefix.Length..] : newTag
+        );
         var labels = new Dictionary<string, string>();
         var identifier = container.GetLabel(Constants.IdentifierLabel);
-        if (identifier is not null) labels.Add(Constants.IdentifierLabel, identifier);
+        if (identifier is not null)
+            labels.Add(Constants.IdentifierLabel, identifier);
         var baseTag = container.GetLabel(Constants.BaseTagLabel);
-        if (baseTag is not null) labels.Add(Constants.BaseTagLabel, baseTag);
-        var createContainerResponse = await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
-        {
-            Name = containerName,
-            Image = ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag),
-            HostConfig = new HostConfig
+        if (baseTag is not null)
+            labels.Add(Constants.BaseTagLabel, baseTag);
+        var createContainerResponse = await _dockerClient.Containers.CreateContainerAsync(
+            new CreateContainerParameters
             {
-                PortBindings = portBindings
-            },
-            Env = environment,
-            ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
-            Labels = labels
-        });
+                Name = containerName,
+                Image = ImageNameHelper.BuildImageName(container.ImageIdentifier, newTag),
+                HostConfig = new HostConfig { PortBindings = portBindings },
+                Env = environment,
+                ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
+                Labels = labels,
+            }
+        );
         return createContainerResponse.ID;
     }
 
@@ -77,32 +87,30 @@ internal class CreateContainerCommand : ICreateContainerCommand
         var environment = container.Environment;
         var labels = new Dictionary<string, string>();
         var identifier = container.GetLabel(Constants.IdentifierLabel);
-        if (identifier is not null) labels.Add(Constants.IdentifierLabel, identifier);
+        if (identifier is not null)
+            labels.Add(Constants.IdentifierLabel, identifier);
         var baseTag = container.GetLabel(Constants.BaseTagLabel);
-        if (baseTag is not null) labels.Add(Constants.BaseTagLabel, baseTag);
-        var createContainerResponse = await _dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
-        {
-            Name = container.ContainerName,
-            Image = ImageNameHelper.BuildImageName(container.ImageIdentifier, container.ImageTag),
-            HostConfig = new HostConfig
+        if (baseTag is not null)
+            labels.Add(Constants.BaseTagLabel, baseTag);
+        var createContainerResponse = await _dockerClient.Containers.CreateContainerAsync(
+            new CreateContainerParameters
             {
-                PortBindings = portBindings
-            },
-            Env = environment,
-            ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
-            Labels = labels
-        });
+                Name = container.ContainerName,
+                Image = ImageNameHelper.BuildImageName(
+                    container.ImageIdentifier,
+                    container.ImageTag
+                ),
+                HostConfig = new HostConfig { PortBindings = portBindings },
+                Env = environment,
+                ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
+                Labels = labels,
+            }
+        );
         return createContainerResponse.ID;
     }
 
     private static IList<PortBinding> CreateHostPortList(string hostPort)
     {
-        return new List<PortBinding>
-        {
-            new()
-            {
-                HostPort = hostPort
-            }
-        };
+        return new List<PortBinding> { new() { HostPort = hostPort } };
     }
 }

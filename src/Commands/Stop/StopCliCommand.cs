@@ -11,9 +11,12 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
     private readonly IStopContainerCommand _stopContainerCommand;
     private readonly ListCliCommand _listCliCommand;
 
-    public StopCliCommand(IGetRunningContainersQuery getRunningContainersQuery,
-        IContainerNamePrompt containerNamePrompt, IStopContainerCommand stopContainerCommand,
-        ListCliCommand listCliCommand)
+    public StopCliCommand(
+        IGetRunningContainersQuery getRunningContainersQuery,
+        IContainerNamePrompt containerNamePrompt,
+        IStopContainerCommand stopContainerCommand,
+        ListCliCommand listCliCommand
+    )
     {
         _getRunningContainersQuery = getRunningContainersQuery;
         _containerNamePrompt = containerNamePrompt;
@@ -48,11 +51,14 @@ internal class StopCliCommand : AsyncCommand<StopSettings>
         return containers.SingleOrDefault(c => c.ContainerName == identifier);
     }
 
-
     private async Task StopContainerAsync(Container container)
     {
         await Spinner.StartAsync(
-                $"Stopping container '{container.ContainerName}'",
-                async _ => { await _stopContainerCommand.ExecuteAsync(container.Id); });
+            $"Stopping container '{container.ContainerName}'",
+            async _ =>
+            {
+                await _stopContainerCommand.ExecuteAsync(container.Id);
+            }
+        );
     }
 }

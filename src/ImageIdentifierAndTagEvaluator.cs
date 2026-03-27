@@ -19,7 +19,9 @@ internal class ImageIdentifierAndTagEvaluator : IImageIdentifierAndTagEvaluator
         var imageConfig = _config.GetImageConfigByIdentifier(identifierAndTag.imageName);
         if (imageConfig.ImageTags.Count > 1)
         {
-            throw new InvalidOperationException("Given identifier has multiple tags, please manually provide the tag");
+            throw new InvalidOperationException(
+                "Given identifier has multiple tags, please manually provide the tag"
+            );
         }
 
         return (imageConfig.Identifier, imageConfig.ImageTags.Single());

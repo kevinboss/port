@@ -11,8 +11,10 @@ public class Config
         var imageConfig = ImageConfigs.SingleOrDefault(e => e.Identifier == identifier);
         if (imageConfig == null)
         {
-            throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
-                nameof(identifier));
+            throw new ArgumentException(
+                $"There is no config defined for identifier '{identifier}'",
+                nameof(identifier)
+            );
         }
 
         return imageConfig;

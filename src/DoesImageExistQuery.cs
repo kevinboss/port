@@ -16,16 +16,16 @@ internal class DoesImageExistQuery : IDoesImageExistQuery
     {
         var parameters = new ImagesListParameters
         {
-            Filters = new Dictionary<string, IDictionary<string, bool>>()
+            Filters = new Dictionary<string, IDictionary<string, bool>>(),
         };
-        parameters.Filters.Add("reference", new Dictionary<string, bool>
-        {
-            { imageName, true }
-        });
+        parameters.Filters.Add("reference", new Dictionary<string, bool> { { imageName, true } });
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
-        return imagesListResponses
-            .Any(e =>
-                tag == null && !e.RepoTags.Any()
-                || e.RepoTags != null && e.RepoTags.Any(repoTag => repoTag.Contains(ImageNameHelper.BuildImageName(imageName, tag))));
+        return imagesListResponses.Any(e =>
+            tag == null && !e.RepoTags.Any()
+            || e.RepoTags != null
+                && e.RepoTags.Any(repoTag =>
+                    repoTag.Contains(ImageNameHelper.BuildImageName(imageName, tag))
+                )
+        );
     }
 }

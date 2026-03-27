@@ -4,8 +4,10 @@ namespace port;
 
 internal class ContainerNamePrompt : IContainerNamePrompt
 {
-    public string GetIdentifierOfContainerFromUser(IReadOnlyCollection<Container> containers,
-        string command)
+    public string GetIdentifierOfContainerFromUser(
+        IReadOnlyCollection<Container> containers,
+        string command
+    )
     {
         switch (containers.Count)
         {
@@ -32,9 +34,8 @@ internal class ContainerNamePrompt : IContainerNamePrompt
             {
                 return o switch
                 {
-                    Container container =>
-                        $"[white]{container.ContainerName}[/]",
-                    _ => o as string ?? throw new InvalidOperationException()
+                    Container container => $"[white]{container.ContainerName}[/]",
+                    _ => o as string ?? throw new InvalidOperationException(),
                 };
             })
             .PageSize(10)

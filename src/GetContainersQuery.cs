@@ -16,24 +16,26 @@ internal class GetContainersQuery : IGetContainersQuery
         _containerListResponses = new AsyncLazy<IList<ContainerListResponse>>(async token =>
         {
             var containers = await _dockerClient.Containers.ListContainersAsync(
-                new ContainersListParameters
-                {
-                    Limit = long.MaxValue
-                }, token);
+                new ContainersListParameters { Limit = long.MaxValue },
+                token
+            );
             return containers.Where(clr => clr.State != "dead").ToList();
         });
     }
 
     public async IAsyncEnumerable<Container> QueryRunningAsync()
     {
-        var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
+        var containerListResponses = await _containerListResponses.WithCancellation(
+            CancellationToken.None
+        );
         foreach (var containerListResponse in containerListResponses)
         {
             ContainerInspectResponse inspectContainerResponse;
             try
             {
-                inspectContainerResponse =
-                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+                inspectContainerResponse = await _dockerClient.Containers.InspectContainerAsync(
+                    containerListResponse.ID
+                );
             }
             catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
@@ -48,17 +50,22 @@ internal class GetContainersQuery : IGetContainersQuery
         }
     }
 
-    public async IAsyncEnumerable<Container> QueryByContainerIdentifierAndTagAsync(string containerIdentifier,
-        string? tag)
+    public async IAsyncEnumerable<Container> QueryByContainerIdentifierAndTagAsync(
+        string containerIdentifier,
+        string? tag
+    )
     {
-        var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
+        var containerListResponses = await _containerListResponses.WithCancellation(
+            CancellationToken.None
+        );
         foreach (var containerListResponse in containerListResponses)
         {
             ContainerInspectResponse inspectContainerResponse;
             try
             {
-                inspectContainerResponse =
-                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+                inspectContainerResponse = await _dockerClient.Containers.InspectContainerAsync(
+                    containerListResponse.ID
+                );
             }
             catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
@@ -66,7 +73,10 @@ internal class GetContainersQuery : IGetContainersQuery
             }
 
             var container = new Container(containerListResponse, inspectContainerResponse);
-            if (containerIdentifier == container.ContainerIdentifier && tag == container.ContainerTag)
+            if (
+                containerIdentifier == container.ContainerIdentifier
+                && tag == container.ContainerTag
+            )
             {
                 yield return container;
             }
@@ -75,15 +85,19 @@ internal class GetContainersQuery : IGetContainersQuery
 
     public async IAsyncEnumerable<Container> QueryByImageIdAsync(string imageId)
     {
-        var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
+        var containerListResponses = await _containerListResponses.WithCancellation(
+            CancellationToken.None
+        );
         foreach (var containerListResponse in containerListResponses)
         {
-            if (containerListResponse.ImageID != imageId) continue;
+            if (containerListResponse.ImageID != imageId)
+                continue;
             ContainerInspectResponse inspectContainerResponse;
             try
             {
-                inspectContainerResponse =
-                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+                inspectContainerResponse = await _dockerClient.Containers.InspectContainerAsync(
+                    containerListResponse.ID
+                );
             }
             catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {
@@ -97,14 +111,17 @@ internal class GetContainersQuery : IGetContainersQuery
 
     public async IAsyncEnumerable<Container> QueryByContainerNameAsync(string containerName)
     {
-        var containerListResponses = await _containerListResponses.WithCancellation(CancellationToken.None);
+        var containerListResponses = await _containerListResponses.WithCancellation(
+            CancellationToken.None
+        );
         foreach (var containerListResponse in containerListResponses)
         {
             ContainerInspectResponse inspectContainerResponse;
             try
             {
-                inspectContainerResponse =
-                    await _dockerClient.Containers.InspectContainerAsync(containerListResponse.ID);
+                inspectContainerResponse = await _dockerClient.Containers.InspectContainerAsync(
+                    containerListResponse.ID
+                );
             }
             catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)
             {

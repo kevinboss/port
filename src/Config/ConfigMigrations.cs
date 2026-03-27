@@ -7,16 +7,15 @@ public static class ConfigMigrations
         return new Config
         {
             DockerEndpoint = config.DockerEndpoint,
-            ImageConfigs = config.Images.Select(e => new Config.ImageConfig
-            {
-                Identifier = e.Identifier,
-                ImageName = e.ImageName,
-                Ports = e.Ports,
-                ImageTags = new List<string>
+            ImageConfigs = config
+                .Images.Select(e => new Config.ImageConfig
                 {
-                    e.ImageTag
-                }
-            }).ToList()
+                    Identifier = e.Identifier,
+                    ImageName = e.ImageName,
+                    Ports = e.Ports,
+                    ImageTags = new List<string> { e.ImageTag },
+                })
+                .ToList(),
         };
     }
 }

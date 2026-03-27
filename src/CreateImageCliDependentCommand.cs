@@ -15,26 +15,30 @@ internal class CreateImageCliChildCommand : ICreateImageCliChildCommand
     {
         var tasks = new Dictionary<string, ProgressTask>();
         var lockObject = new object();
-        await AnsiConsole.Progress()
+        await AnsiConsole
+            .Progress()
             .Columns(
                 new PercentageColumn(),
                 new ProgressBarColumn(),
                 new SpinnerColumn(),
-                new TaskDescriptionColumn
-                {
-                    Alignment = Justify.Left
-                })
+                new TaskDescriptionColumn { Alignment = Justify.Left }
+            )
             .StartAsync(async ctx =>
             {
-                _createImageCommand.ProgressObservable
-                    .Subscribe(progress => UpdateProgressTasks(tag, lockObject, progress, tasks, ctx));
+                _createImageCommand.ProgressObservable.Subscribe(progress =>
+                    UpdateProgressTasks(tag, lockObject, progress, tasks, ctx)
+                );
                 await _createImageCommand.ExecuteAsync(imageName, tag);
             });
     }
 
-    private static void UpdateProgressTasks(string? tag, object lockObject, Progress progress,
+    private static void UpdateProgressTasks(
+        string? tag,
+        object lockObject,
+        Progress progress,
         IDictionary<string, ProgressTask> tasks,
-        ProgressContext ctx)
+        ProgressContext ctx
+    )
     {
         lock (lockObject)
         {

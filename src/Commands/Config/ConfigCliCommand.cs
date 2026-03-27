@@ -22,5 +22,6 @@ internal class ConfigCliCommand : Command<ConfigSettings>
         return 0;
     }
 
-    private static string FormatAsLink(string caption, string url) => $"\u001B]8;;{url}\a{caption}\u001B]8;;\a";
+    private static string FormatAsLink(string caption, string url) =>
+        $"\u001B]8;;{url}\a{caption}\u001B]8;;\a";
 }

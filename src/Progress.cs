@@ -3,7 +3,7 @@ namespace port;
 public class Progress
 {
     internal const string NullId = nameof(NullId);
-    
+
     internal Progress(Progress progress)
     {
         Id = progress.Id;
@@ -36,5 +36,5 @@ public enum ProgressState
 {
     Initial,
     Downloading,
-    Finished
+    Finished,
 }

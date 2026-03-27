@@ -9,13 +9,19 @@ public static class ImageNameHelper
     {
         if (!TryGetImageNameAndTag(imageName, out var result))
         {
-            throw new ArgumentException($"Does not contain tag separator {TagSeparator}", nameof(imageName));
+            throw new ArgumentException(
+                $"Does not contain tag separator {TagSeparator}",
+                nameof(imageName)
+            );
         }
 
         return result;
     }
 
-    public static bool TryGetImageNameAndTag(string imageName, out (string imageName, string tag) nameAndTag)
+    public static bool TryGetImageNameAndTag(
+        string imageName,
+        out (string imageName, string tag) nameAndTag
+    )
     {
         nameAndTag = (imageName, string.Empty);
 
@@ -57,7 +63,8 @@ public static class ImageNameHelper
 
     public static string BuildImageName(string imageName, string? tag = null)
     {
-        if (tag == null) return imageName;
+        if (tag == null)
+            return imageName;
 
         // Digests use @ separator, tags use : separator
         var separator = IsDigest(tag) ? DigestSeparator : TagSeparator;
@@ -65,6 +72,6 @@ public static class ImageNameHelper
     }
 
     public static bool IsDigest(string tag) =>
-        tag.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) ||
-        tag.StartsWith("sha512:", StringComparison.OrdinalIgnoreCase);
+        tag.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase)
+        || tag.StartsWith("sha512:", StringComparison.OrdinalIgnoreCase);
 }
