@@ -4,7 +4,10 @@ public static class DigestHelper
 {
     private const string Separator = "@";
 
-    public static bool TryGetImageNameAndId(string digest, out (string imageName, string tag) nameAndId)
+    public static bool TryGetImageNameAndId(
+        string digest,
+        out (string imageName, string tag) nameAndId
+    )
     {
         nameAndId = (digest, string.Empty);
         var idx = digest.LastIndexOf(Separator, StringComparison.Ordinal);

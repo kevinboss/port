@@ -4,8 +4,11 @@ public static class ContainerNameHelper
 {
     private const string Separator = ".";
 
-    public static bool TryGetContainerNameAndTag(string containerName, string? tagPrefix,
-        out (string containerName, string tag) nameAndTag)
+    public static bool TryGetContainerNameAndTag(
+        string containerName,
+        string? tagPrefix,
+        out (string containerName, string tag) nameAndTag
+    )
     {
         nameAndTag = (containerName, string.Empty);
 
@@ -21,11 +24,13 @@ public static class ContainerNameHelper
         return true;
     }
 
-    public static string BuildContainerName(string identifier, string? tag) => $"{identifier}{Separator}{SanitizeTag(tag)}";
+    public static string BuildContainerName(string identifier, string? tag) =>
+        $"{identifier}{Separator}{SanitizeTag(tag)}";
 
     private static string? SanitizeTag(string? tag)
     {
-        if (tag == null) return null;
+        if (tag == null)
+            return null;
 
         var sanitized = tag.Replace(':', '-');
 

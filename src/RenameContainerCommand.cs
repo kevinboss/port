@@ -13,6 +13,9 @@ internal class RenameContainerCommand : IRenameContainerCommand
     }
 
     public async Task ExecuteAsync(string containerId, string newName) =>
-        await _dockerClient.Containers.RenameContainerAsync(containerId,
-            new ContainerRenameParameters { NewName = newName }, CancellationToken.None);
+        await _dockerClient.Containers.RenameContainerAsync(
+            containerId,
+            new ContainerRenameParameters { NewName = newName },
+            CancellationToken.None
+        );
 }

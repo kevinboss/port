@@ -9,8 +9,8 @@ internal class ResetCliCommand(
     ICreateContainerCommand createContainerCommand,
     IRunContainerCommand runContainerCommand,
     IContainerNamePrompt containerNamePrompt,
-    ListCliCommand listCliCommand)
-    : AsyncCommand<ResetSettings>
+    ListCliCommand listCliCommand
+) : AsyncCommand<ResetSettings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ResetSettings settings)
     {
@@ -29,8 +29,10 @@ internal class ResetCliCommand(
 
     private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)
     {
-        var containers = await Spinner.StartAsync("Getting running containers",
-            async _ => await getRunningContainersQuery.QueryAsync().ToListAsync());
+        var containers = await Spinner.StartAsync(
+            "Getting running containers",
+            async _ => await getRunningContainersQuery.QueryAsync().ToListAsync()
+        );
 
         if (settings.ContainerIdentifier != null)
         {
@@ -47,7 +49,6 @@ internal class ResetCliCommand(
         return containers.SingleOrDefault(c => c.ContainerName == identifier);
     }
 
-
     private async Task ResetContainerAsync(Container container)
     {
         await Spinner.StartAsync(
@@ -57,6 +58,7 @@ internal class ResetCliCommand(
                 await stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
                 var id = await createContainerCommand.ExecuteAsync(container);
                 await runContainerCommand.ExecuteAsync(id);
-            });
+            }
+        );
     }
 }

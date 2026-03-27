@@ -16,8 +16,8 @@ internal class RunCliCommand(
     IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
     IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
     IRenameContainerCommand renameContainerCommand,
-    ListCliCommand listCliCommand)
-    : AsyncCommand<RunSettings>
+    ListCliCommand listCliCommand
+) : AsyncCommand<RunSettings>
 {
     private const char PortSeparator = ':';
 
@@ -35,14 +35,18 @@ internal class RunCliCommand(
         return 0;
     }
 
-    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(IImageIdentifierSettings settings)
+    private async Task<(string identifier, string? tag)> GetIdentifierAndTagAsync(
+        IImageIdentifierSettings settings
+    )
     {
         if (settings.ImageIdentifier != null)
         {
             return imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await imageIdentifierPrompt.GetRunnableIdentifierAndTagFromUserAsync("run");
+        var identifierAndTag = await imageIdentifierPrompt.GetRunnableIdentifierAndTagFromUserAsync(
+            "run"
+        );
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
@@ -51,35 +55,44 @@ internal class RunCliCommand(
         var imageConfig = config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
         {
-            throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
-                nameof(identifier));
+            throw new ArgumentException(
+                $"There is no config defined for identifier '{identifier}'",
+                nameof(identifier)
+            );
         }
 
-        var hostPorts = imageConfig.Ports
-            .Select(e => e.Split(PortSeparator)[0])
-            .ToList();
-        var spinnerTex = $"Terminating containers using host ports '{string.Join(", ", hostPorts)}'";
-        return Spinner.StartAsync(spinnerTex, async _ =>
-        {
-            var containers = GetRunningContainersUsingHostPortsAsync(hostPorts);
-            await foreach (var container in containers)
-                await stopContainerCommand.ExecuteAsync(container.Id);
-        });
+        var hostPorts = imageConfig.Ports.Select(e => e.Split(PortSeparator)[0]).ToList();
+        var spinnerTex =
+            $"Terminating containers using host ports '{string.Join(", ", hostPorts)}'";
+        return Spinner.StartAsync(
+            spinnerTex,
+            async _ =>
+            {
+                var containers = GetRunningContainersUsingHostPortsAsync(hostPorts);
+                await foreach (var container in containers)
+                    await stopContainerCommand.ExecuteAsync(container.Id);
+            }
+        );
     }
 
     private IAsyncEnumerable<Container> GetRunningContainersUsingHostPortsAsync(
-        IEnumerable<string> hostPorts)
+        IEnumerable<string> hostPorts
+    )
     {
-        return getContainersQuery.QueryRunningAsync()
+        return getContainersQuery
+            .QueryRunningAsync()
             .Where(container =>
             {
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-                if (container.PortBindings is null) return false;
-                var usedHostPorts = container.PortBindings
-                    .SelectMany(pb => pb.Value
-                        .Select(hp => hp.HostPort));
-                return container.PortBindings
-                    .Any(p => { return hostPorts.Any(p => usedHostPorts.Contains(p)); });
+                if (container.PortBindings is null)
+                    return false;
+                var usedHostPorts = container.PortBindings.SelectMany(pb =>
+                    pb.Value.Select(hp => hp.HostPort)
+                );
+                return container.PortBindings.Any(p =>
+                {
+                    return hostPorts.Any(p => usedHostPorts.Contains(p));
+                });
             });
     }
 
@@ -90,62 +103,96 @@ internal class RunCliCommand(
 
         var imageName = imageConfig.ImageName;
         var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
-        var existingImage = await Spinner.StartAsync($"Query existing image: {constructedImageName}",
+        var existingImage = await Spinner.StartAsync(
+            $"Query existing image: {constructedImageName}",
             async _ =>
             {
-                if (imageConfig.ImageTags.Contains(tag)) return await getImageQuery.QueryAsync(imageName, tag);
+                if (imageConfig.ImageTags.Contains(tag))
+                    return await getImageQuery.QueryAsync(imageName, tag);
                 var existingImage = await getImageQuery.QueryAsync(imageName, tag);
-                if (existingImage is not null) return existingImage;
+                if (existingImage is not null)
+                    return existingImage;
                 tag = $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}";
                 return await getImageQuery.QueryAsync(imageName, tag);
-            });
+            }
+        );
         if (existingImage is null)
         {
             await createImageCliChildCommand.ExecuteAsync(imageName, tag);
-            existingImage = await Spinner.StartAsync($"Re-query existing image: {constructedImageName}",
-                async _ => await getImageQuery.QueryAsync(imageName, tag));
+            existingImage = await Spinner.StartAsync(
+                $"Re-query existing image: {constructedImageName}",
+                async _ => await getImageQuery.QueryAsync(imageName, tag)
+            );
         }
 
         var tagPrefix = existingImage?.GetLabel(Constants.TagPrefix);
 
-        await Spinner.StartAsync($"Launching {constructedImageName}", async _ =>
-        {
-            var containers = await getContainersQuery.QueryByContainerNameAsync(containerName).ToListAsync();
-            var ports = imageConfig.Ports;
-            var environment = imageConfig.Environment;
-            if (containers.Count == 1)
+        await Spinner.StartAsync(
+            $"Launching {constructedImageName}",
+            async _ =>
             {
-                var container = containers.Single();
-                var imageChanged = existingImage?.Id != null && container.ImageId != existingImage.Id;
-                if (resetContainer)
+                var containers = await getContainersQuery
+                    .QueryByContainerNameAsync(containerName)
+                    .ToListAsync();
+                var ports = imageConfig.Ports;
+                var environment = imageConfig.Environment;
+                if (containers.Count == 1)
                 {
-                    await stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                    var id =
-                        await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
-                            environment);
+                    var container = containers.Single();
+                    var imageChanged =
+                        existingImage?.Id != null && container.ImageId != existingImage.Id;
+                    if (resetContainer)
+                    {
+                        await stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+                        var id = await createContainerCommand.ExecuteAsync(
+                            identifier,
+                            imageName,
+                            tagPrefix,
+                            tag,
+                            ports,
+                            environment
+                        );
+                        await runContainerCommand.ExecuteAsync(id);
+                    }
+                    else if (imageChanged)
+                    {
+                        await stopContainerCommand.ExecuteAsync(container.Id);
+                        var renamedContainerName = ContainerNameHelper.BuildContainerName(
+                            identifier,
+                            container.ImageId
+                        );
+                        await renameContainerCommand.ExecuteAsync(
+                            container.Id,
+                            renamedContainerName
+                        );
+                        var id = await createContainerCommand.ExecuteAsync(
+                            identifier,
+                            imageName,
+                            tagPrefix,
+                            tag,
+                            ports,
+                            environment
+                        );
+                        await runContainerCommand.ExecuteAsync(id);
+                    }
+                    else
+                    {
+                        await runContainerCommand.ExecuteAsync(container.Id);
+                    }
+                }
+                else if (containers.Count == 0)
+                {
+                    var id = await createContainerCommand.ExecuteAsync(
+                        identifier,
+                        imageName,
+                        tagPrefix,
+                        tag,
+                        ports,
+                        environment
+                    );
                     await runContainerCommand.ExecuteAsync(id);
                 }
-                else if (imageChanged)
-                {
-                    await stopContainerCommand.ExecuteAsync(container.Id);
-                    var renamedContainerName = ContainerNameHelper.BuildContainerName(identifier, container.ImageId);
-                    await renameContainerCommand.ExecuteAsync(container.Id, renamedContainerName);
-                    var id =
-                        await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
-                            environment);
-                    await runContainerCommand.ExecuteAsync(id);
-                }
-                else
-                {
-                    await runContainerCommand.ExecuteAsync(container.Id);
-                }
             }
-            else if (containers.Count == 0)
-            {
-                var id = await createContainerCommand.ExecuteAsync(identifier, imageName, tagPrefix, tag, ports,
-                    environment);
-                await runContainerCommand.ExecuteAsync(id);
-            }
-        });
+        );
     }
 }

@@ -13,5 +13,8 @@ internal class StopContainerCommand : IStopContainerCommand
     }
 
     public async Task ExecuteAsync(string containerId) =>
-        await _dockerClient.Containers.StopContainerAsync(containerId, new ContainerStopParameters());
+        await _dockerClient.Containers.StopContainerAsync(
+            containerId,
+            new ContainerStopParameters()
+        );
 }

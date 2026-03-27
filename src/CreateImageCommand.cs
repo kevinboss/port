@@ -25,11 +25,9 @@ internal class CreateImageCommand : ICreateImageCommand
 
         _progressSubscriber.Subscribe(progress, _progressSubject);
         await _dockerClient.Images.CreateImageAsync(
-            new ImagesCreateParameters
-            {
-                FromImage = imageName,
-                Tag = tag
-            },
-            null, progress);
+            new ImagesCreateParameters { FromImage = imageName, Tag = tag },
+            null,
+            progress
+        );
     }
 }

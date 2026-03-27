@@ -8,7 +8,7 @@ public class Image
     {
         _labels = labels;
     }
-    
+
     public bool IsSnapshot { get; set; }
     public string? Tag { get; set; }
     public string? OriginalTag { get; set; }
@@ -38,7 +38,6 @@ public class Image
 
     public IReadOnlyList<Container> Containers { get; set; } = new List<Container>();
 
-    public string? GetLabel(string label) => _labels.Where(l => l.Key == label)
-        .Select(l => l.Value)
-        .SingleOrDefault();
+    public string? GetLabel(string label) =>
+        _labels.Where(l => l.Key == label).Select(l => l.Value).SingleOrDefault();
 }

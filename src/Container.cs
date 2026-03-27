@@ -8,7 +8,10 @@ public class Container
     private readonly IDictionary<string, string> _labels;
     private readonly string _containerName;
 
-    public Container(ContainerListResponse containerListResponse, ContainerInspectResponse inspectContainerResponse)
+    public Container(
+        ContainerListResponse containerListResponse,
+        ContainerInspectResponse inspectContainerResponse
+    )
     {
         Id = containerListResponse.ID;
         ImageId = containerListResponse.ImageID;
@@ -17,20 +20,28 @@ public class Container
         Created = inspectContainerResponse.Created;
 
         // Check if base tag label contains a digest reference
-        var baseTagFromLabel = containerListResponse.Labels
-            .Where(l => l.Key == Constants.BaseTagLabel)
+        var baseTagFromLabel = containerListResponse
+            .Labels.Where(l => l.Key == Constants.BaseTagLabel)
             .Select(l => l.Value)
             .SingleOrDefault();
 
         if (baseTagFromLabel != null && ImageNameHelper.IsDigest(baseTagFromLabel))
         {
             // Container was created from a digest reference (by port)
-            ImageIdentifier = ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var parsed)
+            ImageIdentifier = ImageNameHelper.TryGetImageNameAndTag(
+                containerListResponse.Image,
+                out var parsed
+            )
                 ? parsed.imageName
                 : containerListResponse.Image;
             ImageTag = baseTagFromLabel;
         }
-        else if (ImageNameHelper.TryGetImageNameAndTag(containerListResponse.Image, out var imageNameAndTag))
+        else if (
+            ImageNameHelper.TryGetImageNameAndTag(
+                containerListResponse.Image,
+                out var imageNameAndTag
+            )
+        )
         {
             var tag = imageNameAndTag.tag;
 
@@ -42,10 +53,12 @@ public class Container
             }
             else
             {
-                var tagPrefix = containerListResponse.Labels.Where(l => l.Key == Constants.TagPrefix)
+                var tagPrefix = containerListResponse
+                    .Labels.Where(l => l.Key == Constants.TagPrefix)
                     .Select(l => l.Value)
                     .SingleOrDefault();
-                if (tagPrefix is not null && tag.StartsWith(tagPrefix)) tag = tag[tagPrefix.Length..];
+                if (tagPrefix is not null && tag.StartsWith(tagPrefix))
+                    tag = tag[tagPrefix.Length..];
                 if (containerName.EndsWith(tag))
                 {
                     ImageIdentifier = imageNameAndTag.imageName;
@@ -79,7 +92,13 @@ public class Container
     {
         get
         {
-            if (!ContainerNameHelper.TryGetContainerNameAndTag(_containerName, TagPrefix, out var containerNameAndTag))
+            if (
+                !ContainerNameHelper.TryGetContainerNameAndTag(
+                    _containerName,
+                    TagPrefix,
+                    out var containerNameAndTag
+                )
+            )
                 return _containerName;
             var tagPrefix = TagPrefix;
             var tag = containerNameAndTag.tag.StartsWith(tagPrefix)
@@ -90,11 +109,15 @@ public class Container
     }
 
     public string ContainerIdentifier =>
-        _labels.Where(l => l.Key == Constants.IdentifierLabel)
+        _labels
+            .Where(l => l.Key == Constants.IdentifierLabel)
             .Select(l => l.Value)
-            .SingleOrDefault() ?? (ContainerTag is not null
-            ? _containerName.Replace($".{ContainerTag}", string.Empty)
-            : _containerName);
+            .SingleOrDefault()
+        ?? (
+            ContainerTag is not null
+                ? _containerName.Replace($".{ContainerTag}", string.Empty)
+                : _containerName
+        );
 
     public string TagPrefix => TagPrefixHelper.GetTagPrefix(ContainerIdentifier);
 
@@ -105,7 +128,6 @@ public class Container
     public bool Running { get; }
     public IList<string> Environment { get; }
 
-    public string? GetLabel(string label) => _labels.Where(l => l.Key == label)
-        .Select(l => l.Value)
-        .SingleOrDefault();
+    public string? GetLabel(string label) =>
+        _labels.Where(l => l.Key == label).Select(l => l.Value).SingleOrDefault();
 }

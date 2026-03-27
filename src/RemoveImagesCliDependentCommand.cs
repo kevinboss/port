@@ -8,16 +8,21 @@ internal class RemoveImagesCliDependentCommand : IRemoveImagesCliDependentComman
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
 
-    public RemoveImagesCliDependentCommand(IGetContainersQuery getContainersQuery,
-        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand, 
-        IRemoveImageCommand removeImageCommand)
+    public RemoveImagesCliDependentCommand(
+        IGetContainersQuery getContainersQuery,
+        IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
+        IRemoveImageCommand removeImageCommand
+    )
     {
         _getContainersQuery = getContainersQuery;
         _stopAndRemoveContainerCommand = stopAndRemoveContainerCommand;
         _removeImageCommand = removeImageCommand;
     }
 
-    public async Task<List<ImageRemovalResult>> ExecuteAsync(List<string> imageIds, StatusContext ctx)
+    public async Task<List<ImageRemovalResult>> ExecuteAsync(
+        List<string> imageIds,
+        StatusContext ctx
+    )
     {
         var result = new List<ImageRemovalResult>();
         foreach (var imageId in imageIds)

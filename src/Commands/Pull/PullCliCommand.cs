@@ -6,8 +6,8 @@ public class PullCliCommand(
     IImageIdentifierPrompt imageIdentifierPrompt,
     port.Config.Config config,
     IImageIdentifierAndTagEvaluator imageIdentifierAndTagEvaluator,
-    ICreateImageCliChildCommand createImageCliChildCommand)
-    : AsyncCommand<PullSettings>
+    ICreateImageCliChildCommand createImageCliChildCommand
+) : AsyncCommand<PullSettings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, PullSettings settings)
     {
@@ -16,14 +16,18 @@ public class PullCliCommand(
         return 0;
     }
 
-    private async Task<(string identifier, string? tag)> GetBaseIdentifierAndTagAsync(IImageIdentifierSettings settings)
+    private async Task<(string identifier, string? tag)> GetBaseIdentifierAndTagAsync(
+        IImageIdentifierSettings settings
+    )
     {
         if (settings.ImageIdentifier != null)
         {
             return imageIdentifierAndTagEvaluator.Evaluate(settings.ImageIdentifier);
         }
 
-        var identifierAndTag = await imageIdentifierPrompt.GetBaseIdentifierAndTagFromUserAsync("pull");
+        var identifierAndTag = await imageIdentifierPrompt.GetBaseIdentifierAndTagFromUserAsync(
+            "pull"
+        );
         return (identifierAndTag.identifier, identifierAndTag.tag);
     }
 
@@ -32,8 +36,10 @@ public class PullCliCommand(
         var imageConfig = config.GetImageConfigByIdentifier(identifier);
         if (imageConfig == null)
         {
-            throw new ArgumentException($"There is no config defined for identifier '{identifier}'",
-                nameof(identifier));
+            throw new ArgumentException(
+                $"There is no config defined for identifier '{identifier}'",
+                nameof(identifier)
+            );
         }
 
         var imageName = imageConfig.ImageName;
