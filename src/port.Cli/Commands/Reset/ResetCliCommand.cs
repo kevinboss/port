@@ -1,64 +1,33 @@
 using port.Commands.List;
+using port.Orchestrators;
 using Spectre.Console.Cli;
 
 namespace port.Commands.Reset;
 
 public class ResetCliCommand(
     IGetRunningContainersQuery getRunningContainersQuery,
-    IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
-    ICreateContainerCommand createContainerCommand,
-    IRunContainerCommand runContainerCommand,
     IContainerNamePrompt containerNamePrompt,
+    IResetOrchestrator resetOrchestrator,
     ListCliCommand listCliCommand
 ) : AsyncCommand<ResetSettings>
 {
     public override async Task<int> ExecuteAsync(CommandContext context, ResetSettings settings)
     {
-        var container = await GetContainerAsync(settings);
-        if (container == null)
-        {
-            throw new InvalidOperationException("No running container found");
-        }
-
-        await ResetContainerAsync(container);
-
+        var containerName = await ResolveContainerNameAsync(settings);
+        await resetOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(containerName));
         await listCliCommand.ExecuteAsync();
-
         return 0;
     }
 
-    private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)
+    private async Task<string> ResolveContainerNameAsync(IContainerIdentifierSettings settings)
     {
-        var containers = await Spinner.StartAsync(
-            "Getting running containers",
-            async _ => await getRunningContainersQuery.QueryAsync().ToListAsync()
-        );
-
         if (settings.ContainerIdentifier != null)
-        {
-            return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);
-        }
+            return settings.ContainerIdentifier;
 
-        // If only one container is running, use it directly
+        var containers = await getRunningContainersQuery.QueryAsync().ToListAsync();
         if (containers.Count == 1)
-        {
-            return containers.Single();
-        }
+            return containers.Single().ContainerName;
 
-        var identifier = containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "reset");
-        return containers.SingleOrDefault(c => c.ContainerName == identifier);
-    }
-
-    private async Task ResetContainerAsync(Container container)
-    {
-        await Spinner.StartAsync(
-            $"Resetting container '{container.ContainerName}'",
-            async _ =>
-            {
-                await stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-                var id = await createContainerCommand.ExecuteAsync(container);
-                await runContainerCommand.ExecuteAsync(id);
-            }
-        );
+        return containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "reset");
     }
 }
