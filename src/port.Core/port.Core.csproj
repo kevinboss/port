@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Docker.DotNet" />
+    <PackageReference Include="DotNext.Threading" />
+    <PackageReference Include="System.Reactive" />
+    <PackageReference Include="yamldotnet" />
+  </ItemGroup>
+</Project>
