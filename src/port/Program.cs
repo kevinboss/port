@@ -80,6 +80,7 @@ app.Configure(appConfig =>
     appConfig.AddCommand<StopCliCommand>("stop").WithAlias("s");
     appConfig.AddCommand<ConfigCliCommand>("config").WithAlias("cfg");
     appConfig.AddCommand<PruneCliCommand>("prune").WithAlias("pr");
+    appConfig.AddCommand<McpCliCommand>("mcp");
 });
 
 AnsiConsole.Console = new CustomConsole();

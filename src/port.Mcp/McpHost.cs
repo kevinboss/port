@@ -10,9 +10,9 @@ namespace port.Mcp;
 
 public static class McpHost
 {
-    public static async Task RunAsync(string[] args, CancellationToken cancellationToken = default)
+    public static async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        var builder = Host.CreateApplicationBuilder(args);
+        var builder = Host.CreateApplicationBuilder();
 
         builder.Logging.ClearProviders();
         builder.Logging.AddConsole(options =>
