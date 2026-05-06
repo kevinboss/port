@@ -38,7 +38,7 @@ public class CreateContainerCommand : ICreateContainerCommand
             labels.Add(Constants.BaseTagLabel, baseTag);
         if (tagPrefix is not null)
             labels.Add(Constants.TagPrefix, tagPrefix);
-        await _dockerClient.Containers.CreateContainerAsync(
+        var createContainerResponse = await _dockerClient.Containers.CreateContainerAsync(
             new CreateContainerParameters
             {
                 Name = containerName,
@@ -49,7 +49,7 @@ public class CreateContainerCommand : ICreateContainerCommand
                 Labels = labels,
             }
         );
-        return containerName;
+        return createContainerResponse.ID;
     }
 
     public async Task<string> ExecuteAsync(Container container, string tagPrefix, string newTag)
