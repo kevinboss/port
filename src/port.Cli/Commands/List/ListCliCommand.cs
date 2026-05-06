@@ -1,3 +1,4 @@
+using port.Orchestrators;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -5,57 +6,43 @@ namespace port.Commands.List;
 
 public class ListCliCommand : AsyncCommand<ListSettings>
 {
-    private readonly IAllImagesQuery _allImagesQuery;
+    private readonly IListOrchestrator _listOrchestrator;
 
-    public ListCliCommand(IAllImagesQuery allImagesQuery)
+    public ListCliCommand(IListOrchestrator listOrchestrator)
     {
-        _allImagesQuery = allImagesQuery;
+        _listOrchestrator = listOrchestrator;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext _, ListSettings settings)
     {
-        var textsGroups = await Spinner.StartAsync(
-            "Loading images",
-            async _ => await CreateImageTree(settings.ImageIdentifier).ToListAsync()
+        var result = await _listOrchestrator.WithRenderingAsync(o =>
+            o.ExecuteAsync(settings.ImageIdentifier)
         );
-        AnsiConsole.WriteLine();
-        foreach (var text in textsGroups.SelectMany(texts => texts))
-        {
-            AnsiConsole.MarkupLine(text);
-        }
-
+        Render(result);
         return 0;
     }
 
     public async Task ExecuteAsync()
     {
-        var textsGroups = await Spinner.StartAsync(
-            "Loading images",
-            async _ => await CreateImageTree().ToListAsync()
-        );
-        AnsiConsole.WriteLine();
-        foreach (var text in textsGroups.SelectMany(texts => texts))
-        {
-            AnsiConsole.MarkupLine(text);
-        }
+        var result = await _listOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(null));
+        Render(result);
     }
 
-    private async IAsyncEnumerable<List<string>> CreateImageTree(string? imageIdentifier = default)
+    private static void Render(ListResult result)
     {
-        var imageGroups = (await _allImagesQuery.QueryAsync().ToListAsync())
-            .Where(e => imageIdentifier == null || e.Identifier == imageIdentifier)
-            .OrderBy(i => i.Identifier)
-            .ToList();
-        var lengths = TagTextBuilder.GetLengths(
-            imageGroups.SelectMany(imageGroup => imageGroup.Images)
-        );
-        foreach (var imageGroup in imageGroups)
+        var lengths = TagTextBuilder.GetLengths(result.ImageGroups.SelectMany(g => g.Images));
+        AnsiConsole.WriteLine();
+        foreach (var group in result.ImageGroups)
         {
-            yield return imageGroup
-                .Images.Where(e => e.Tag != null)
-                .OrderBy(e => e.Tag)
-                .Select(image => TagTextBuilder.BuildTagText(image, lengths))
-                .ToList();
+            foreach (
+                var line in group
+                    .Images.Where(e => e.Tag != null)
+                    .OrderBy(e => e.Tag)
+                    .Select(image => TagTextBuilder.BuildTagText(image, lengths))
+            )
+            {
+                AnsiConsole.MarkupLine(line);
+            }
         }
     }
 }

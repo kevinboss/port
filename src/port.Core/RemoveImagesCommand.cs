@@ -1,14 +1,14 @@
-using Spectre.Console;
+using port.Orchestrators;
 
 namespace port;
 
-public class RemoveImagesCliDependentCommand : IRemoveImagesCliDependentCommand
+public class RemoveImagesCommand : IRemoveImagesCommand
 {
     private readonly IGetContainersQuery _getContainersQuery;
     private readonly IStopAndRemoveContainerCommand _stopAndRemoveContainerCommand;
     private readonly IRemoveImageCommand _removeImageCommand;
 
-    public RemoveImagesCliDependentCommand(
+    public RemoveImagesCommand(
         IGetContainersQuery getContainersQuery,
         IStopAndRemoveContainerCommand stopAndRemoveContainerCommand,
         IRemoveImageCommand removeImageCommand
@@ -21,21 +21,23 @@ public class RemoveImagesCliDependentCommand : IRemoveImagesCliDependentCommand
 
     public async Task<List<ImageRemovalResult>> ExecuteAsync(
         List<string> imageIds,
-        StatusContext ctx
+        IObserver<OrchestrationEvent>? events = null,
+        CancellationToken ct = default
     )
     {
         var result = new List<ImageRemovalResult>();
         foreach (var imageId in imageIds)
         {
-            var containers = await _getContainersQuery.QueryByImageIdAsync(imageId).ToListAsync();
-            ctx.Status = $"Removing containers using '{imageId}'".EscapeMarkup();
+            ct.ThrowIfCancellationRequested();
+            var containers = await _getContainersQuery.QueryByImageIdAsync(imageId).ToListAsync(ct);
+            events?.OnNext(new StatusEvent($"Removing containers using '{imageId}'"));
             foreach (var container in containers)
             {
+                ct.ThrowIfCancellationRequested();
                 await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
             }
 
-            ctx.Status = $"Containers using '{imageId}' removed".EscapeMarkup();
-
+            events?.OnNext(new StatusEvent($"Containers using '{imageId}' removed"));
             result.Add(await _removeImageCommand.ExecuteAsync(imageId));
         }
 

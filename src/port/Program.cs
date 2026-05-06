@@ -12,6 +12,7 @@ using port.Commands.Run;
 using port.Commands.Stop;
 using port.Config;
 using port.Infrastructure;
+using port.Orchestrators;
 using port.Spectre;
 using Spectre.Console;
 using Spectre.Console.Cli;
@@ -34,10 +35,18 @@ registrations.AddTransient<IStopContainerCommand, StopContainerCommand>();
 registrations.AddTransient<IStopAndRemoveContainerCommand, StopAndRemoveContainerCommand>();
 registrations.AddTransient<IRenameContainerCommand, RenameContainerCommand>();
 registrations.AddTransient<IRemoveImageCommand, RemoveImageCommand>();
-registrations.AddTransient<ICreateImageCliChildCommand, CreateImageCliChildCommand>();
+registrations.AddTransient<IRemoveImagesCommand, RemoveImagesCommand>();
 registrations.AddTransient<IImageIdentifierAndTagEvaluator, ImageIdentifierAndTagEvaluator>();
 registrations.AddTransient<IProgressSubscriber, ProgressSubscriber>();
-registrations.AddTransient<IRemoveImagesCliDependentCommand, RemoveImagesCliDependentCommand>();
+registrations.AddTransient<IRunOrchestrator, RunOrchestrator>();
+registrations.AddTransient<IStopOrchestrator, StopOrchestrator>();
+registrations.AddTransient<IResetOrchestrator, ResetOrchestrator>();
+registrations.AddTransient<ICommitOrchestrator, CommitOrchestrator>();
+registrations.AddTransient<IPullOrchestrator, PullOrchestrator>();
+registrations.AddTransient<IRemoveOrchestrator, RemoveOrchestrator>();
+registrations.AddTransient<IPruneOrchestrator, PruneOrchestrator>();
+registrations.AddTransient<IListOrchestrator, ListOrchestrator>();
+registrations.AddTransient<IConfigOrchestrator, ConfigOrchestrator>();
 registrations.AddSingleton(typeof(Config), _ => ConfigFactory.GetOrCreateConfig());
 registrations.AddSingleton(
     typeof(IDockerClient),

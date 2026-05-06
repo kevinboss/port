@@ -1,5 +1,5 @@
 using port.Commands.List;
-using Spectre.Console;
+using port.Orchestrators;
 using Spectre.Console.Cli;
 
 namespace port.Commands.Stop;
@@ -8,57 +8,36 @@ public class StopCliCommand : AsyncCommand<StopSettings>
 {
     private readonly IGetRunningContainersQuery _getRunningContainersQuery;
     private readonly IContainerNamePrompt _containerNamePrompt;
-    private readonly IStopContainerCommand _stopContainerCommand;
+    private readonly IStopOrchestrator _stopOrchestrator;
     private readonly ListCliCommand _listCliCommand;
 
     public StopCliCommand(
         IGetRunningContainersQuery getRunningContainersQuery,
         IContainerNamePrompt containerNamePrompt,
-        IStopContainerCommand stopContainerCommand,
+        IStopOrchestrator stopOrchestrator,
         ListCliCommand listCliCommand
     )
     {
         _getRunningContainersQuery = getRunningContainersQuery;
         _containerNamePrompt = containerNamePrompt;
-        _stopContainerCommand = stopContainerCommand;
+        _stopOrchestrator = stopOrchestrator;
         _listCliCommand = listCliCommand;
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, StopSettings settings)
     {
-        var container = await GetContainerAsync(settings);
-        if (container == null)
-        {
-            throw new InvalidOperationException("No running container found");
-        }
-
-        await StopContainerAsync(container);
-
+        var containerName = await ResolveContainerNameAsync(settings);
+        await _stopOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(containerName));
         await _listCliCommand.ExecuteAsync();
-
         return 0;
     }
 
-    private async Task<Container?> GetContainerAsync(IContainerIdentifierSettings settings)
+    private async Task<string> ResolveContainerNameAsync(IContainerIdentifierSettings settings)
     {
-        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
         if (settings.ContainerIdentifier != null)
-        {
-            return containers.SingleOrDefault(c => c.ContainerName == settings.ContainerIdentifier);
-        }
+            return settings.ContainerIdentifier;
 
-        var identifier = _containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "stop");
-        return containers.SingleOrDefault(c => c.ContainerName == identifier);
-    }
-
-    private async Task StopContainerAsync(Container container)
-    {
-        await Spinner.StartAsync(
-            $"Stopping container '{container.ContainerName}'",
-            async _ =>
-            {
-                await _stopContainerCommand.ExecuteAsync(container.Id);
-            }
-        );
+        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
+        return _containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "stop");
     }
 }
