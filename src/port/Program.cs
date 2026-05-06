@@ -96,6 +96,11 @@ app.Configure(config =>
                         "[red]Timeout exception occurred[/], is the Docker daemon running?"
                     );
                     return -1;
+                case InvalidOperationException
+                or ArgumentException
+                or Docker.DotNet.DockerApiException:
+                    AnsiConsole.MarkupLine($"[red]{exception.Message.EscapeMarkup()}[/]");
+                    return -1;
                 default:
                     AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything);
                     return -1;
