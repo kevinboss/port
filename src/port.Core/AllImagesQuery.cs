@@ -401,7 +401,7 @@ public class AllImagesQuery : IAllImagesQuery
                     imageConfig.ImageName,
                     imageConfig.tag
                 );
-                return e.RepoTags.Any(repoTag => repoTag.Contains(imageNameAndTag));
+                return e.RepoTags.Any(repoTag => repoTag == imageNameAndTag);
             });
     }
 
