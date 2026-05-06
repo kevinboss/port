@@ -1,15 +1,18 @@
+using Docker.DotNet;
+using ModelContextProtocol;
 using port.Orchestrators;
 
 namespace port.Mcp;
 
 internal static class EventCollector
 {
-    public static (List<string> Messages, IDisposable Subscription) Subscribe(
-        IObservable<OrchestrationEvent> events
+    public static async Task<McpToolResponse<T>> InvokeAsync<T>(
+        IObservable<OrchestrationEvent> events,
+        Func<Task<T>> work
     )
     {
         var messages = new List<string>();
-        var subscription = events.Subscribe(evt =>
+        using var subscription = events.Subscribe(evt =>
         {
             switch (evt)
             {
@@ -21,6 +24,41 @@ internal static class EventCollector
                     break;
             }
         });
-        return (messages, subscription);
+
+        try
+        {
+            return new McpToolResponse<T>(await work(), messages);
+        }
+        catch (Exception e) when (IsDomainException(e))
+        {
+            throw new McpException(e.Message, e);
+        }
     }
+
+    public static async Task<T> InvokeAsync<T>(Func<Task<T>> work)
+    {
+        try
+        {
+            return await work();
+        }
+        catch (Exception e) when (IsDomainException(e))
+        {
+            throw new McpException(e.Message, e);
+        }
+    }
+
+    public static T Invoke<T>(Func<T> work)
+    {
+        try
+        {
+            return work();
+        }
+        catch (Exception e) when (IsDomainException(e))
+        {
+            throw new McpException(e.Message, e);
+        }
+    }
+
+    private static bool IsDomainException(Exception e) =>
+        e is InvalidOperationException or ArgumentException or DockerApiException;
 }
