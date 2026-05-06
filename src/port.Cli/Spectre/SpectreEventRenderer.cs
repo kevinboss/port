@@ -5,21 +5,19 @@ namespace port;
 
 public static class SpectreEventRenderer
 {
-    private const string StatusTaskKey = "__status__";
-
     public static Task<T> WithRenderingAsync<TOrchestrator, T>(
         this TOrchestrator orchestrator,
         Func<TOrchestrator, Task<T>> work
     )
         where TOrchestrator : IOrchestrator =>
-        RunAsync(orchestrator.Events, () => work(orchestrator));
+        RunWithStatusAsync(orchestrator.Events, () => work(orchestrator));
 
     public static Task WithRenderingAsync<TOrchestrator>(
         this TOrchestrator orchestrator,
         Func<TOrchestrator, Task> work
     )
         where TOrchestrator : IOrchestrator =>
-        RunAsync(
+        RunWithStatusAsync(
             orchestrator.Events,
             async () =>
             {
@@ -28,7 +26,59 @@ public static class SpectreEventRenderer
             }
         );
 
-    private static async Task<T> RunAsync<T>(
+    public static Task<T> WithProgressAsync<TOrchestrator, T>(
+        this TOrchestrator orchestrator,
+        Func<TOrchestrator, Task<T>> work
+    )
+        where TOrchestrator : IOrchestrator =>
+        RunWithProgressAsync(orchestrator.Events, () => work(orchestrator));
+
+    public static Task WithProgressAsync<TOrchestrator>(
+        this TOrchestrator orchestrator,
+        Func<TOrchestrator, Task> work
+    )
+        where TOrchestrator : IOrchestrator =>
+        RunWithProgressAsync(
+            orchestrator.Events,
+            async () =>
+            {
+                await work(orchestrator);
+                return 0;
+            }
+        );
+
+    private static async Task<T> RunWithStatusAsync<T>(
+        IObservable<OrchestrationEvent> events,
+        Func<Task<T>> work
+    )
+    {
+        return await AnsiConsole
+            .Status()
+            .Spinner(global::Spectre.Console.Spinner.Known.Dots)
+            .StartAsync(
+                "...",
+                async ctx =>
+                {
+                    using var subscription = events.Subscribe(evt =>
+                    {
+                        switch (evt)
+                        {
+                            case StatusEvent status:
+                                ctx.Status(status.Message.EscapeMarkup());
+                                break;
+                            case WarningEvent warning:
+                                AnsiConsole.MarkupLine(
+                                    $"[orange3]{warning.Message.EscapeMarkup()}[/]"
+                                );
+                                break;
+                        }
+                    });
+                    return await work();
+                }
+            );
+    }
+
+    private static async Task<T> RunWithProgressAsync<T>(
         IObservable<OrchestrationEvent> events,
         Func<Task<T>> work
     )
@@ -64,9 +114,6 @@ public static class SpectreEventRenderer
         {
             switch (evt)
             {
-                case StatusEvent status:
-                    UpdateStatus(ctx, tasks, status.Message);
-                    break;
                 case LayerProgressEvent layer:
                     UpdateLayer(ctx, tasks, layer);
                     break;
@@ -74,25 +121,6 @@ public static class SpectreEventRenderer
                     AnsiConsole.MarkupLine($"[orange3]{warning.Message.EscapeMarkup()}[/]");
                     break;
             }
-        }
-    }
-
-    private static void UpdateStatus(
-        ProgressContext ctx,
-        IDictionary<string, ProgressTask> tasks,
-        string message
-    )
-    {
-        var description = message.EscapeMarkup();
-        if (!tasks.TryGetValue(StatusTaskKey, out var task))
-        {
-            task = ctx.AddTask(description, autoStart: true, maxValue: 1);
-            task.IsIndeterminate();
-            tasks[StatusTaskKey] = task;
-        }
-        else
-        {
-            task.Description = description;
         }
     }
 

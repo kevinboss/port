@@ -12,7 +12,7 @@ public class PullCliCommand(
     public override async Task<int> ExecuteAsync(CommandContext context, PullSettings settings)
     {
         var (identifier, tag) = await ResolveIdentifierAndTagAsync(settings);
-        await pullOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(identifier, tag));
+        await pullOrchestrator.WithProgressAsync(o => o.ExecuteAsync(identifier, tag));
         return 0;
     }
 

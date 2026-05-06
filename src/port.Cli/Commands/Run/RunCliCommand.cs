@@ -17,7 +17,7 @@ public class RunCliCommand(
         if (tag == null)
             throw new InvalidOperationException("Can not launch untagged image");
 
-        await runOrchestrator.WithRenderingAsync(o =>
+        await runOrchestrator.WithProgressAsync(o =>
             o.ExecuteAsync(identifier, tag, settings.Reset)
         );
         await listCliCommand.ExecuteAsync();
