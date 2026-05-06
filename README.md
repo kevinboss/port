@@ -1,168 +1,145 @@
-# 🐳 port: run and manage containerized services with ease
+# port
 
 ![Port Logo](logo_1.png)
 
-[![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml) 
-[![CI](https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg)](https://github.com/kevinboss/heartbeat) 
+[![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml)
+[![Heartbeat](https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg)](https://github.com/kevinboss/heartbeat)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-Port streamlines the management of Docker images and containers, empowering you to:
-
-- ▶️ **Run containers** effortlessly with simple commands.
-- ⏹️ **Stop running containers** seamlessly.
-- 📋 **List all containers** to keep track of their status.
-- 🗑️ **Remove unwanted containers** to free up resources.
-- 🔄 **Reset containers** to their original state for reusability.
-- 💾 **Save container states** for future use or backups.
-
-All this without the hassle of memorizing complex Docker CLI commands, even when working with remote Docker engines.
+A small CLI for running and snapshotting Docker containers from a YAML config,
+with an MCP server so AI agents can drive the same workflows.
 
 ![Port in Action](example-2.gif)
 
-## 📥 Installation
+## Install
 
-### Scoop
+**Scoop**
 
 ```powershell
 scoop bucket add maple 'https://github.com/kevinboss/maple.git'
 scoop install port
 ```
 
-### Winget
+**Winget**
 
 ```powershell
 winget install kevinboss.port
 ```
 
-### Manual Installation
+**Manual**
 
-1. 📂 Download the latest release from the [Releases Page](https://github.com/kevinboss/port/releases).
-2. 🛠️ Add the folder to your system PATH:
+Grab a binary from the [releases page](https://github.com/kevinboss/port/releases)
+and put it on your `PATH`.
 
-   ```powershell
-   $Env:PATH += "C:\Path\To\Folder"
-   ```
+## Configuration
 
-## ⚙️ Configuration
-
-Configure Port by creating a `config.yml` file:
+Port reads `~/.port` (or `%USERPROFILE%\.port` on Windows). If the file does
+not exist, a default one is written on first run. You can also drop a
+`docker-compose.yml` next to where you invoke port and the services in it are
+merged in.
 
 ```yaml
 version: 1.1
 dockerEndpoint: unix:///var/run/docker.sock
 imageConfigs:
-  - identifier: Getting.Started
-    imageName: docker/getting-started
+  - identifier: Nginx
+    imageName: nginx
     imageTags:
-      - latest
-      - vscode
+      - alpine
+      - alpine-slim
     ports:
-      - 80:80
-    environment:
-      - DEBUG=1
+      - 8080:80
+    environment: []
+  - identifier: Alpine
+    imageName: alpine
+    imageTags:
+      - '3.19'
+      - latest
+    ports: []
+    environment: []
 ```
 
-A default `.port` file will be created in your user profile if you don't manually create one.
+`identifier` is the human-friendly name port uses everywhere (commands, container
+names, tags); `imageName` is the actual Docker image; `imageTags` are the tags
+port knows how to launch.
 
-## 🧑‍💻 Usage
+## Commands
 
-### Commands
+`port config` prints the path of the config file. Pass `--open` to open it in
+your editor.
 
-- **▶️ Run an Image**:
+`port list [identifier]` shows every configured image, every tag, every
+snapshot, and the running container if any. With an identifier, the listing is
+restricted to that group.
 
-  Run a specific tag (base or snapshot) of an image:
-  ```powershell
-  port run [identifier] -r
-  ```
+`port pull <identifier:tag>` fetches the image. Per-layer download progress is
+shown live.
 
-  - `identifier` (optional): If omitted, a prompt will request image selection.
-  - `-r` (reset) (optional): Resets the existing container for the specified image, if applicable.
+`port run <identifier:tag> [-r]` launches a container. Any container holding
+the same host port is stopped first. `-r` recreates the container instead of
+restarting an existing one. Pulls the image if it isn't local yet.
 
-- **⏹️ Stop a Container**:
+`port stop <containerName>` stops a running container by its full name (e.g.
+`Nginx.alpine`). With no name, you get a picker.
 
-  Stop a running container:
-  ```powershell
-  port stop [identifier]
-  ```
+`port reset <containerName>` stops, removes, and recreates a container — useful
+to discard mutations made inside it.
 
-  - `identifier` (optional): Specifies the container to stop. If omitted, operates on the current container.
+`port commit <containerName> [-t tag] [-s] [-o]` snapshots a running container
+into a new image. `-t` sets the tag (defaults to a timestamp); `-s` switches
+the running container to the new snapshot; `-o` overwrites the source tag.
 
-- **📋 List Images**:
+`port remove <identifier:tag> [-r]` removes the image and any containers using
+it. `-r` also removes descendant snapshot images.
 
-  Display all images and their tags:
-  ```powershell
-  port list [identifier]
-  ```
+`port prune [identifier]` removes dangling (digest-only) images. Restrict to
+one identifier with the optional argument.
 
-  - `identifier` (optional): Limits the listing to images under the given identifier. Without it, all images are listed.
+## MCP server
 
-- **🗑️ Remove an Image**:
+`port mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io)
+server over stdio. AI agents can then drive port the same way you do from the
+shell.
 
-  Delete a specific image tag (base, snapshot, or untagged):
-  ```powershell
-  port remove -r [identifier]
-  ```
+The exposed tools mirror the CLI verbs: `run`, `stop`, `reset`, `commit`,
+`pull`, `remove`, `prune`, `list`, `config`. A few have stricter inputs than
+their CLI siblings — `reset` always requires a container name, `commit`
+requires an explicit tag — to remove ambiguity for an agent.
 
-  - `identifier` (optional): If omitted, a prompt will request image selection.
-  - `-r` (recursive) (optional): Automatically deletes child images. Without this, an error is raised if the image has dependents.
+### Claude Code
 
-- **🔄 Reset a Container**:
+```bash
+claude mcp add port -- port mcp
+```
 
-  Stop, remove, and recreate the container using its original image:
-  ```powershell
-  port reset [identifier]
-  ```
+### Claude Desktop
 
-  - `identifier` (optional): If omitted, a prompt will request container selection.
+Add to your `claude_desktop_config.json`:
 
-- **💾 Commit a Container**:
+```json
+{
+  "mcpServers": {
+    "port": {
+      "command": "port",
+      "args": ["mcp"]
+    }
+  }
+}
+```
 
-  Generate an image from the currently active container:
-  ```powershell
-  port commit -t [identifier]
-  ```
+## PowerShell Unicode
 
-  - `identifier` (optional): If omitted, a prompt will request container selection.
-  - `-t` (tag) (optional): Specifies the tag name. Defaults to the current date-time if not provided.
-  - `-o` (overwrite) (optional): Re-uses the running image and replaces the existing one.
-
-- **📥 Pull an Image**:
-
-  Download a specific tag (base or snapshot) of an image:
-  ```powershell
-  port pull [identifier]
-  ```
-
-  - `identifier` (optional): If omitted, a prompt will request image selection.
-
-- **🛠️ Prune Images**:
-
-  Remove untagged versions of an image:
-  ```powershell
-  port prune [identifier]
-  ```
-
-  - `identifier` (optional): If omitted, a prompt will request image selection.
-
-## Powershell
-
-To get Unicode support in Powershell, add:
+To get proper rendering of port's output in PowerShell, add this to your
+`$profile`:
 
 ```powershell
 [console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 ```
 
-to your `$profile`.
+## Contributing
 
-## 🤝 Contributing
+PRs welcome. Fork, branch, commit, open a pull request.
 
-We welcome contributions to improve Port! Please follow the steps below:
+## License
 
-1. 🍴 Fork the repository.
-2. 🌱 Create a new branch for your feature or bug fix.
-3. 💾 Commit your changes.
-4. 🔄 Submit a pull request.
-
-## 📄 License
-
-This project is licensed under the [GPL-3.0 License](LICENSE).
+[GPL-3.0](LICENSE)
