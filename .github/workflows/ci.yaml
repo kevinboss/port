@@ -10,10 +10,10 @@ jobs:
       - name: Setup .NET Core SDK
         uses: actions/setup-dotnet@v5.0.1
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
       - name: Install dependencies
-        run: dotnet restore src/port.csproj
+        run: dotnet restore src/port/port.csproj
       - name: Build
-        run: dotnet build src/port.csproj --configuration Release
+        run: dotnet build src/port/port.csproj --configuration Release
       - name: Test
-        run: dotnet test src/port.csproj --no-restore --verbosity normal
+        run: dotnet test src/port/port.csproj --no-restore --verbosity normal

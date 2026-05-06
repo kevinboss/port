@@ -22,7 +22,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v5.0.1
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
           
       - name: Create build data
         shell: bash
@@ -36,7 +36,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          dotnet publish src/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}" -p:Version=${{ steps.build-data.outputs.version }}
+          dotnet publish src/port/port.csproj --self-contained --runtime "${{ matrix.target }}" -c Release -o "${{ steps.build-data.outputs.release_name }}" -p:Version=${{ steps.build-data.outputs.version }}
 
       - name: Package Windows
         shell: bash
