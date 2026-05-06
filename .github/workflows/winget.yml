@@ -13,7 +13,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           checkName: Release (windows)
       - name: Publish port to WinGet
-        uses: vedantmgoyal2009/winget-releaser@v2
+        # Tracking @main: the @v2 tag misses the fix in 19e706d ("pwsh doesn't
+        # sort sometimes") which makes max-versions-to-keep delete the newest
+        # versions instead of the oldest.
+        uses: vedantmgoyal2009/winget-releaser@main
         if: steps.wait-for-release.outputs.conclusion == 'success'
         with:
           identifier: kevinboss.port
