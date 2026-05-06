@@ -6,13 +6,15 @@ namespace port;
 
 public static class TagTextBuilder
 {
-    public static (int first, int second) GetLengths(IEnumerable<Image> images)
+    public static (int first, int second) GetLengths(
+        IEnumerable<(string identifier, Image image)> entries
+    )
     {
         var first = 0;
         var second = 0;
-        foreach (var image in images)
+        foreach (var (identifier, image) in entries)
         {
-            var f = BuildFirstLine(image).RemoveMarkup().Length;
+            var f = BuildFirstLine(identifier, image).RemoveMarkup().Length;
             if (first < f)
                 first = f;
             var s = BuildSecondLine(image).RemoveMarkup().Length;
@@ -23,12 +25,16 @@ public static class TagTextBuilder
         return (first, second);
     }
 
-    public static string BuildTagText(Image image, (int first, int second) lengths)
+    public static string BuildTagText(
+        string identifier,
+        Image image,
+        (int first, int second) lengths
+    )
     {
         var sb = new StringBuilder();
         sb.Append(image.Running ? "[green]\u25a0[/] " : "[red]\u25a0[/] ");
 
-        var firstLine = BuildFirstLine(image);
+        var firstLine = BuildFirstLine(identifier, image);
         sb.Append(
             firstLine.PadRight(lengths.first + firstLine.Length - firstLine.RemoveMarkup().Length)
         );
@@ -55,10 +61,10 @@ public static class TagTextBuilder
         return sb.ToString();
     }
 
-    private static string BuildFirstLine(Image image)
+    private static string BuildFirstLine(string identifier, Image image)
     {
         var sb = new StringBuilder();
-        sb.Append($"[grey78]{image.Group.Identifier}[/]:");
+        sb.Append($"[grey78]{identifier}[/]:");
         var imageTag = image.Tag;
         var tagPrefix = image.GetLabel(Constants.TagPrefix);
         if (tagPrefix is not null && imageTag?.StartsWith(tagPrefix) == true)

@@ -20,7 +20,6 @@ public class ImageGroup
 
     public void AddImage(Image image)
     {
-        image.Group = this;
         _images.Add(image);
     }
 }
