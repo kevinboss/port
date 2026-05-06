@@ -30,7 +30,8 @@ public class ListCliCommand : AsyncCommand<ListSettings>
 
     private static void Render(ListResult result)
     {
-        var lengths = TagTextBuilder.GetLengths(result.ImageGroups.SelectMany(g => g.Images));
+        var entries = result.ImageGroups.SelectMany(g => g.Images.Select(i => (g.Identifier, i)));
+        var lengths = TagTextBuilder.GetLengths(entries);
         AnsiConsole.WriteLine();
         foreach (var group in result.ImageGroups)
         {
@@ -38,7 +39,7 @@ public class ListCliCommand : AsyncCommand<ListSettings>
                 var line in group
                     .Images.Where(e => e.Tag != null)
                     .OrderBy(e => e.Tag)
-                    .Select(image => TagTextBuilder.BuildTagText(image, lengths))
+                    .Select(image => TagTextBuilder.BuildTagText(group.Identifier, image, lengths))
             )
             {
                 AnsiConsole.MarkupLine(line);

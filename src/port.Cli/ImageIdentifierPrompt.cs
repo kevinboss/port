@@ -31,81 +31,56 @@ public class ImageIdentifierPrompt : IImageIdentifierPrompt
         return selectedImageConfig.Identifier;
     }
 
-    public async Task<(string identifier, string? tag)> GetBaseIdentifierAndTagFromUserAsync(
+    public Task<(string identifier, string? tag)> GetBaseIdentifierAndTagFromUserAsync(
         string command
+    ) => PromptAsync(command, image => !image.IsSnapshot && image.Tag != null);
+
+    public Task<(string identifier, string? tag)> GetDownloadedIdentifierAndTagFromUserAsync(
+        string command
+    ) => PromptAsync(command, image => image.Existing);
+
+    public Task<(string identifier, string? tag)> GetRunnableIdentifierAndTagFromUserAsync(
+        string command
+    ) => PromptAsync(command, image => image.Tag != null);
+
+    private async Task<(string identifier, string? tag)> PromptAsync(
+        string command,
+        Func<Image, bool> filter
     )
     {
         var groups = await Spinner.StartAsync(
             $"Loading images to [green]{command}[/]",
             async _ => await _allImagesQuery.QueryAsync().ToListAsync()
         );
-        var lengths = TagTextBuilder.GetLengths(groups.SelectMany(group => group.Images));
+        var lengths = TagTextBuilder.GetLengths(
+            groups.SelectMany(g => g.Images.Select(i => (g.Identifier, i)))
+        );
         var selectionPrompt = CreateSelectionPrompt(command, lengths);
         foreach (var imageGroup in groups.OrderBy(i => i.Identifier))
         {
             selectionPrompt.AddChoices(
                 imageGroup
-                    .Images.Where(e => !e.IsSnapshot)
-                    .Where(e => e.Tag != null)
+                    .Images.Where(filter)
                     .OrderBy(e => e.Tag)
+                    .Select(i => new ImageChoice(imageGroup.Identifier, i))
             );
         }
 
-        var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
-        return (selectedImage.Group.Identifier, selectedImage.Tag);
+        var selected = AnsiConsole.Prompt(selectionPrompt);
+        return (selected.Identifier, selected.Image.Tag);
     }
 
-    public async Task<(string identifier, string? tag)> GetDownloadedIdentifierAndTagFromUserAsync(
-        string command
-    )
-    {
-        var groups = await Spinner.StartAsync(
-            $"Loading images to [green]{command}[/]",
-            async _ => await _allImagesQuery.QueryAsync().ToListAsync()
-        );
-        var lengths = TagTextBuilder.GetLengths(groups.SelectMany(group => group.Images));
-        var selectionPrompt = CreateSelectionPrompt(command, lengths);
-        foreach (var imageGroup in groups.OrderBy(i => i.Identifier))
-        {
-            selectionPrompt.AddChoices(
-                imageGroup.Images.Where(e => e.Existing).OrderBy(e => e.Tag)
-            );
-        }
-
-        var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
-        return (selectedImage.Group.Identifier, selectedImage.Tag);
-    }
-
-    public async Task<(string identifier, string? tag)> GetRunnableIdentifierAndTagFromUserAsync(
-        string command
-    )
-    {
-        var groups = await Spinner.StartAsync(
-            $"Loading images to [green]{command}[/]",
-            async _ => await _allImagesQuery.QueryAsync().ToListAsync()
-        );
-        var lengths = TagTextBuilder.GetLengths(groups.SelectMany(group => group.Images));
-        var selectionPrompt = CreateSelectionPrompt(command, lengths);
-        foreach (var imageGroup in groups.OrderBy(i => i.Identifier))
-        {
-            selectionPrompt.AddChoices(
-                imageGroup.Images.Where(e => e.Tag != null).OrderBy(e => e.Tag)
-            );
-        }
-
-        var selectedImage = (Image)AnsiConsole.Prompt(selectionPrompt);
-        return (selectedImage.Group.Identifier, selectedImage.Tag);
-    }
-
-    private static SelectionPrompt<Image> CreateSelectionPrompt(
+    private static SelectionPrompt<ImageChoice> CreateSelectionPrompt(
         string command,
         (int first, int second) lengths
     )
     {
-        return new SelectionPrompt<Image>()
-            .UseConverter(image => TagTextBuilder.BuildTagText(image, lengths))
+        return new SelectionPrompt<ImageChoice>()
+            .UseConverter(c => TagTextBuilder.BuildTagText(c.Identifier, c.Image, lengths))
             .PageSize(10)
             .Title($"Select image you wish to [green]{command}[/]")
             .MoreChoicesText(GreyMoveUpAndDownToRevealMoreImages);
     }
+
+    private sealed record ImageChoice(string Identifier, Image Image);
 }
