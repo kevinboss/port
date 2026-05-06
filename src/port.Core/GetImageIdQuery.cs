@@ -33,13 +33,11 @@ public class GetImageIdQuery : IGetImageIdQuery
         };
         parameters.Filters.Add("reference", new Dictionary<string, bool> { { imageName, true } });
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
+        var fullName = ImageNameHelper.BuildImageName(imageName, tag);
         return imagesListResponses
             .Where(e =>
                 tag == null && !e.RepoTags.Any()
-                || e.RepoTags != null
-                    && e.RepoTags.Any(repoTag =>
-                        repoTag.Contains(ImageNameHelper.BuildImageName(imageName, tag))
-                    )
+                || e.RepoTags != null && e.RepoTags.Any(repoTag => repoTag == fullName)
             )
             .Select(e => e.ID);
     }
