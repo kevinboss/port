@@ -4,9 +4,9 @@ public class Image
 {
     private readonly IDictionary<string, string> _labels;
 
-    public Image(IDictionary<string, string> labels)
+    public Image(IDictionary<string, string>? labels)
     {
-        _labels = labels;
+        _labels = labels ?? new Dictionary<string, string>();
     }
 
     public bool IsSnapshot { get; set; }
@@ -20,7 +20,6 @@ public class Image
     public string? Id { get; set; }
     public string? ParentId { get; set; }
     public Image? Parent { get; set; }
-    public ImageGroup Group { get; set; } = null!;
 
     public Image? BaseImage
     {
