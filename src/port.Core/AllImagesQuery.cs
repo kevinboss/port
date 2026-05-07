@@ -121,7 +121,9 @@ public class AllImagesQuery : IAllImagesQuery
                         var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
                             imagesListResponse.ID
                         );
-                        var labels = imageInspectResponse.Config.Labels;
+                        var labels =
+                            imageInspectResponse.Config?.Labels
+                            ?? new Dictionary<string, string>();
                         var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(
                             imagesListResponse.RepoTags.Single()
                         );
@@ -422,6 +424,12 @@ public class AllImagesQuery : IAllImagesQuery
             .SingleOrDefault();
         if (identifier is not null)
             return imageConfig.Identifier == identifier;
-        return e.RepoTags.Any(repoTag => imageNameAndTags.Any(repoTag.StartsWith));
+        return e.RepoTags.Any(repoTag =>
+            imageNameAndTags.Any(baseTag =>
+                repoTag.StartsWith(baseTag)
+                && repoTag.Length > baseTag.Length
+                && repoTag[baseTag.Length] != '@'
+            )
+        );
     }
 }
