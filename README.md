@@ -1,17 +1,27 @@
-# port
+<p align="center">
+  <img src="logo_1.png" alt="port logo" width="320">
+</p>
 
-![Port Logo](logo_1.png)
+<h1 align="center">port</h1>
 
-[![CI](https://github.com/kevinboss/port/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/kevinboss/port/actions/workflows/ci.yaml)
-[![Heartbeat](https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg)](https://github.com/kevinboss/heartbeat)
-[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+<p align="center">
+  A small CLI for running and snapshotting Docker containers from a YAML config &mdash; with an MCP server so AI agents can drive the same workflows.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white" alt=".NET">
+  <a href="https://github.com/kevinboss/maple"><img src="https://img.shields.io/scoop/v/port?bucket=https://github.com/kevinboss/maple" alt="Scoop"></a>
+  <a href="https://github.com/microsoft/winget-pkgs/tree/master/manifests/k/kevinboss/port"><img src="https://img.shields.io/badge/winget-kevinboss.port-0078D4?logo=windows&logoColor=white" alt="winget"></a>
+  <a href="https://github.com/kevinboss/port/actions/workflows/ci.yaml"><img src="https://img.shields.io/github/actions/workflow/status/kevinboss/port/ci.yaml?label=CI" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/kevinboss/port" alt="License"></a>
+  <a href="https://github.com/kevinboss/heartbeat"><img src="https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg" alt="Heartbeat"></a>
+</p>
 
 > This project is being developed using AI development tools. However, every line of code is reviewed and approved by a human before being committed.
 
-A small CLI for running and snapshotting Docker containers from a YAML config,
-with an MCP server so AI agents can drive the same workflows.
-
-![Port in Action](example-2.gif)
+<p align="center">
+  <img src="example-2.gif" alt="Port in Action">
+</p>
 
 ## Install
 
