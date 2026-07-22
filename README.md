@@ -2,8 +2,6 @@
   <img src="logo_1.png" alt="port logo" width="320">
 </p>
 
-<h1 align="center">port</h1>
-
 <p align="center">
   A small CLI for running and snapshotting Docker containers from a YAML config &mdash; with an MCP server so AI agents can drive the same workflows.
 </p>
