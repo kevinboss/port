@@ -12,16 +12,21 @@ public class RunContainerCommand : IRunContainerCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string id)
+    public Task ExecuteAsync(string id, CancellationToken cancellationToken)
     {
-        return _dockerClient.Containers.StartContainerAsync(id, new ContainerStartParameters());
+        return _dockerClient.Containers.StartContainerAsync(
+            id,
+            new ContainerStartParameters(),
+            cancellationToken
+        );
     }
 
-    public Task ExecuteAsync(Container container)
+    public Task ExecuteAsync(Container container, CancellationToken cancellationToken)
     {
         return _dockerClient.Containers.StartContainerAsync(
             container.Id,
-            new ContainerStartParameters()
+            new ContainerStartParameters(),
+            cancellationToken
         );
     }
 }

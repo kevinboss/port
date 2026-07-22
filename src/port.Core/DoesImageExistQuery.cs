@@ -12,14 +12,21 @@ public class DoesImageExistQuery : IDoesImageExistQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<bool> QueryAsync(string imageName, string? tag)
+    public async Task<bool> QueryAsync(
+        string imageName,
+        string? tag,
+        CancellationToken cancellationToken = default
+    )
     {
         var parameters = new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>(),
         };
         parameters.Filters.Add("reference", new Dictionary<string, bool> { { imageName, true } });
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(
+            parameters,
+            cancellationToken
+        );
         var fullName = ImageNameHelper.BuildImageName(imageName, tag);
         return imagesListResponses.Any(e =>
             tag == null && !e.RepoTags.Any()

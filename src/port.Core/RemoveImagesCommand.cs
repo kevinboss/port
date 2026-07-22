@@ -34,11 +34,11 @@ public class RemoveImagesCommand : IRemoveImagesCommand
             foreach (var container in containers)
             {
                 ct.ThrowIfCancellationRequested();
-                await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+                await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id, ct);
             }
 
             events?.OnNext(new StatusEvent($"Containers using '{imageId}' removed"));
-            result.Add(await _removeImageCommand.ExecuteAsync(imageId));
+            result.Add(await _removeImageCommand.ExecuteAsync(imageId, ct));
         }
 
         return result;

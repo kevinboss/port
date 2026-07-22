@@ -8,8 +8,14 @@ public interface ICreateContainerCommand
         string? tagPrefix,
         string? tag,
         IEnumerable<string> ports,
-        IList<string> environment
+        IList<string> environment,
+        CancellationToken cancellationToken
     );
-    Task<string> ExecuteAsync(Container container, string tagPrefix, string newTag);
-    Task<string> ExecuteAsync(Container container);
+    Task<string> ExecuteAsync(
+        Container container,
+        string tagPrefix,
+        string newTag,
+        CancellationToken cancellationToken
+    );
+    Task<string> ExecuteAsync(Container container, CancellationToken cancellationToken);
 }

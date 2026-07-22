@@ -19,7 +19,7 @@ public class CreateImageCommand : ICreateImageCommand
         _progressSubscriber = progressSubscriber;
     }
 
-    public async Task ExecuteAsync(string imageName, string? tag)
+    public async Task ExecuteAsync(string imageName, string? tag, CancellationToken cancellationToken)
     {
         var progress = new Progress<JSONMessage>();
 
@@ -27,7 +27,8 @@ public class CreateImageCommand : ICreateImageCommand
         await _dockerClient.Images.CreateImageAsync(
             new ImagesCreateParameters { FromImage = imageName, Tag = tag },
             null,
-            progress
+            progress,
+            cancellationToken
         );
     }
 }

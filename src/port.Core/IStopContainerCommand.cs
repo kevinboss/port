@@ -2,5 +2,5 @@ namespace port;
 
 public interface IStopContainerCommand
 {
-    public Task ExecuteAsync(string containerId);
+    public Task ExecuteAsync(string containerId, CancellationToken cancellationToken);
 }

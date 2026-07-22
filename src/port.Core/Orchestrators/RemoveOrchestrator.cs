@@ -42,12 +42,13 @@ public class RemoveOrchestrator : IRemoveOrchestrator
             initialImageIds.AddRange(
                 await _getImageIdQuery.QueryAsync(
                     imageName,
-                    $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}"
+                    $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}",
+                    ct
                 )
             );
         }
 
-        initialImageIds.AddRange(await _getImageIdQuery.QueryAsync(imageName, tag));
+        initialImageIds.AddRange(await _getImageIdQuery.QueryAsync(imageName, tag, ct));
 
         var imageIds = recursive
             ? await ResolveRecursiveAsync(initialImageIds, ct)
