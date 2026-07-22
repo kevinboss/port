@@ -29,7 +29,7 @@ public class RemoveOrchestrator : IRemoveOrchestrator
         string identifier,
         string? tag,
         bool recursive,
-        CancellationToken ct = default
+        CancellationToken cancellationToken
     )
     {
         _events.OnNext(new StatusEvent($"Removing {ImageNameHelper.BuildImageName(identifier, tag)}"));
@@ -42,30 +42,31 @@ public class RemoveOrchestrator : IRemoveOrchestrator
             initialImageIds.AddRange(
                 await _getImageIdQuery.QueryAsync(
                     imageName,
-                    $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}"
+                    $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}",
+                    cancellationToken
                 )
             );
         }
 
-        initialImageIds.AddRange(await _getImageIdQuery.QueryAsync(imageName, tag));
+        initialImageIds.AddRange(await _getImageIdQuery.QueryAsync(imageName, tag, cancellationToken));
 
         var imageIds = recursive
-            ? await ResolveRecursiveAsync(initialImageIds, ct)
+            ? await ResolveRecursiveAsync(initialImageIds, cancellationToken)
             : initialImageIds.ToList();
 
         if (imageIds.Count == 0)
             throw new InvalidOperationException("No images to remove found");
 
-        var removals = await _removeImagesCommand.ExecuteAsync(imageIds, _events, ct);
+        var removals = await _removeImagesCommand.ExecuteAsync(imageIds, _events, cancellationToken);
         return new RemoveResult(removals);
     }
 
     private async Task<List<string>> ResolveRecursiveAsync(
         List<string> initialImageIds,
-        CancellationToken ct
+        CancellationToken cancellationToken
     )
     {
-        var images = await _allImagesQuery.QueryAllImagesWithParentAsync().ToListAsync(ct);
+        var images = await _allImagesQuery.QueryAllImagesWithParentAsync().ToListAsync(cancellationToken);
 
         var imageIds = new List<string>();
         var imageIdsToAnalyze = initialImageIds.ToHashSet();

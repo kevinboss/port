@@ -2,5 +2,9 @@ namespace port;
 
 public interface IDoesImageExistQuery
 {
-    Task<bool> QueryAsync(string imageName, string? tag);
+    Task<bool> QueryAsync(
+        string imageName,
+        string? tag,
+        CancellationToken cancellationToken
+    );
 }

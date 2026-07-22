@@ -4,7 +4,12 @@ namespace port;
 
 public interface IAllImagesQuery
 {
-    IAsyncEnumerable<ImageGroup> QueryAsync();
-    IAsyncEnumerable<(string Id, string ParentId)> QueryAllImagesWithParentAsync();
-    Task<List<Image>> QueryByImageConfigAsync(port.Config.Config.ImageConfig imageConfig);
+    IAsyncEnumerable<ImageGroup> QueryAsync(CancellationToken cancellationToken = default);
+    IAsyncEnumerable<(string Id, string ParentId)> QueryAllImagesWithParentAsync(
+        CancellationToken cancellationToken = default
+    );
+    Task<List<Image>> QueryByImageConfigAsync(
+        port.Config.Config.ImageConfig imageConfig,
+        CancellationToken cancellationToken
+    );
 }

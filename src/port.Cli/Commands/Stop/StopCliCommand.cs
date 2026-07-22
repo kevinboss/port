@@ -24,20 +24,20 @@ public class StopCliCommand : AsyncCommand<StopSettings>
         _listCliCommand = listCliCommand;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, StopSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, StopSettings settings, CancellationToken cancellationToken)
     {
-        var containerName = await ResolveContainerNameAsync(settings);
-        await _stopOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(containerName));
-        await _listCliCommand.ExecuteAsync();
+        var containerName = await ResolveContainerNameAsync(settings, cancellationToken);
+        await _stopOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(containerName, cancellationToken));
+        await _listCliCommand.ExecuteAsync(cancellationToken);
         return 0;
     }
 
-    private async Task<string> ResolveContainerNameAsync(IContainerIdentifierSettings settings)
+    private async Task<string> ResolveContainerNameAsync(IContainerIdentifierSettings settings, CancellationToken cancellationToken)
     {
         if (settings.ContainerIdentifier != null)
             return settings.ContainerIdentifier;
 
-        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync();
+        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync(cancellationToken);
         return _containerNamePrompt.GetIdentifierOfContainerFromUser(containers, "stop");
     }
 }

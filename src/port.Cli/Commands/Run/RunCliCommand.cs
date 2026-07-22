@@ -11,16 +11,16 @@ public class RunCliCommand(
     ListCliCommand listCliCommand
 ) : AsyncCommand<RunSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, RunSettings settings, CancellationToken cancellationToken)
     {
         var (identifier, tag) = await ResolveIdentifierAndTagAsync(settings);
         if (tag == null)
             throw new InvalidOperationException("Can not launch untagged image");
 
         await runOrchestrator.WithProgressAsync(o =>
-            o.ExecuteAsync(identifier, tag, settings.Reset)
+            o.ExecuteAsync(identifier, tag, settings.Reset, cancellationToken)
         );
-        await listCliCommand.ExecuteAsync();
+        await listCliCommand.ExecuteAsync(cancellationToken);
         return 0;
     }
 

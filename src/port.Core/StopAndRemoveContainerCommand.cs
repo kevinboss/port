@@ -17,12 +17,13 @@ public class StopAndRemoveContainerCommand : IStopAndRemoveContainerCommand
         _stopContainerCommand = stopContainerCommand;
     }
 
-    public async Task ExecuteAsync(string containerId)
+    public async Task ExecuteAsync(string containerId, CancellationToken cancellationToken)
     {
-        await _stopContainerCommand.ExecuteAsync(containerId);
+        await _stopContainerCommand.ExecuteAsync(containerId, cancellationToken);
         await _dockerClient.Containers.RemoveContainerAsync(
             containerId,
-            new ContainerRemoveParameters()
+            new ContainerRemoveParameters(),
+            cancellationToken
         );
     }
 }

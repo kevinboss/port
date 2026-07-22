@@ -14,10 +14,10 @@ public class ListOrchestrator : IListOrchestrator
 
     public IObservable<OrchestrationEvent> Events => _events;
 
-    public async Task<ListResult> ExecuteAsync(string? identifier, CancellationToken ct = default)
+    public async Task<ListResult> ExecuteAsync(string? identifier, CancellationToken cancellationToken)
     {
         _events.OnNext(new StatusEvent("Loading images"));
-        var groups = (await _allImagesQuery.QueryAsync().ToListAsync(ct))
+        var groups = (await _allImagesQuery.QueryAsync().ToListAsync(cancellationToken))
             .Where(g => identifier == null || g.Identifier == identifier)
             .OrderBy(g => g.Identifier)
             .ToList();

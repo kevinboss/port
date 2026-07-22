@@ -21,14 +21,15 @@ public class CreateContainerCommand : ICreateContainerCommand
         string? tagPrefix,
         string? tag,
         IEnumerable<string> ports,
-        IList<string> environment
+        IList<string> environment,
+        CancellationToken cancellationToken
     )
     {
         var portBindings = ports
             .Select(e => e.Split(PortSeparator))
             .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
         var containerName = ContainerNameHelper.BuildContainerName(containerIdentifier, tag);
-        var image = await _getImageQuery.QueryAsync(imageIdentifier, tag);
+        var image = await _getImageQuery.QueryAsync(imageIdentifier, tag, cancellationToken);
         var baseTag = image?.GetLabel(Constants.BaseTagLabel) ?? image?.BaseImage?.Tag ?? tag;
         var labels = new Dictionary<string, string>
         {
@@ -47,12 +48,18 @@ public class CreateContainerCommand : ICreateContainerCommand
                 HostConfig = new HostConfig { PortBindings = portBindings },
                 ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
                 Labels = labels,
-            }
+            },
+            cancellationToken
         );
         return createContainerResponse.ID;
     }
 
-    public async Task<string> ExecuteAsync(Container container, string tagPrefix, string newTag)
+    public async Task<string> ExecuteAsync(
+        Container container,
+        string tagPrefix,
+        string newTag,
+        CancellationToken cancellationToken
+    )
     {
         var portBindings = container.PortBindings;
         var environment = container.Environment;
@@ -76,12 +83,13 @@ public class CreateContainerCommand : ICreateContainerCommand
                 Env = environment,
                 ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
                 Labels = labels,
-            }
+            },
+            cancellationToken
         );
         return createContainerResponse.ID;
     }
 
-    public async Task<string> ExecuteAsync(Container container)
+    public async Task<string> ExecuteAsync(Container container, CancellationToken cancellationToken)
     {
         var portBindings = container.PortBindings;
         var environment = container.Environment;
@@ -104,7 +112,8 @@ public class CreateContainerCommand : ICreateContainerCommand
                 Env = environment,
                 ExposedPorts = portBindings.Keys.ToDictionary(port => port, _ => new EmptyStruct()),
                 Labels = labels,
-            }
+            },
+            cancellationToken
         );
         return createContainerResponse.ID;
     }

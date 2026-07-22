@@ -13,7 +13,7 @@ public class RemoveImageCommand : IRemoveImageCommand
         _dockerClient = dockerClient;
     }
 
-    public Task ExecuteAsync(string imageName, string? tag)
+    public Task ExecuteAsync(string imageName, string? tag, CancellationToken cancellationToken)
     {
         if (tag == null)
         {
@@ -22,15 +22,20 @@ public class RemoveImageCommand : IRemoveImageCommand
 
         return _dockerClient.Images.DeleteImageAsync(
             ImageNameHelper.BuildImageName(imageName, tag),
-            new ImageDeleteParameters()
+            new ImageDeleteParameters(),
+            cancellationToken
         );
     }
 
-    public async Task<ImageRemovalResult> ExecuteAsync(string id)
+    public async Task<ImageRemovalResult> ExecuteAsync(string id, CancellationToken cancellationToken)
     {
         try
         {
-            await _dockerClient.Images.DeleteImageAsync(id, new ImageDeleteParameters());
+            await _dockerClient.Images.DeleteImageAsync(
+                id,
+                new ImageDeleteParameters(),
+                cancellationToken
+            );
             return new ImageRemovalResult(id, true);
         }
         catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.Conflict)
