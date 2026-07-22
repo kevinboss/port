@@ -10,6 +10,6 @@ public interface IAllImagesQuery
     );
     Task<List<Image>> QueryByImageConfigAsync(
         port.Config.Config.ImageConfig imageConfig,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken
     );
 }

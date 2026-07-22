@@ -15,7 +15,7 @@ public class DoesImageExistQuery : IDoesImageExistQuery
     public async Task<bool> QueryAsync(
         string imageName,
         string? tag,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken
     )
     {
         var parameters = new ImagesListParameters

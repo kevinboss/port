@@ -20,7 +20,7 @@ public class PullOrchestrator : IPullOrchestrator
     public async Task<PullResult> ExecuteAsync(
         string identifier,
         string? tag,
-        CancellationToken ct = default
+        CancellationToken ct
     )
     {
         var imageConfig =

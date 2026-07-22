@@ -15,7 +15,7 @@ public class GetImageIdQuery : IGetImageIdQuery
     public async Task<IEnumerable<string>> QueryAsync(
         string imageName,
         string? tag,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken
     )
     {
         if (tag != null && ImageNameHelper.IsDigest(tag))

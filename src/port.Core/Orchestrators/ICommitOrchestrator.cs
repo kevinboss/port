@@ -7,6 +7,6 @@ public interface ICommitOrchestrator : IOrchestrator
         string tag,
         bool overwrite,
         bool @switch,
-        CancellationToken ct = default
+        CancellationToken ct
     );
 }

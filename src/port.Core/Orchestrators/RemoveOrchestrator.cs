@@ -29,7 +29,7 @@ public class RemoveOrchestrator : IRemoveOrchestrator
         string identifier,
         string? tag,
         bool recursive,
-        CancellationToken ct = default
+        CancellationToken ct
     )
     {
         _events.OnNext(new StatusEvent($"Removing {ImageNameHelper.BuildImageName(identifier, tag)}"));
