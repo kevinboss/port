@@ -6,6 +6,8 @@
 [![Heartbeat](https://raw.githubusercontent.com/kevinboss/heartbeat/main/badges/kevinboss_port.svg)](https://github.com/kevinboss/heartbeat)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
+> This project is being developed using AI development tools. However, every line of code is reviewed and approved by a human before being committed.
+
 A small CLI for running and snapshotting Docker containers from a YAML config,
 with an MCP server so AI agents can drive the same workflows.
 
