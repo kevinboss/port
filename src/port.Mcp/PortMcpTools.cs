@@ -17,11 +17,11 @@ public static class PortMcpTools
             string identifier,
         [Description("Image tag to launch (e.g. 'latest')")] string tag,
         [Description("Recreate the container instead of restarting it")] bool reset = false,
-        CancellationToken ct = default
+        CancellationToken cancellationToken = default
     ) =>
         EventCollector.InvokeAsync(
             orchestrator.Events,
-            () => orchestrator.ExecuteAsync(identifier, tag, reset, ct)
+            () => orchestrator.ExecuteAsync(identifier, tag, reset, cancellationToken)
         );
 
     [McpServerTool(Name = "stop")]
@@ -29,11 +29,11 @@ public static class PortMcpTools
     public static Task<McpToolResponse<StopResult>> StopAsync(
         IStopOrchestrator orchestrator,
         [Description("Exact container name as shown by the list tool")] string containerName,
-        CancellationToken ct = default
+        CancellationToken cancellationToken = default
     ) =>
         EventCollector.InvokeAsync(
             orchestrator.Events,
-            () => orchestrator.ExecuteAsync(containerName, ct)
+            () => orchestrator.ExecuteAsync(containerName, cancellationToken)
         );
 
     [McpServerTool(Name = "reset")]
@@ -43,11 +43,11 @@ public static class PortMcpTools
     public static Task<McpToolResponse<ResetResult>> ResetAsync(
         IResetOrchestrator orchestrator,
         [Description("Exact container name to reset")] string containerName,
-        CancellationToken ct = default
+        CancellationToken cancellationToken = default
     ) =>
         EventCollector.InvokeAsync(
             orchestrator.Events,
-            () => orchestrator.ExecuteAsync(containerName, ct)
+            () => orchestrator.ExecuteAsync(containerName, cancellationToken)
         );
 
     [McpServerTool(Name = "commit")]
@@ -60,11 +60,11 @@ public static class PortMcpTools
         [Description("Tag for the new snapshot image")] string tag,
         [Description("Overwrite the container's current tag")] bool overwrite = false,
         [Description("Stop the source container and switch to the new image")] bool @switch = false,
-        CancellationToken ct = default
+        CancellationToken cancellationToken = default
     ) =>
         EventCollector.InvokeAsync(
             orchestrator.Events,
-            () => orchestrator.ExecuteAsync(containerName, tag, overwrite, @switch, ct)
+            () => orchestrator.ExecuteAsync(containerName, tag, overwrite, @switch, cancellationToken)
         );
 
     [McpServerTool(Name = "pull")]
@@ -73,8 +73,8 @@ public static class PortMcpTools
         IPullOrchestrator orchestrator,
         [Description("Image identifier as defined in port config")] string identifier,
         [Description("Optional image tag; pulls the configured tags if omitted")] string? tag = null,
-        CancellationToken ct = default
-    ) => EventCollector.InvokeAsync(() => orchestrator.ExecuteAsync(identifier, tag, ct));
+        CancellationToken cancellationToken = default
+    ) => EventCollector.InvokeAsync(() => orchestrator.ExecuteAsync(identifier, tag, cancellationToken));
 
     [McpServerTool(Name = "remove")]
     [Description(
@@ -85,11 +85,11 @@ public static class PortMcpTools
         [Description("Image identifier as defined in port config")] string identifier,
         [Description("Optional tag; if omitted, removes images for the configured tag")] string? tag = null,
         [Description("Also remove descendant snapshot images")] bool recursive = false,
-        CancellationToken ct = default
+        CancellationToken cancellationToken = default
     ) =>
         EventCollector.InvokeAsync(
             orchestrator.Events,
-            () => orchestrator.ExecuteAsync(identifier, tag, recursive, ct)
+            () => orchestrator.ExecuteAsync(identifier, tag, recursive, cancellationToken)
         );
 
     [McpServerTool(Name = "prune")]
@@ -97,11 +97,11 @@ public static class PortMcpTools
     public static Task<McpToolResponse<PruneResult>> PruneAsync(
         IPruneOrchestrator orchestrator,
         [Description("Optional image identifier to restrict pruning")] string? identifier = null,
-        CancellationToken ct = default
+        CancellationToken cancellationToken = default
     ) =>
         EventCollector.InvokeAsync(
             orchestrator.Events,
-            () => orchestrator.ExecuteAsync(identifier, ct)
+            () => orchestrator.ExecuteAsync(identifier, cancellationToken)
         );
 
     [McpServerTool(Name = "list")]
@@ -111,8 +111,8 @@ public static class PortMcpTools
     public static Task<ListResult> ListAsync(
         IListOrchestrator orchestrator,
         [Description("Optional image identifier to restrict the listing")] string? identifier = null,
-        CancellationToken ct = default
-    ) => EventCollector.InvokeAsync(() => orchestrator.ExecuteAsync(identifier, ct));
+        CancellationToken cancellationToken = default
+    ) => EventCollector.InvokeAsync(() => orchestrator.ExecuteAsync(identifier, cancellationToken));
 
     [McpServerTool(Name = "config")]
     [Description("Return the absolute path to port's config file.")]

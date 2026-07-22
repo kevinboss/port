@@ -27,11 +27,11 @@ public class ResetOrchestrator : IResetOrchestrator
 
     public async Task<ResetResult> ExecuteAsync(
         string containerName,
-        CancellationToken ct
+        CancellationToken cancellationToken
     )
     {
         _events.OnNext(new StatusEvent("Getting running containers"));
-        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync(ct);
+        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync(cancellationToken);
         var container =
             containers.SingleOrDefault(c => c.ContainerName == containerName)
             ?? throw new InvalidOperationException(
@@ -39,9 +39,9 @@ public class ResetOrchestrator : IResetOrchestrator
             );
 
         _events.OnNext(new StatusEvent($"Resetting container '{container.ContainerName}'"));
-        await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id, ct);
-        var id = await _createContainerCommand.ExecuteAsync(container, ct);
-        await _runContainerCommand.ExecuteAsync(id, ct);
+        await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id, cancellationToken);
+        var id = await _createContainerCommand.ExecuteAsync(container, cancellationToken);
+        await _runContainerCommand.ExecuteAsync(id, cancellationToken);
         return new ResetResult(id, container.ContainerName);
     }
 }
