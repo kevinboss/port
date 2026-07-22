@@ -9,10 +9,10 @@ public class PullCliCommand(
     IPullOrchestrator pullOrchestrator
 ) : AsyncCommand<PullSettings>
 {
-    public override async Task<int> ExecuteAsync(CommandContext context, PullSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, PullSettings settings, CancellationToken cancellationToken)
     {
         var (identifier, tag) = await ResolveIdentifierAndTagAsync(settings);
-        await pullOrchestrator.WithProgressAsync(o => o.ExecuteAsync(identifier, tag));
+        await pullOrchestrator.WithProgressAsync(o => o.ExecuteAsync(identifier, tag, cancellationToken));
         return 0;
     }
 

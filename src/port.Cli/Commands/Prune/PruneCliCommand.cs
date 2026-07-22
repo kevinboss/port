@@ -19,10 +19,10 @@ public class PruneCliCommand : AsyncCommand<PruneSettings>
         _listCliCommand = listCliCommand;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, PruneSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, PruneSettings settings, CancellationToken cancellationToken)
     {
         var result = await _pruneOrchestrator.WithRenderingAsync(o =>
-            o.ExecuteAsync(settings.ImageIdentifier)
+            o.ExecuteAsync(settings.ImageIdentifier, cancellationToken)
         );
 
         if (result.Removals.Count == 0)
@@ -41,7 +41,7 @@ public class PruneCliCommand : AsyncCommand<PruneSettings>
         var removed = result.Removals.Count(r => r.Successful);
         AnsiConsole.MarkupLine($"[green]Pruned {removed} image(s)[/]");
 
-        await _listCliCommand.ExecuteAsync();
+        await _listCliCommand.ExecuteAsync(cancellationToken);
         return 0;
     }
 }

@@ -7,7 +7,7 @@ namespace port.Commands.Config;
 
 public class ConfigCliCommand(IConfigOrchestrator configOrchestrator) : Command<ConfigSettings>
 {
-    public override int Execute(CommandContext context, ConfigSettings settings)
+    public override int Execute(CommandContext context, ConfigSettings settings, CancellationToken cancellationToken)
     {
         var result = configOrchestrator.Execute();
 
