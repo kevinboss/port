@@ -17,7 +17,7 @@ public class GetImageQuery : IGetImageQuery
     public async Task<Image?> QueryAsync(
         string imageName,
         string? tag,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken
     )
     {
         var parameters = new ImagesListParameters

@@ -46,7 +46,7 @@ public class RunOrchestrator : IRunOrchestrator
         string identifier,
         string tag,
         bool reset,
-        CancellationToken ct = default
+        CancellationToken ct
     )
     {
         var imageConfig =

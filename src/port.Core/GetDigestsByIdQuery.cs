@@ -14,7 +14,7 @@ public class GetDigestsByIdQuery : IGetDigestsByIdQuery
 
     public async Task<IList<string>?> QueryAsync(
         string imageId,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken
     )
     {
         var parameters = new ImagesListParameters

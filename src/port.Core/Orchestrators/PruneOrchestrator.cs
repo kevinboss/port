@@ -21,7 +21,7 @@ public class PruneOrchestrator : IPruneOrchestrator
 
     public async Task<PruneResult> ExecuteAsync(
         string? identifier,
-        CancellationToken ct = default
+        CancellationToken ct
     )
     {
         var imageGroups = await _allImagesQuery

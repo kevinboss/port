@@ -57,7 +57,7 @@ public class AllImagesQuery : IAllImagesQuery
 
     public async Task<List<Image>> QueryByImageConfigAsync(
         port.Config.Config.ImageConfig imageConfig,
-        CancellationToken cancellationToken = default
+        CancellationToken cancellationToken
     ) => await QueryByImageConfigAsync(imageConfig, _config.ImageConfigs, cancellationToken);
 
     private async Task<List<Image>> QueryByImageConfigAsync(

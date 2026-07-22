@@ -22,7 +22,7 @@ public class ListCliCommand : AsyncCommand<ListSettings>
         return 0;
     }
 
-    public async Task ExecuteAsync(CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
         var result = await _listOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(null, cancellationToken));
         Render(result);

@@ -46,7 +46,7 @@ public class CommitOrchestrator : ICommitOrchestrator
         string tag,
         bool overwrite,
         bool @switch,
-        CancellationToken ct = default
+        CancellationToken ct
     )
     {
         _events.OnNext(new StatusEvent("Getting running containers"));

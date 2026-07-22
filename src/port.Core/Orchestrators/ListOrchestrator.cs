@@ -14,7 +14,7 @@ public class ListOrchestrator : IListOrchestrator
 
     public IObservable<OrchestrationEvent> Events => _events;
 
-    public async Task<ListResult> ExecuteAsync(string? identifier, CancellationToken ct = default)
+    public async Task<ListResult> ExecuteAsync(string? identifier, CancellationToken ct)
     {
         _events.OnNext(new StatusEvent("Loading images"));
         var groups = (await _allImagesQuery.QueryAsync().ToListAsync(ct))

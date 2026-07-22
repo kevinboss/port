@@ -27,7 +27,7 @@ public class ResetOrchestrator : IResetOrchestrator
 
     public async Task<ResetResult> ExecuteAsync(
         string containerName,
-        CancellationToken ct = default
+        CancellationToken ct
     )
     {
         _events.OnNext(new StatusEvent("Getting running containers"));
