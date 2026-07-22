@@ -1,4 +1,5 @@
 using System.Net;
+using System.Runtime.CompilerServices;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -15,13 +16,16 @@ public class GetRunningContainersQuery : IGetRunningContainersQuery
         _config = config;
     }
 
-    public async IAsyncEnumerable<Container> QueryAsync()
+    public async IAsyncEnumerable<Container> QueryAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
     {
         var images = _config.ImageConfigs;
         var identifiers = images.Select(image => image.Identifier).ToHashSet();
 
         var containerListResponses = await _dockerClient.Containers.ListContainersAsync(
-            new ContainersListParameters { Limit = long.MaxValue }
+            new ContainersListParameters { Limit = long.MaxValue },
+            cancellationToken
         );
         foreach (var containerListResponse in containerListResponses)
         {
@@ -29,7 +33,8 @@ public class GetRunningContainersQuery : IGetRunningContainersQuery
             try
             {
                 inspectContainerResponse = await _dockerClient.Containers.InspectContainerAsync(
-                    containerListResponse.ID
+                    containerListResponse.ID,
+                    cancellationToken
                 );
             }
             catch (DockerApiException e) when (e.StatusCode == HttpStatusCode.NotFound)

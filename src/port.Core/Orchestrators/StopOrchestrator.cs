@@ -21,11 +21,11 @@ public class StopOrchestrator : IStopOrchestrator
 
     public async Task<StopResult> ExecuteAsync(
         string containerName,
-        CancellationToken ct = default
+        CancellationToken cancellationToken
     )
     {
         _events.OnNext(new StatusEvent("Getting running containers"));
-        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync(ct);
+        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync(cancellationToken);
         var container =
             containers.SingleOrDefault(c => c.ContainerName == containerName)
             ?? throw new InvalidOperationException(
@@ -33,7 +33,7 @@ public class StopOrchestrator : IStopOrchestrator
             );
 
         _events.OnNext(new StatusEvent($"Stopping container '{container.ContainerName}'"));
-        await _stopContainerCommand.ExecuteAsync(container.Id);
+        await _stopContainerCommand.ExecuteAsync(container.Id, cancellationToken);
         return new StopResult(container.Id, container.ContainerName);
     }
 }

@@ -25,11 +25,11 @@ public class RemoveCliCommand : AsyncCommand<RemoveSettings>
         _listCliCommand = listCliCommand;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext context, RemoveSettings settings, CancellationToken cancellationToken)
     {
         var (identifier, tag) = await ResolveIdentifierAndTagAsync(settings);
         var result = await _removeOrchestrator.WithRenderingAsync(o =>
-            o.ExecuteAsync(identifier, tag, settings.Recursive)
+            o.ExecuteAsync(identifier, tag, settings.Recursive, cancellationToken)
         );
 
         foreach (var failure in result.Removals.Where(r => !r.Successful))
@@ -43,7 +43,7 @@ public class RemoveCliCommand : AsyncCommand<RemoveSettings>
                 );
         }
 
-        await _listCliCommand.ExecuteAsync();
+        await _listCliCommand.ExecuteAsync(cancellationToken);
         return 0;
     }
 

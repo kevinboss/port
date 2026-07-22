@@ -12,10 +12,10 @@ public class RenameContainerCommand : IRenameContainerCommand
         _dockerClient = dockerClient;
     }
 
-    public async Task ExecuteAsync(string containerId, string newName) =>
+    public async Task ExecuteAsync(string containerId, string newName, CancellationToken cancellationToken) =>
         await _dockerClient.Containers.RenameContainerAsync(
             containerId,
             new ContainerRenameParameters { NewName = newName },
-            CancellationToken.None
+            cancellationToken
         );
 }

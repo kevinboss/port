@@ -13,18 +13,18 @@ public class ListCliCommand : AsyncCommand<ListSettings>
         _listOrchestrator = listOrchestrator;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext _, ListSettings settings)
+    public override async Task<int> ExecuteAsync(CommandContext _, ListSettings settings, CancellationToken cancellationToken)
     {
         var result = await _listOrchestrator.WithRenderingAsync(o =>
-            o.ExecuteAsync(settings.ImageIdentifier)
+            o.ExecuteAsync(settings.ImageIdentifier, cancellationToken)
         );
         Render(result);
         return 0;
     }
 
-    public async Task ExecuteAsync()
+    public async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        var result = await _listOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(null));
+        var result = await _listOrchestrator.WithRenderingAsync(o => o.ExecuteAsync(null, cancellationToken));
         Render(result);
     }
 

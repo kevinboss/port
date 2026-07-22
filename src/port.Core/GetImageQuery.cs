@@ -14,14 +14,21 @@ public class GetImageQuery : IGetImageQuery
         _getContainersQuery = getContainersQuery;
     }
 
-    public async Task<Image?> QueryAsync(string imageName, string? tag)
+    public async Task<Image?> QueryAsync(
+        string imageName,
+        string? tag,
+        CancellationToken cancellationToken
+    )
     {
         var parameters = new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>(),
         };
         parameters.Filters.Add("reference", new Dictionary<string, bool> { { imageName, true } });
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(
+            parameters,
+            cancellationToken
+        );
         var fullName = ImageNameHelper.BuildImageName(imageName, tag);
         var imagesListResponse = imagesListResponses.SingleOrDefault(e =>
             tag == null && !e.RepoTags.Any()
@@ -34,16 +41,18 @@ public class GetImageQuery : IGetImageQuery
 
         var containers = await _getContainersQuery
             .QueryByImageIdAsync(imagesListResponse.ID)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
         var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
-            imagesListResponse.ID
+            imagesListResponse.ID,
+            cancellationToken
         );
         return await ConvertToImage(
             imageInspectResponse.Config.Labels,
             imageName,
             tag,
             imagesListResponse,
-            containers
+            containers,
+            cancellationToken
         );
     }
 
@@ -52,11 +61,13 @@ public class GetImageQuery : IGetImageQuery
         string imageName,
         string? tag,
         ImagesListResponse imagesListResponse,
-        IReadOnlyCollection<Container> containers
+        IReadOnlyCollection<Container> containers,
+        CancellationToken cancellationToken
     )
     {
         var imageInspectResult = await _dockerClient.Images.InspectImageAsync(
-            imagesListResponse.ID
+            imagesListResponse.ID,
+            cancellationToken
         );
         return new Image(labels ?? new Dictionary<string, string>())
         {
@@ -74,14 +85,19 @@ public class GetImageQuery : IGetImageQuery
                 : imageInspectResult.Parent,
             Parent = string.IsNullOrEmpty(imageInspectResult.Parent)
                 ? null
-                : await QueryParent(imageInspectResult.Parent, containers),
+                : await QueryParent(imageInspectResult.Parent, containers, cancellationToken),
         };
     }
 
-    private async Task<Image?> QueryParent(string id, IReadOnlyCollection<Container> containers)
+    private async Task<Image?> QueryParent(
+        string id,
+        IReadOnlyCollection<Container> containers,
+        CancellationToken cancellationToken
+    )
     {
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(
-            new ImagesListParameters()
+            new ImagesListParameters(),
+            cancellationToken
         );
 
         var imagesListResponse = imagesListResponses.SingleOrDefault(e => e.ID == id);
@@ -92,7 +108,8 @@ public class GetImageQuery : IGetImageQuery
         }
 
         var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
-            imagesListResponse.ID
+            imagesListResponse.ID,
+            cancellationToken
         );
         var labels = imageInspectResponse.Config.Labels;
 
@@ -108,7 +125,8 @@ public class GetImageQuery : IGetImageQuery
                     imageName1,
                     tag,
                     imagesListResponse,
-                    containers
+                    containers,
+                    cancellationToken
                 );
             }
 
@@ -122,7 +140,8 @@ public class GetImageQuery : IGetImageQuery
                         imageName1,
                         tag,
                         imagesListResponse,
-                        containers
+                        containers,
+                        cancellationToken
                     );
             }
         }
@@ -134,7 +153,8 @@ public class GetImageQuery : IGetImageQuery
                 nameNameAndId.imageName,
                 null,
                 imagesListResponse,
-                containers
+                containers,
+                cancellationToken
             );
 
         return null;

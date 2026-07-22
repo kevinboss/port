@@ -12,13 +12,19 @@ public class GetDigestsByIdQuery : IGetDigestsByIdQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<IList<string>?> QueryAsync(string imageId)
+    public async Task<IList<string>?> QueryAsync(
+        string imageId,
+        CancellationToken cancellationToken
+    )
     {
         var parameters = new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>(),
         };
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(
+            parameters,
+            cancellationToken
+        );
         var imagesListResponse = imagesListResponses.SingleOrDefault(e => e.ID == imageId);
         return imagesListResponse?.RepoDigests;
     }

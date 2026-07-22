@@ -20,7 +20,7 @@ public class PullOrchestrator : IPullOrchestrator
     public async Task<PullResult> ExecuteAsync(
         string identifier,
         string? tag,
-        CancellationToken ct = default
+        CancellationToken cancellationToken
     )
     {
         var imageConfig =
@@ -38,7 +38,7 @@ public class PullOrchestrator : IPullOrchestrator
             error => _events.OnError(error)
         );
 
-        await _createImageCommand.ExecuteAsync(imageName, tag);
+        await _createImageCommand.ExecuteAsync(imageName, tag, cancellationToken);
         return new PullResult(imageName, tag);
     }
 
