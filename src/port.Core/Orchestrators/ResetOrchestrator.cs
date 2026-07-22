@@ -39,9 +39,9 @@ public class ResetOrchestrator : IResetOrchestrator
             );
 
         _events.OnNext(new StatusEvent($"Resetting container '{container.ContainerName}'"));
-        await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
-        var id = await _createContainerCommand.ExecuteAsync(container);
-        await _runContainerCommand.ExecuteAsync(id);
+        await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id, ct);
+        var id = await _createContainerCommand.ExecuteAsync(container, ct);
+        await _runContainerCommand.ExecuteAsync(id, ct);
         return new ResetResult(id, container.ContainerName);
     }
 }

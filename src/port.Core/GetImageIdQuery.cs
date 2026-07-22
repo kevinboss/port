@@ -12,13 +12,20 @@ public class GetImageIdQuery : IGetImageIdQuery
         _dockerClient = dockerClient;
     }
 
-    public async Task<IEnumerable<string>> QueryAsync(string imageName, string? tag)
+    public async Task<IEnumerable<string>> QueryAsync(
+        string imageName,
+        string? tag,
+        CancellationToken cancellationToken = default
+    )
     {
         if (tag != null && ImageNameHelper.IsDigest(tag))
         {
             try
             {
-                var inspectResponse = await _dockerClient.Images.InspectImageAsync(tag);
+                var inspectResponse = await _dockerClient.Images.InspectImageAsync(
+                    tag,
+                    cancellationToken
+                );
                 return [inspectResponse.ID];
             }
             catch (DockerImageNotFoundException)
@@ -32,7 +39,10 @@ public class GetImageIdQuery : IGetImageIdQuery
             Filters = new Dictionary<string, IDictionary<string, bool>>(),
         };
         parameters.Filters.Add("reference", new Dictionary<string, bool> { { imageName, true } });
-        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(parameters);
+        var imagesListResponses = await _dockerClient.Images.ListImagesAsync(
+            parameters,
+            cancellationToken
+        );
         var fullName = ImageNameHelper.BuildImageName(imageName, tag);
         return imagesListResponses
             .Where(e =>

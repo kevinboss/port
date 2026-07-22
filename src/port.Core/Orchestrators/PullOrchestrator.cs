@@ -38,7 +38,7 @@ public class PullOrchestrator : IPullOrchestrator
             error => _events.OnError(error)
         );
 
-        await _createImageCommand.ExecuteAsync(imageName, tag);
+        await _createImageCommand.ExecuteAsync(imageName, tag, ct);
         return new PullResult(imageName, tag);
     }
 

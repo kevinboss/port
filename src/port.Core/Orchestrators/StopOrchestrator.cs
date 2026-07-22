@@ -33,7 +33,7 @@ public class StopOrchestrator : IStopOrchestrator
             );
 
         _events.OnNext(new StatusEvent($"Stopping container '{container.ContainerName}'"));
-        await _stopContainerCommand.ExecuteAsync(container.Id);
+        await _stopContainerCommand.ExecuteAsync(container.Id, ct);
         return new StopResult(container.Id, container.ContainerName);
     }
 }

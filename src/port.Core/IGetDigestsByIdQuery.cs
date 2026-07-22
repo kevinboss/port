@@ -2,5 +2,5 @@ namespace port.Commands.Commit;
 
 public interface IGetDigestsByIdQuery
 {
-    Task<IList<string>?> QueryAsync(string imageId);
+    Task<IList<string>?> QueryAsync(string imageId, CancellationToken cancellationToken = default);
 }

@@ -6,6 +6,7 @@ public interface ICreateImageFromContainerCommand
         Container container,
         string imageName,
         string tagPrefix,
-        string newTag
+        string newTag,
+        CancellationToken cancellationToken
     );
 }

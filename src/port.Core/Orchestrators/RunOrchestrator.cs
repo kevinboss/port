@@ -73,7 +73,7 @@ public class RunOrchestrator : IRunOrchestrator
         );
         var containers = GetRunningContainersUsingHostPortsAsync(hostPorts);
         await foreach (var container in containers.WithCancellation(ct))
-            await _stopContainerCommand.ExecuteAsync(container.Id);
+            await _stopContainerCommand.ExecuteAsync(container.Id, ct);
     }
 
     private IAsyncEnumerable<Container> GetRunningContainersUsingHostPortsAsync(
@@ -108,14 +108,14 @@ public class RunOrchestrator : IRunOrchestrator
         var containerName = ContainerNameHelper.BuildContainerName(identifier, tag);
 
         _events.OnNext(new StatusEvent($"Query existing image: {constructedImageName}"));
-        var existingImage = await QueryExistingAsync(imageConfig, imageName, identifier, tag);
+        var existingImage = await QueryExistingAsync(imageConfig, imageName, identifier, tag, ct);
         var resolvedTag = existingImage?.Tag ?? tag;
 
         if (existingImage is null)
         {
-            await PullImageAsync(imageName, tag);
+            await PullImageAsync(imageName, tag, ct);
             _events.OnNext(new StatusEvent($"Re-query existing image: {constructedImageName}"));
-            existingImage = await _getImageQuery.QueryAsync(imageName, tag);
+            existingImage = await _getImageQuery.QueryAsync(imageName, tag, ct);
             resolvedTag = existingImage?.Tag ?? tag;
         }
 
@@ -135,39 +135,41 @@ public class RunOrchestrator : IRunOrchestrator
             var imageChanged = existingImage?.Id != null && container.ImageId != existingImage.Id;
             if (resetContainer)
             {
-                await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id);
+                await _stopAndRemoveContainerCommand.ExecuteAsync(container.Id, ct);
                 runningId = await _createContainerCommand.ExecuteAsync(
                     identifier,
                     imageName,
                     tagPrefix,
                     resolvedTag,
                     ports,
-                    environment
+                    environment,
+                    ct
                 );
-                await _runContainerCommand.ExecuteAsync(runningId);
+                await _runContainerCommand.ExecuteAsync(runningId, ct);
             }
             else if (imageChanged)
             {
-                await _stopContainerCommand.ExecuteAsync(container.Id);
+                await _stopContainerCommand.ExecuteAsync(container.Id, ct);
                 var renamedContainerName = ContainerNameHelper.BuildContainerName(
                     identifier,
                     container.ImageId
                 );
-                await _renameContainerCommand.ExecuteAsync(container.Id, renamedContainerName);
+                await _renameContainerCommand.ExecuteAsync(container.Id, renamedContainerName, ct);
                 runningId = await _createContainerCommand.ExecuteAsync(
                     identifier,
                     imageName,
                     tagPrefix,
                     resolvedTag,
                     ports,
-                    environment
+                    environment,
+                    ct
                 );
-                await _runContainerCommand.ExecuteAsync(runningId);
+                await _runContainerCommand.ExecuteAsync(runningId, ct);
             }
             else
             {
                 runningId = container.Id;
-                await _runContainerCommand.ExecuteAsync(runningId);
+                await _runContainerCommand.ExecuteAsync(runningId, ct);
             }
         }
         else
@@ -178,9 +180,10 @@ public class RunOrchestrator : IRunOrchestrator
                 tagPrefix,
                 resolvedTag,
                 ports,
-                environment
+                environment,
+                ct
             );
-            await _runContainerCommand.ExecuteAsync(runningId);
+            await _runContainerCommand.ExecuteAsync(runningId, ct);
         }
 
         return new RunResult(identifier, tag, runningId, containerName);
@@ -190,25 +193,26 @@ public class RunOrchestrator : IRunOrchestrator
         port.Config.Config.ImageConfig imageConfig,
         string imageName,
         string identifier,
-        string tag
+        string tag,
+        CancellationToken ct
     )
     {
         if (imageConfig.ImageTags.Contains(tag))
-            return await _getImageQuery.QueryAsync(imageName, tag);
-        var existing = await _getImageQuery.QueryAsync(imageName, tag);
+            return await _getImageQuery.QueryAsync(imageName, tag, ct);
+        var existing = await _getImageQuery.QueryAsync(imageName, tag, ct);
         if (existing is not null)
             return existing;
         var prefixed = $"{TagPrefixHelper.GetTagPrefix(identifier)}{tag}";
-        return await _getImageQuery.QueryAsync(imageName, prefixed);
+        return await _getImageQuery.QueryAsync(imageName, prefixed, ct);
     }
 
-    private async Task PullImageAsync(string imageName, string? tag)
+    private async Task PullImageAsync(string imageName, string? tag, CancellationToken ct)
     {
         using var subscription = _createImageCommand.ProgressObservable.Subscribe(
             progress => _events.OnNext(ToLayerEvent(progress, tag)),
             error => _events.OnError(error)
         );
-        await _createImageCommand.ExecuteAsync(imageName, tag);
+        await _createImageCommand.ExecuteAsync(imageName, tag, ct);
     }
 
     private static LayerProgressEvent ToLayerEvent(Progress progress, string? requestedTag)

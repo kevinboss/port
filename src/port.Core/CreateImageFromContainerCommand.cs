@@ -10,7 +10,8 @@ public class CreateImageFromContainerCommand(IDockerClient dockerClient)
         Container container,
         string imageName,
         string tagPrefix,
-        string newTag
+        string newTag,
+        CancellationToken cancellationToken
     )
     {
         var labels = new Dictionary<string, string>();
@@ -30,7 +31,8 @@ public class CreateImageFromContainerCommand(IDockerClient dockerClient)
                 RepositoryName = imageName,
                 Tag = newTag,
                 Config = new Docker.DotNet.Models.Config { Labels = labels },
-            }
+            },
+            cancellationToken
         );
         return newTag;
     }

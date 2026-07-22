@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
@@ -20,26 +21,32 @@ public class AllImagesQuery : IAllImagesQuery
         _getContainersQuery = getContainersQuery;
     }
 
-    public async IAsyncEnumerable<ImageGroup> QueryAsync()
+    public async IAsyncEnumerable<ImageGroup> QueryAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
     {
         var imageConfigs = _config.ImageConfigs;
 
         foreach (var imageConfig in imageConfigs)
         {
-            var images = await QueryByImageConfigAsync(imageConfig, imageConfigs);
+            var images = await QueryByImageConfigAsync(imageConfig, imageConfigs, cancellationToken);
             yield return CreateImageGroup(images, imageConfig);
         }
     }
 
-    public async IAsyncEnumerable<(string Id, string ParentId)> QueryAllImagesWithParentAsync()
+    public async IAsyncEnumerable<(string Id, string ParentId)> QueryAllImagesWithParentAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
     {
         var imagesListResponses = await _dockerClient.Images.ListImagesAsync(
-            new ImagesListParameters()
+            new ImagesListParameters(),
+            cancellationToken
         );
         foreach (var imagesListResponse in imagesListResponses)
         {
             var imageInspectResult = await _dockerClient.Images.InspectImageAsync(
-                imagesListResponse.ID
+                imagesListResponse.ID,
+                cancellationToken
             );
             if (imageInspectResult.Parent is not null)
             {
@@ -49,29 +56,41 @@ public class AllImagesQuery : IAllImagesQuery
     }
 
     public async Task<List<Image>> QueryByImageConfigAsync(
-        port.Config.Config.ImageConfig imageConfig
-    ) => await QueryByImageConfigAsync(imageConfig, _config.ImageConfigs);
+        port.Config.Config.ImageConfig imageConfig,
+        CancellationToken cancellationToken = default
+    ) => await QueryByImageConfigAsync(imageConfig, _config.ImageConfigs, cancellationToken);
 
     private async Task<List<Image>> QueryByImageConfigAsync(
         port.Config.Config.ImageConfig imageConfig,
-        IReadOnlyCollection<port.Config.Config.ImageConfig> imageConfigs
+        IReadOnlyCollection<port.Config.Config.ImageConfig> imageConfigs,
+        CancellationToken cancellationToken
     )
     {
-        var imagesListResponses = await GetImagesByNameAsync(imageConfig.ImageName);
+        var imagesListResponses = await GetImagesByNameAsync(
+            imageConfig.ImageName,
+            cancellationToken
+        );
         var danglingImages = await GetDanglingImagesByNameAsync(
             imageConfig.ImageName,
-            imageConfig.Identifier
+            imageConfig.Identifier,
+            cancellationToken
         );
         var allImagesListResponses = imagesListResponses
             .Concat(danglingImages.Where(d => imagesListResponses.All(i => i.ID != d.ID)))
             .ToList();
         var images = await GetAllTagsAsync(imageConfig, imageConfigs, allImagesListResponses)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
         images.AddRange(
-            await GetSnapshotImagesAsync(imageConfigs, imageConfig, allImagesListResponses)
+            await GetSnapshotImagesAsync(
+                imageConfigs,
+                imageConfig,
+                allImagesListResponses,
+                cancellationToken
+            )
         );
         images.AddRange(
-            await GetUntaggedImagesAsync(imageConfig, allImagesListResponses).ToListAsync()
+            await GetUntaggedImagesAsync(imageConfig, allImagesListResponses)
+                .ToListAsync(cancellationToken)
         );
         return images;
     }
@@ -106,7 +125,8 @@ public class AllImagesQuery : IAllImagesQuery
     private async Task<IEnumerable<Image>> GetSnapshotImagesAsync(
         IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
         Config.Config.ImageConfig imageConfig,
-        IEnumerable<ImagesListResponse> imagesListResponses
+        IEnumerable<ImagesListResponse> imagesListResponses,
+        CancellationToken cancellationToken
     )
     {
         return (
@@ -116,10 +136,17 @@ public class AllImagesQuery : IAllImagesQuery
                     .Where(imagesListResponse => IsNotBase(imageConfigs, imagesListResponse))
                     .Select(async imagesListResponse =>
                     {
-                        if (!await IsSnapshotOfBaseAsync(imageConfig, imagesListResponse))
+                        if (
+                            !await IsSnapshotOfBaseAsync(
+                                imageConfig,
+                                imagesListResponse,
+                                cancellationToken
+                            )
+                        )
                             return null;
                         var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
-                            imagesListResponse.ID
+                            imagesListResponse.ID,
+                            cancellationToken
                         );
                         var labels =
                             imageInspectResponse.Config?.Labels
@@ -135,7 +162,7 @@ public class AllImagesQuery : IAllImagesQuery
                             tag = tag[tagPrefix.Length..];
                         var containers = await _getContainersQuery
                             .QueryByImageIdAsync(imagesListResponse.ID)
-                            .ToListAsync();
+                            .ToListAsync(cancellationToken);
                         return new Image(labels)
                         {
                             Name = imageName,
@@ -166,7 +193,8 @@ public class AllImagesQuery : IAllImagesQuery
     private async IAsyncEnumerable<Image> GetAllTagsAsync(
         Config.Config.ImageConfig imageConfig,
         IReadOnlyCollection<Config.Config.ImageConfig> imageConfigs,
-        IList<ImagesListResponse> imagesListResponses
+        IList<ImagesListResponse> imagesListResponses,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
         var yieldedTags = new HashSet<string>();
@@ -187,7 +215,7 @@ public class AllImagesQuery : IAllImagesQuery
             {
                 containers = await _getContainersQuery
                     .QueryByImageIdAsync(imagesListResponse.ID)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
                 yieldedImageIds.Add(imagesListResponse.ID);
             }
             else
@@ -198,7 +226,10 @@ public class AllImagesQuery : IAllImagesQuery
             var cleanedTag = tag;
             var imageInspectResponse =
                 imagesListResponse != null
-                    ? await _dockerClient.Images.InspectImageAsync(imagesListResponse.ID)
+                    ? await _dockerClient.Images.InspectImageAsync(
+                        imagesListResponse.ID,
+                        cancellationToken
+                    )
                     : null;
             var labels = imageInspectResponse?.Config?.Labels ?? new Dictionary<string, string>();
             var tagPrefix = labels
@@ -233,7 +264,8 @@ public class AllImagesQuery : IAllImagesQuery
             if (IsNotBase(imageConfigs, imagesListResponse))
             {
                 var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
-                    imagesListResponse.ID
+                    imagesListResponse.ID,
+                    cancellationToken
                 );
                 var snapshotIdentifier = imageInspectResponse
                     .Config.Labels?.Where(l => l.Key == Constants.IdentifierLabel)
@@ -263,9 +295,10 @@ public class AllImagesQuery : IAllImagesQuery
 
                 var containers = await _getContainersQuery
                     .QueryByImageIdAsync(imagesListResponse.ID)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
                 var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
-                    imagesListResponse.ID
+                    imagesListResponse.ID,
+                    cancellationToken
                 );
                 var labels =
                     imageInspectResponse.Config?.Labels ?? new Dictionary<string, string>();
@@ -294,7 +327,8 @@ public class AllImagesQuery : IAllImagesQuery
 
     private async IAsyncEnumerable<Image> GetUntaggedImagesAsync(
         Config.Config.ImageConfig imageConfig,
-        IEnumerable<ImagesListResponse> imagesListResponses
+        IEnumerable<ImagesListResponse> imagesListResponses,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
     )
     {
         foreach (var imagesListResponse in imagesListResponses.Where(IsUntagged))
@@ -312,9 +346,10 @@ public class AllImagesQuery : IAllImagesQuery
 
             var containers = await _getContainersQuery
                 .QueryByImageIdAsync(imagesListResponse.ID)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
             var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
-                imagesListResponse.ID
+                imagesListResponse.ID,
+                cancellationToken
             );
             var originalTag = containers
                 .Select(c => c.GetLabel(Constants.BaseTagLabel))
@@ -336,23 +371,30 @@ public class AllImagesQuery : IAllImagesQuery
         }
     }
 
-    private async Task<IList<ImagesListResponse>> GetImagesByNameAsync(string imageName)
+    private async Task<IList<ImagesListResponse>> GetImagesByNameAsync(
+        string imageName,
+        CancellationToken cancellationToken
+    )
     {
         var parameters = new ImagesListParameters
         {
             Filters = new Dictionary<string, IDictionary<string, bool>>(),
         };
         parameters.Filters.Add("reference", new Dictionary<string, bool> { { imageName, true } });
-        return await _dockerClient.Images.ListImagesAsync(parameters);
+        return await _dockerClient.Images.ListImagesAsync(parameters, cancellationToken);
     }
 
     private async Task<IList<ImagesListResponse>> GetDanglingImagesByNameAsync(
         string imageName,
-        string identifier
+        string identifier,
+        CancellationToken cancellationToken
     )
     {
         // Query all images (not just dangling) to also catch untagged images that still have RepoDigests
-        var allImages = await _dockerClient.Images.ListImagesAsync(new ImagesListParameters());
+        var allImages = await _dockerClient.Images.ListImagesAsync(
+            new ImagesListParameters(),
+            cancellationToken
+        );
 
         var result = new List<ImagesListResponse>();
         foreach (var image in allImages.Where(IsUntagged))
@@ -368,7 +410,9 @@ public class AllImagesQuery : IAllImagesQuery
             }
 
             // Match by containers with matching identifier
-            var containers = await _getContainersQuery.QueryByImageIdAsync(image.ID).ToListAsync();
+            var containers = await _getContainersQuery
+                .QueryByImageIdAsync(image.ID)
+                .ToListAsync(cancellationToken);
             if (containers.Any(c => c.ContainerIdentifier == identifier))
             {
                 result.Add(image);
@@ -409,7 +453,8 @@ public class AllImagesQuery : IAllImagesQuery
 
     private async Task<bool> IsSnapshotOfBaseAsync(
         port.Config.Config.ImageConfig imageConfig,
-        ImagesListResponse e
+        ImagesListResponse e,
+        CancellationToken cancellationToken
     )
     {
         var imageNameAndTags = imageConfig
@@ -417,7 +462,10 @@ public class AllImagesQuery : IAllImagesQuery
             .Select(imageConfig1 =>
                 ImageNameHelper.BuildImageName(imageConfig1.ImageName, imageConfig1.tag)
             );
-        var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(e.ID);
+        var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
+            e.ID,
+            cancellationToken
+        );
         var identifier = imageInspectResponse
             .Config.Labels?.Where(l => l.Key == Constants.IdentifierLabel)
             .Select(l => l.Value)
