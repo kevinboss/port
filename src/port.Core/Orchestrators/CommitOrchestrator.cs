@@ -46,11 +46,11 @@ public class CommitOrchestrator : ICommitOrchestrator
         string tag,
         bool overwrite,
         bool @switch,
-        CancellationToken ct
+        CancellationToken cancellationToken
     )
     {
         _events.OnNext(new StatusEvent("Getting running containers"));
-        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync(ct);
+        var containers = await _getRunningContainersQuery.QueryAsync().ToListAsync(cancellationToken);
         var container =
             containers.SingleOrDefault(c => c.ContainerName == containerName)
             ?? throw new InvalidOperationException(
@@ -74,7 +74,7 @@ public class CommitOrchestrator : ICommitOrchestrator
         }
         else
         {
-            (imageName, tagPrefix, newTag) = await GetNewTagAsync(container, tag, ct);
+            (imageName, tagPrefix, newTag) = await GetNewTagAsync(container, tag, cancellationToken);
         }
 
         _events.OnNext(
@@ -82,7 +82,7 @@ public class CommitOrchestrator : ICommitOrchestrator
         );
         var containerWithSameTag = await _getContainersQuery
             .QueryByContainerIdentifierAndTagAsync(container.ContainerIdentifier, newTag)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         _events.OnNext(
             new StatusEvent($"Creating image from running container '{container.ContainerName}'")
@@ -92,12 +92,12 @@ public class CommitOrchestrator : ICommitOrchestrator
             imageName,
             tagPrefix,
             newTag,
-            ct
+            cancellationToken
         );
 
         _events.OnNext(new StatusEvent($"Removing containers named '{container.ContainerName}'"));
         await Task.WhenAll(
-            containerWithSameTag.Select(c => _stopAndRemoveContainerCommand.ExecuteAsync(c.Id, ct))
+            containerWithSameTag.Select(c => _stopAndRemoveContainerCommand.ExecuteAsync(c.Id, cancellationToken))
         );
 
         if (overwrite)
@@ -107,8 +107,8 @@ public class CommitOrchestrator : ICommitOrchestrator
                     "Overwrite not supported when committing untagged container"
                 );
             _events.OnNext(new StatusEvent("Launching new image"));
-            var id = await _createContainerCommand.ExecuteAsync(container, tagPrefix, newTag, ct);
-            await _runContainerCommand.ExecuteAsync(id, ct);
+            var id = await _createContainerCommand.ExecuteAsync(container, tagPrefix, newTag, cancellationToken);
+            await _runContainerCommand.ExecuteAsync(id, cancellationToken);
         }
         else if (@switch)
         {
@@ -119,11 +119,11 @@ public class CommitOrchestrator : ICommitOrchestrator
             _events.OnNext(
                 new StatusEvent($"Stopping running container '{container.ContainerName}'")
             );
-            await _stopContainerCommand.ExecuteAsync(container.Id, ct);
+            await _stopContainerCommand.ExecuteAsync(container.Id, cancellationToken);
 
             _events.OnNext(new StatusEvent("Launching new image"));
-            var id = await _createContainerCommand.ExecuteAsync(container, tagPrefix, newTag, ct);
-            await _runContainerCommand.ExecuteAsync(id, ct);
+            var id = await _createContainerCommand.ExecuteAsync(container, tagPrefix, newTag, cancellationToken);
+            await _runContainerCommand.ExecuteAsync(id, cancellationToken);
         }
 
         return new CommitResult(imageName, newTag);
@@ -132,19 +132,19 @@ public class CommitOrchestrator : ICommitOrchestrator
     private async Task<(string imageName, string tagPrefix, string newTag)> GetNewTagAsync(
         Container container,
         string tag,
-        CancellationToken ct
+        CancellationToken cancellationToken
     )
     {
         var image = await _getImageQuery.QueryAsync(
             container.ImageIdentifier,
             container.ImageTag,
-            ct
+            cancellationToken
         );
         string imageName;
         string? baseTag = null;
         if (image == null)
         {
-            var digests = await _getDigestsByIdQuery.QueryAsync(container.ImageIdentifier, ct);
+            var digests = await _getDigestsByIdQuery.QueryAsync(container.ImageIdentifier, cancellationToken);
             var digest = digests?.SingleOrDefault();
             if (digest == null || !DigestHelper.TryGetImageNameAndId(digest, out var nameAndId))
                 throw new InvalidOperationException(

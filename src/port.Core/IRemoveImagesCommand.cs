@@ -7,6 +7,6 @@ public interface IRemoveImagesCommand
     Task<List<ImageRemovalResult>> ExecuteAsync(
         List<string> imageIds,
         IObserver<OrchestrationEvent>? events = null,
-        CancellationToken ct = default
+        CancellationToken cancellationToken = default
     );
 }

@@ -21,13 +21,13 @@ public class PruneOrchestrator : IPruneOrchestrator
 
     public async Task<PruneResult> ExecuteAsync(
         string? identifier,
-        CancellationToken ct
+        CancellationToken cancellationToken
     )
     {
         var imageGroups = await _allImagesQuery
             .QueryAsync()
             .Where(g => identifier == null || g.Identifier == identifier)
-            .ToListAsync(ct);
+            .ToListAsync(cancellationToken);
 
         var pruneableImages = imageGroups
             .SelectMany(g => g.Images)
@@ -41,7 +41,7 @@ public class PruneOrchestrator : IPruneOrchestrator
         var removals = await _removeImagesCommand.ExecuteAsync(
             pruneableImages.Select(i => i.Id!).ToList(),
             _events,
-            ct
+            cancellationToken
         );
         return new PruneResult(removals);
     }

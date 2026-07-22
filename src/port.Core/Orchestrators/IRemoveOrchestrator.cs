@@ -6,6 +6,6 @@ public interface IRemoveOrchestrator : IOrchestrator
         string identifier,
         string? tag,
         bool recursive,
-        CancellationToken ct
+        CancellationToken cancellationToken
     );
 }
