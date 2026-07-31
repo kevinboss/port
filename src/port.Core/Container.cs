@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Docker.DotNet.Models;
 
@@ -126,6 +127,13 @@ public class Container
     public string? ImageTag { get; }
     public IDictionary<string, IList<PortBinding>> PortBindings { get; }
     public bool Running { get; }
+
+    /// <summary>
+    /// The container's raw environment. Secret values are masked when this is
+    /// serialised (see <see cref="MaskedEnvironmentJsonConverter"/>); readers in
+    /// process still get the real values, which container creation depends on.
+    /// </summary>
+    [JsonConverter(typeof(MaskedEnvironmentJsonConverter))]
     public IList<string> Environment { get; }
 
     public string? GetLabel(string label) =>
