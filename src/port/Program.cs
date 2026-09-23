@@ -85,29 +85,28 @@ app.Configure(appConfig =>
 
 AnsiConsole.Console = new CustomConsole();
 
-app.Configure(config =>
-{
-    config.SetExceptionHandler(
-        (exception, _) =>
-        {
-            switch (exception)
-            {
-                case TimeoutException:
-                    AnsiConsole.MarkupLine(
-                        "[red]Timeout exception occurred[/], is the Docker daemon running?"
-                    );
-                    return -1;
-                case InvalidOperationException
-                or ArgumentException
-                or Docker.DotNet.DockerApiException:
-                    AnsiConsole.MarkupLine($"[red]{exception.Message.EscapeMarkup()}[/]");
-                    return -1;
-                default:
-                    AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything);
-                    return -1;
-            }
-        }
-    );
-});
+app.Configure(config => config.SetExceptionHandler((exception, _) => HandleException(exception)));
 
 return app.Run(args);
+
+static int HandleException(Exception exception)
+{
+    switch (exception)
+    {
+        case CommandRuntimeException { InnerException: { } inner }:
+            return HandleException(inner);
+        case TimeoutException:
+            AnsiConsole.MarkupLine(
+                "[red]Timeout exception occurred[/], is the Docker daemon running?"
+            );
+            return -1;
+        case InvalidOperationException
+        or ArgumentException
+        or DockerApiException:
+            AnsiConsole.MarkupLine($"[red]{exception.Message.EscapeMarkup()}[/]");
+            return -1;
+        default:
+            AnsiConsole.WriteException(exception, ExceptionFormats.ShortenEverything);
+            return -1;
+    }
+}
