@@ -87,7 +87,7 @@ AnsiConsole.Console = new CustomConsole();
 
 app.Configure(config => config.SetExceptionHandler((exception, _) => HandleException(exception)));
 
-return app.Run(args);
+return await app.RunAsync(args);
 
 static int HandleException(Exception exception)
 {
