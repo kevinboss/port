@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -69,13 +70,13 @@ public static class ConfigFactory
         var serializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
-        var version = serializer.Deserialize<ConfigVersion>(versionString);
+        var version = Deserialize<ConfigVersion>(serializer, versionString, path);
         switch (version.Version)
         {
             case Versions.V10:
                 var yaml = File.ReadAllText(path);
                 PersistConfig(
-                    ConfigMigrations.Migrate10To11(serializer.Deserialize<Config10>(yaml)),
+                    ConfigMigrations.Migrate10To11(Deserialize<Config10>(serializer, yaml, path)),
                     path
                 );
                 break;
@@ -90,7 +91,22 @@ public static class ConfigFactory
         var serializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
-        return serializer.Deserialize<Config>(yaml);
+        return Deserialize<Config>(serializer, yaml, path);
+    }
+
+    private static T Deserialize<T>(IDeserializer deserializer, string yaml, string path)
+    {
+        try
+        {
+            return deserializer.Deserialize<T>(yaml);
+        }
+        catch (YamlException e)
+        {
+            throw new InvalidOperationException(
+                $"Config file {path} is invalid (line {e.Start.Line}, column {e.Start.Column}): {e.Message}",
+                e
+            );
+        }
     }
 
     private static Config CreateDefault() =>
