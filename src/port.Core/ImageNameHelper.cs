@@ -4,6 +4,7 @@ public static class ImageNameHelper
 {
     private const string TagSeparator = ":";
     private const string DigestSeparator = "@";
+    private const int ShortDigestLength = 12;
 
     public static (string imageName, string? tag) GetImageNameAndTag(string imageName)
     {
@@ -74,4 +75,14 @@ public static class ImageNameHelper
     public static bool IsDigest(string tag) =>
         tag.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase)
         || tag.StartsWith("sha512:", StringComparison.OrdinalIgnoreCase);
+
+    public static string SanitizeTag(string tag)
+    {
+        if (!IsDigest(tag))
+            return tag.Replace(':', '-');
+
+        var idx = tag.IndexOf(TagSeparator, StringComparison.Ordinal);
+        var hash = tag[(idx + 1)..];
+        return $"{tag[..idx]}-{hash[..Math.Min(ShortDigestLength, hash.Length)]}";
+    }
 }
