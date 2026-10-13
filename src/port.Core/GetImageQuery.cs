@@ -111,7 +111,7 @@ public class GetImageQuery : IGetImageQuery
             imagesListResponse.ID,
             cancellationToken
         );
-        var labels = imageInspectResponse.Config.Labels;
+        var labels = imageInspectResponse.Config?.Labels ?? new Dictionary<string, string>();
 
         if (imagesListResponse.RepoTags != null)
         {
