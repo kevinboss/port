@@ -263,11 +263,11 @@ public class AllImagesQuery : IAllImagesQuery
         {
             if (IsNotBase(imageConfigs, imagesListResponse))
             {
-                var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
+                var snapshotInspectResponse = await _dockerClient.Images.InspectImageAsync(
                     imagesListResponse.ID,
                     cancellationToken
                 );
-                var snapshotIdentifier = imageInspectResponse
+                var snapshotIdentifier = snapshotInspectResponse
                     .Config.Labels?.Where(l => l.Key == Constants.IdentifierLabel)
                     .Select(l => l.Value)
                     .SingleOrDefault();
@@ -280,48 +280,48 @@ public class AllImagesQuery : IAllImagesQuery
             if (yieldedImageIds.Contains(imagesListResponse.ID))
                 continue;
 
-            foreach (var repoTag in imagesListResponse.RepoTags)
+            var repoTag = imagesListResponse
+                .RepoTags.Where(t => !yieldedTags.Contains(t))
+                .Where(t =>
+                    ImageNameHelper.GetImageNameAndTag(t).imageName == imageConfig.ImageName
+                )
+                .OrderBy(t => t.Contains('@'))
+                .FirstOrDefault();
+            if (repoTag is null)
+                continue;
+
+            var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(repoTag);
+
+            yieldedTags.Add(repoTag);
+            yieldedImageIds.Add(imagesListResponse.ID);
+
+            var containers = await _getContainersQuery
+                .QueryByImageIdAsync(imagesListResponse.ID)
+                .ToListAsync(cancellationToken);
+            var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
+                imagesListResponse.ID,
+                cancellationToken
+            );
+            var labels = imageInspectResponse.Config?.Labels ?? new Dictionary<string, string>();
+
+            yield return new Image(labels)
             {
-                if (yieldedTags.Contains(repoTag))
-                    continue;
-
-                var (imageName, tag) = ImageNameHelper.GetImageNameAndTag(repoTag);
-
-                if (imageName != imageConfig.ImageName)
-                    continue;
-
-                yieldedTags.Add(repoTag);
-                yieldedImageIds.Add(imagesListResponse.ID);
-
-                var containers = await _getContainersQuery
-                    .QueryByImageIdAsync(imagesListResponse.ID)
-                    .ToListAsync(cancellationToken);
-                var imageInspectResponse = await _dockerClient.Images.InspectImageAsync(
-                    imagesListResponse.ID,
-                    cancellationToken
-                );
-                var labels =
-                    imageInspectResponse.Config?.Labels ?? new Dictionary<string, string>();
-
-                yield return new Image(labels)
-                {
-                    Name = imageName,
-                    Tag = tag,
-                    IsSnapshot = false,
-                    Existing = true,
-                    Created = imageInspectResponse.Created,
-                    Containers = containers
-                        .Where(c =>
-                            c.ContainerName
-                            == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag)
-                        )
-                        .ToList(),
-                    Id = imagesListResponse.ID,
-                    ParentId = string.IsNullOrEmpty(imageInspectResponse.Parent)
-                        ? null
-                        : imageInspectResponse.Parent,
-                };
-            }
+                Name = imageName,
+                Tag = tag,
+                IsSnapshot = false,
+                Existing = true,
+                Created = imageInspectResponse.Created,
+                Containers = containers
+                    .Where(c =>
+                        c.ContainerName
+                        == ContainerNameHelper.BuildContainerName(imageConfig.Identifier, tag)
+                    )
+                    .ToList(),
+                Id = imagesListResponse.ID,
+                ParentId = string.IsNullOrEmpty(imageInspectResponse.Parent)
+                    ? null
+                    : imageInspectResponse.Parent,
+            };
         }
     }
 
