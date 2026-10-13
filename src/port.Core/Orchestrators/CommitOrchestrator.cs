@@ -160,7 +160,8 @@ public class CommitOrchestrator : ICommitOrchestrator
 
         baseTag = container.GetLabel(Constants.BaseTagLabel) ?? baseTag ?? image?.Tag;
         var tagPrefix = container.TagPrefix;
-        var newTag = baseTag == null ? tag : $"{tagPrefix}{baseTag}-{tag}";
+        var newTag =
+            baseTag == null ? tag : $"{tagPrefix}{ImageNameHelper.SanitizeTag(baseTag)}-{tag}";
         return (imageName, tagPrefix, newTag);
     }
 }
