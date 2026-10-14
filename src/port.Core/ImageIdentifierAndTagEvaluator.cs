@@ -11,12 +11,21 @@ public class ImageIdentifierAndTagEvaluator : IImageIdentifierAndTagEvaluator
 
     public (string identifier, string tag) Evaluate(string imageIdentifier)
     {
-        if (ImageNameHelper.TryGetImageNameAndTag(imageIdentifier, out var identifierAndTag))
+        if (
+            imageIdentifier.Contains('@')
+            && ImageNameHelper.TryGetImageNameAndTag(imageIdentifier, out var identifierAndDigest)
+        )
         {
-            return (identifierAndTag.imageName, identifierAndTag.tag);
+            return (identifierAndDigest.imageName, identifierAndDigest.tag);
         }
 
-        var imageConfig = _config.GetImageConfigByIdentifier(identifierAndTag.imageName);
+        var separatorIdx = imageIdentifier.IndexOf(':');
+        if (separatorIdx != -1)
+        {
+            return (imageIdentifier[..separatorIdx], imageIdentifier[(separatorIdx + 1)..]);
+        }
+
+        var imageConfig = _config.GetImageConfigByIdentifier(imageIdentifier);
         if (imageConfig.ImageTags.Count > 1)
         {
             throw new InvalidOperationException(
