@@ -50,6 +50,11 @@ public class RemoveOrchestrator : IRemoveOrchestrator
 
         initialImageIds.AddRange(await _getImageIdQuery.QueryAsync(imageName, tag, cancellationToken));
 
+        if (!recursive && await HasChildrenAsync(initialImageIds, cancellationToken))
+            throw new InvalidOperationException(
+                "Image has descendant snapshots, use recursive removal to remove them as well"
+            );
+
         var imageIds = recursive
             ? await ResolveRecursiveAsync(initialImageIds, cancellationToken)
             : initialImageIds.ToList();
@@ -60,6 +65,14 @@ public class RemoveOrchestrator : IRemoveOrchestrator
         var removals = await _removeImagesCommand.ExecuteAsync(imageIds, _events, cancellationToken);
         return new RemoveResult(removals);
     }
+
+    private async Task<bool> HasChildrenAsync(
+        List<string> imageIds,
+        CancellationToken cancellationToken
+    ) =>
+        await _allImagesQuery
+            .QueryAllImagesWithParentAsync()
+            .AnyAsync(e => imageIds.Contains(e.ParentId), cancellationToken);
 
     private async Task<List<string>> ResolveRecursiveAsync(
         List<string> initialImageIds,
