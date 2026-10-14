@@ -28,7 +28,12 @@ public class CreateContainerCommand : ICreateContainerCommand
         var portBindings = ports
             .Select(e => e.Split(PortSeparator))
             .ToDictionary(e => e[1], e => CreateHostPortList(e[0]));
-        var containerName = ContainerNameHelper.BuildContainerName(containerIdentifier, tag);
+        var containerName = ContainerNameHelper.BuildContainerName(
+            containerIdentifier,
+            tagPrefix is not null && tag?.StartsWith(tagPrefix) == true
+                ? tag[tagPrefix.Length..]
+                : tag
+        );
         var image = await _getImageQuery.QueryAsync(imageIdentifier, tag, cancellationToken);
         var baseTag = image?.GetLabel(Constants.BaseTagLabel) ?? image?.BaseImage?.Tag ?? tag;
         var labels = new Dictionary<string, string>
