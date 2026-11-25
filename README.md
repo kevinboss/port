@@ -21,135 +21,46 @@
   <img src="example-2.gif" alt="Port in Action">
 </p>
 
-## Install
+`port` runs and snapshots Docker containers from a YAML config (`~/.port` on
+Linux and macOS, `%USERPROFILE%\.port` on Windows) and merges in a local
+`docker-compose.yml` when present. You refer to images by short identifiers
+instead of full Docker names, and launching a container stops any other
+container holding the same host port first. The same workflows are exposed over
+stdio through `port mcp` so AI agents can drive containers with the
+[Model Context Protocol](https://modelcontextprotocol.io).
 
-**Scoop**
+Install with Scoop:
 
 ```powershell
 scoop bucket add maple 'https://github.com/kevinboss/maple.git'
 scoop install port
 ```
 
-**Winget**
+Or with winget:
 
 ```powershell
 winget install kevinboss.port
 ```
 
-**Manual**
+Or download a binary from the
+[releases page](https://github.com/kevinboss/port/releases) and put it on your
+`PATH`.
 
-Grab a binary from the [releases page](https://github.com/kevinboss/port/releases)
-and put it on your `PATH`.
-
-## Configuration
-
-Port reads `~/.port` (or `%USERPROFILE%\.port` on Windows). If the file does
-not exist, a default one is written on first run. You can also drop a
-`docker-compose.yml` next to where you invoke port and the services in it are
-merged in.
-
-```yaml
-version: 1.1
-dockerEndpoint: unix:///var/run/docker.sock
-imageConfigs:
-  - identifier: Nginx
-    imageName: nginx
-    imageTags:
-      - alpine
-      - alpine-slim
-    ports:
-      - 8080:80
-    environment: []
-  - identifier: Alpine
-    imageName: alpine
-    imageTags:
-      - '3.19'
-      - latest
-    ports: []
-    environment: []
-```
-
-`identifier` is the human-friendly name port uses everywhere (commands, container
-names, tags); `imageName` is the actual Docker image; `imageTags` are the tags
-port knows how to launch.
-
-## Commands
-
-`port config` prints the path of the config file. Pass `--open` to open it in
-your editor.
-
-`port list [identifier]` shows every configured image, every tag, every
-snapshot, and the running container if any. With an identifier, the listing is
-restricted to that group.
-
-`port pull <identifier:tag>` fetches the image. Per-layer download progress is
-shown live.
-
-`port run <identifier:tag> [-r]` launches a container. Any container holding
-the same host port is stopped first. `-r` recreates the container instead of
-restarting an existing one. Pulls the image if it isn't local yet.
-
-`port stop <containerName>` stops a running container by its full name (e.g.
-`Nginx.alpine`). With no name, you get a picker.
-
-`port reset <containerName>` stops, removes, and recreates a container — useful
-to discard mutations made inside it.
-
-`port commit <containerName> [-t tag] [-s] [-o]` snapshots a running container
-into a new image. `-t` sets the tag (defaults to a timestamp); `-s` switches
-the running container to the new snapshot; `-o` overwrites the source tag.
-
-`port remove <identifier:tag> [-r]` removes the image and any containers using
-it. `-r` also removes descendant snapshot images.
-
-`port prune [identifier]` removes dangling (digest-only) images. Restrict to
-one identifier with the optional argument.
-
-## MCP server
-
-`port mcp` starts a [Model Context Protocol](https://modelcontextprotocol.io)
-server over stdio. AI agents can then drive port the same way you do from the
-shell.
-
-The exposed tools mirror the CLI verbs: `run`, `stop`, `reset`, `commit`,
-`pull`, `remove`, `prune`, `list`, `config`. A few have stricter inputs than
-their CLI siblings — `reset` always requires a container name, `commit`
-requires an explicit tag — to remove ambiguity for an agent.
-
-### Claude Code
+First run creates `~/.port` with a `Getting.Started` entry:
 
 ```bash
-claude mcp add port -- port mcp
+port config --open                  # open ~/.port in your editor
+port list                           # list images, snapshots, and containers
+port run Getting.Started:latest     # launch a container
+port commit Getting.Started.latest  # snapshot the running container
+port reset Getting.Started.latest   # discard changes and recreate it
+port stop Getting.Started.latest    # stop the container
 ```
 
-### Claude Desktop
+See [commands](docs/commands.md), [configuration](docs/configuration.md), and
+[MCP server](docs/mcp.md) for all flags, Compose setup, and agent integration.
 
-Add to your `claude_desktop_config.json`:
+## How to contribute
 
-```json
-{
-  "mcpServers": {
-    "port": {
-      "command": "port",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-## PowerShell Unicode
-
-To get proper rendering of port's output in PowerShell, add this to your
-`$profile`:
-
-```powershell
-[console]::InputEncoding = [console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-```
-
-## Contributing
-
-PRs welcome. Fork, branch, commit, open a pull request.
-
-## License
-
-[GPL-3.0](LICENSE)
+Pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for
+prerequisites, build and test commands, and repository layout.
